@@ -70,6 +70,17 @@ Bundled in `data.js`:
 | NASA ISS Live snapshot | Cabin air values, used when the live feed is down. | Not confirmed | https://push.lightstreamer.com |
 | NASA-STD-3001 Vol 1 and Vol 2 | The limits where NASA sets a number. Other limits are clinical scores, labelled as non-NASA in the app. | Not confirmed | https://standards.nasa.gov/ |
 
+Sample scan images in `scans/` (shown on the scan comparison screen; cropped, greyscale, 440x340, overlays removed):
+
+| File | What it shows | Author | Licence | Source |
+|---|---|---|---|---|
+| scans/eyes.jpg | OCT of optic nerve and surrounding retina | Bobjgalindo | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Optical_Coherence_Tomography_of_optic_nerve_and_surrounding_retina.jpg |
+| scans/neck.jpg | Neck ultrasound, axial view of the internal jugular vein | Cerevisae | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Ultrasound_showing_right_IJV_narrowing_at_the_mid_neck_due_to_mass_effect_from_adjacent_mass.jpg |
+| scans/heart.jpg | Echocardiogram, four-chamber view | Not stated (Wikimedia Commons) | Public domain | https://commons.wikimedia.org/wiki/File:Echocardiogram_4chambers.jpg |
+| scans/lungs.jpg | Lung ultrasound with B-lines | Tinss | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:B_lines_on_a_lung_ultrasound_of_a_patient_with_fibrosis.jpg |
+| scans/bladder.jpg | Kidney ultrasound, sagittal view (used for kidneys and bladder) | Cerevisae | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Ultrasound_of_right_kidney_moderate_hydronephrosis.jpg |
+| scans/legs.jpg | Femoral vein ultrasound (colour Doppler, shown in greyscale) | Mikael Häggström, M.D. | CC0 | https://commons.wikimedia.org/wiki/File:Ultrasonography_of_deep_vein_thrombosis_of_the_femoral_vein.jpg |
+
 Fetched live when the page loads:
 
 | Source | What it gives | Link |
