@@ -2,7 +2,9 @@ const MAX_BYTES = 2048;
 const LIMIT = 40;
 const WINDOW_MS = 60000;
 const TIMEOUT_MS = 8000;
-const DEEPSEEK_BASE = "https://api.deepseek.com";
+const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/openai";
+const GEMINI_MODEL = "gemini-3.5-flash-lite";
+const DEEPSEEK_BASE ="https://api.deepseek.com";
 const DEEPSEEK_MODEL = "deepseek-flash";
 const DEFAULT_BASE = "https://openrouter.ai/api/v1";
 const DEFAULT_MODEL = "qwen/qwen3-30b-a3b-instruct-2507";
@@ -178,11 +180,26 @@ function acceptable(s, name) {
 }
 
 function provider() {
+  const gm = (process.env.GEMINI_API_KEY || "").trim();
+  if (gm) return {kind: "gemini", by: "Gemini", key: gm, base: (process.env.GEMINI_BASE_URL || GEMINI_BASE).replace(/\/+$/, ""), model: process.env.GEMINI_MODEL || GEMINI_MODEL};
   const ds = (process.env.DEEPSEEK_API_KEY || "").trim();
-  if (ds) return {deepseek: true, key: ds, base: (process.env.DEEPSEEK_BASE_URL || DEEPSEEK_BASE).replace(/\/+$/, ""), model: process.env.DEEPSEEK_MODEL || DEEPSEEK_MODEL};
+  if (ds) return {kind: "deepseek", by: "DeepSeek", key: ds, base: (process.env.DEEPSEEK_BASE_URL || DEEPSEEK_BASE).replace(/\/+$/, ""), model: process.env.DEEPSEEK_MODEL || DEEPSEEK_MODEL};
   const key = (process.env.LLM_API_KEY || "").trim();
-  if (key) return {deepseek: false, key, base: (process.env.LLM_BASE_URL || DEFAULT_BASE).replace(/\/+$/, ""), model: process.env.LLM_MODEL || DEFAULT_MODEL};
+  if (key) return {kind: "generic", by: "model", key, base: (process.env.LLM_BASE_URL || DEFAULT_BASE).replace(/\/+$/, ""), model: process.env.LLM_MODEL || DEFAULT_MODEL};
   return null;
+}
+
+function requestBody(p, v, useName, effort) {
+  const messages = [
+    {role: "system", content: systemPrompt(v, useName)},
+    {role: "user", content: userPrompt(v)}
+  ];
+  if (p.kind === "gemini") {
+    const b = {model: p.model, messages, temperature: 0.8, max_tokens: 220, stream: false};
+    if (effort) b.reasoning_effort = "minimal";
+    return b;
+  }
+  return Object.assign({model: p.model, temperature: 0.8, max_tokens: 70, stream: false, messages}, p.kind === "deepseek" ? {thinking: {type: "disabled"}} : {});
 }
 
 function scrub(s, key) {
@@ -201,31 +218,22 @@ function fallback(why, detail) {
 async function askModel(v, useName) {
   const p = provider();
   if (!p) return {text: "", why: "nokey"};
-  const key = p.key, base = p.base, model = p.model;
+  const key = p.key, base = p.base;
   const ctrl = new AbortController();
   const timer = setTimeout(function () { ctrl.abort(); }, TIMEOUT_MS);
+  const headers = Object.assign({"Content-Type": "application/json", "Authorization": "Bearer " + key}, p.kind === "generic" ? {"X-Title": "ASTRA"} : {});
+  function post(effort) {
+    return fetch(base + "/chat/completions", {method: "POST", signal: ctrl.signal, headers, body: JSON.stringify(requestBody(p, v, useName, effort))});
+  }
   try {
-    const r = await fetch(base + "/chat/completions", {
-      method: "POST",
-      signal: ctrl.signal,
-      headers: Object.assign({"Content-Type": "application/json", "Authorization": "Bearer " + key}, p.deepseek ? {} : {"X-Title": "ASTRA"}),
-      body: JSON.stringify(Object.assign({
-        model,
-        temperature: 0.8,
-        max_tokens: 70,
-        stream: false,
-        messages: [
-          {role: "system", content: systemPrompt(v, useName)},
-          {role: "user", content: userPrompt(v)}
-        ]
-      }, p.deepseek ? {thinking: {type: "disabled"}} : {}))
-    });
+    let r = await post(true);
+    if (p.kind === "gemini" && r.status === 400) r = await post(false);
     if (!r.ok) return {text: "", why: "upstream_" + r.status};
     const j = await r.json();
     const choice = j && j.choices && j.choices[0];
     const msg = choice && choice.message;
     const finish = choice && typeof choice.finish_reason === "string" ? "finish_reason=" + scrub(choice.finish_reason, key) : "";
-    if (msg && typeof msg.content === "string" && msg.content.trim()) return {text: msg.content};
+    if (msg && typeof msg.content === "string" && msg.content.trim()) return {text: msg.content, by: p.by};
     const reasoning = msg && typeof msg.reasoning_content === "string" && msg.reasoning_content.trim();
     return {text: "", why: reasoning ? "empty_reasoning_only" : "empty", detail: finish};
   } catch (e) {
@@ -254,7 +262,7 @@ async function handler(req, res) {
     if (!out.text) return send(res, 200, fallback(out.why, out.detail));
     const say = tidy(out.text);
     if (!acceptable(say, v.name)) return send(res, 200, fallback("rejected", scrub(say)));
-    return send(res, 200, {say});
+    return send(res, 200, {say, by: out.by || "model"});
   } catch (e) {
     return send(res, 200, fallback("error"));
   }

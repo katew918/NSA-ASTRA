@@ -265,7 +265,7 @@
   var speakOn = getPref(PREF_SPEAK, false);
   var hasSpeech = typeof window.speechSynthesis !== "undefined" && typeof window.SpeechSynthesisUtterance !== "undefined";
   var st = null, runId = 0, durMs = DURATION_MS;
-  var REPLY_URL = "/api/reply", REPLY_WAIT_MS = 9000, served = false, misses = 0;
+  var REPLY_URL = "/api/reply", REPLY_WAIT_MS = 9000, served = false, servedBy = "", misses = 0;
 
   function todayLog() { return A.L(); }
   function name() { return firstName(A.S && A.S.name); }
@@ -278,7 +278,7 @@
 
   function paint() {
     var note = $("#mhNote"), sp = $("#mhSpeak");
-    if (note) note.innerHTML = served ? "Private to you. Mini Astra's replies are written by DeepSeek from the question, the option you tapped, your earlier taps in this check-in, your first name and role, the mission day and the time of day. Anything you type yourself and your health readings are never sent, and ASTRA's server stores nothing." : "Private to you. Your answers stay on this device. <span class=\"simtag\">Demo</span>";
+    if (note) note.innerHTML = served ? "Private to you. Mini Astra's replies are written by " + servedBy + " from the question, the option you tapped, your earlier taps in this check-in, your first name and role, the mission day and the time of day. Anything you type yourself and your health readings are never sent, and ASTRA's server stores nothing." : "Private to you. Your answers stay on this device. <span class=\"simtag\">Demo</span>";
     if (sp) { sp.hidden = !hasSpeech; sp.setAttribute("aria-pressed", speakOn ? "true" : "false"); }
   }
 
@@ -334,7 +334,7 @@
     var ctrl = typeof AbortController !== "undefined" ? new AbortController() : null, over = false;
     var timer = setTimeout(function () { if (over) return; over = true; if (ctrl) ctrl.abort(); miss(); done(null); }, REPLY_WAIT_MS);
     function miss() { misses++; }
-    function end(text) { if (over) return; over = true; clearTimeout(timer); if (text) { misses = 0; if (!served) { served = true; paint(); } } else miss(); done(text); }
+    function end(text, by) { if (over) return; over = true; clearTimeout(timer); if (text) { misses = 0; var who = by === "Gemini" ? "Google Gemini" : by === "DeepSeek" ? "DeepSeek" : "an AI model"; if (!served || who !== servedBy) { served = true; servedBy = who; paint(); } } else miss(); done(text); }
     var day = null, ph = "", chip = "", role = "";
     try { day = Math.round(Number(A.day())); } catch (e) {}
     try { ph = String(A.phase() || ""); } catch (e) {}
@@ -344,7 +344,7 @@
     try {
       fetch(REPLY_URL, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body), cache: "no-store", credentials: "same-origin", signal: ctrl ? ctrl.signal : undefined})
         .then(function (r) { return r.ok ? r.json() : null; })
-        .then(function (j) { end(j && typeof j.say === "string" && j.say.trim() ? short(j.say.trim(), 160) : null); }, function () { end(null); });
+        .then(function (j) { end(j && typeof j.say === "string" && j.say.trim() ? short(j.say.trim(), 160) : null, j && j.by); }, function () { end(null); });
     } catch (e) { end(null); }
   }
   function onChip(idx) {

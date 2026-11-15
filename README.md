@@ -20,8 +20,8 @@ ASTRA does not stop at basic vital signs. It also follows the harder conditions 
 | `astra.css` | The visual design layer |
 | `datacard.js` | The Data box: tabs, graphs, time range and the table of numbers |
 | `feeds.js` | Live fetches: NASA ISS Live, NASA DONKI, NOAA SWPC GOES, station position |
-| `checkin.js` | Mini Astra - Companion, the ASTRA check-in: a companion conversation of about five minutes, drawn at random from a bank of 120 questions, with a one-line reply after each answer (written by DeepSeek, or scripted replies matched to the answer) and a next-steps screen |
-| `api/reply.js` | The small server function that asks DeepSeek for Mini Astra's reply line, with the scripted replies as fallback |
+| `checkin.js` | Mini Astra - Companion, the ASTRA check-in: a companion conversation of about five minutes, drawn at random from a bank of 120 questions, with a one-line reply after each answer (written by an AI model when a key is set — Google Gemini first, then DeepSeek — or scripted replies matched to the answer) and a next-steps screen |
+| `api/reply.js` | The small server function that asks Google Gemini (when `GEMINI_API_KEY` is set, otherwise DeepSeek via `DEEPSEEK_API_KEY`) for Mini Astra's reply line, with the scripted replies as fallback |
 | `body3d.js` | The body figure: a front and back outline drawn in SVG, with a marker and an anatomical label for every finding |
 | `today.js` | The Today to-do list and the Mini Astra - Companion card. The schedule is fixed until the person has an amber or red health flag; then a task can be delayed or handed over within team-set limits, never to a crewmate who is unwell |
 | `chart.js` | The shared chart module |
@@ -32,17 +32,17 @@ There is no build step. Vercel serves the files as they are, and every push to `
 
 ## How it stores data
 
-Everything stays in the browser on that device. There is no sign-in. The one exception is Mini Astra (below): for each tapped answer, the question, the option, the crew member's first name and role, the mission day and the earlier taps of the same check-in are sent to DeepSeek to write a reply. The four crew are named after Apollo astronauts and their profiles and health data are simulated; every day of sleep, mood and resting heart rate comes from real PMData rows.
+Everything stays in the browser on that device. There is no sign-in. The one exception is Mini Astra (below): for each tapped answer, the question, the option, the crew member's first name and role, the mission day and the earlier taps of the same check-in are sent to the AI model (Google Gemini or DeepSeek) to write a reply. With no key set, nothing is sent and the scripted replies are used. The four crew are named after Apollo astronauts and their profiles and health data are simulated; every day of sleep, mood and resting heart rate comes from real PMData rows.
 
-## Mini Astra - Companion (DeepSeek)
+## Mini Astra - Companion (Google Gemini)
 
-The mind and mood check-in is called Mini Astra - Companion. After each tapped answer it shows one short, warm line written by DeepSeek's `deepseek-flash` model, with thinking mode switched off so replies come back quickly.
+The mind and mood check-in is called Mini Astra - Companion. After each tapped answer it shows one short, warm line written by Google Gemini (`gemini-3.5-flash-lite`, minimal thinking) when `GEMINI_API_KEY` is set, otherwise by DeepSeek (`deepseek-flash`) when `DEEPSEEK_API_KEY` is set. The privacy note names the provider that actually replied.
 
-- The browser calls `/api/reply` on our own site. That function holds the key and calls DeepSeek, so the key never reaches the browser.
+- The browser calls `/api/reply` on our own site. That function holds the key and calls the provider, so the key never reaches the browser.
 - Only the question, the option tapped, the answer band (low, middle or high), the previous two questions and taps of the same check-in, the first name and role, the mission phase and day, and the time of day are sent, so the line can be written for this person and this answer. Health readings are never sent. Free text the crew member types is never sent; it is only checked on the device for crisis words.
-- Every reply is checked before it is shown (one sentence, no questions, no numbers, no medical words). If DeepSeek is slow, fails, or no key is set, Mini Astra uses its built-in scripted replies instead.
+- Every reply is checked before it is shown (one sentence, no questions, no numbers, no medical words). If the provider is slow, fails, or no key is set, Mini Astra uses its built-in scripted replies instead.
 
-**Setting the key:** in Vercel, open the `nsa-astra` project, then Settings → Environment Variables, and add `DEEPSEEK_API_KEY` for Production and Preview. Redeploy for it to take effect. Never put the key in a file in this repository.
+**Setting the key:** in Vercel, open the `nsa-astra` project, then Settings → Environment Variables, and add `GEMINI_API_KEY` for Production and Preview (optional: `GEMINI_MODEL`, `GEMINI_BASE_URL`; `DEEPSEEK_API_KEY` is used only when no Gemini key is set). Redeploy for it to take effect. Never put the key in a file in this repository.
 
 ## How to try it
 
@@ -85,4 +85,4 @@ None of the thresholds have been validated in astronauts.
 
 ## Use of AI
 
-AI tools (Claude) were used to help write and organise code, set up the database, hosting and this README, and to review the project. The team chose the concept and the problems it covers. While the app runs, DeepSeek writes Mini Astra's one-line check-in replies.
+AI tools (Claude) were used to help write and organise code, set up the database, hosting and this README, and to review the project. The team chose the concept and the problems it covers. While the app runs, an AI model (Google Gemini or DeepSeek, whichever key is set) writes Mini Astra's one-line check-in replies; without a key the replies are scripted.

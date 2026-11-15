@@ -1177,3 +1177,20 @@ rect.ch-cursor{fill:var(--navy);stroke:none;opacity:.06}
 .task.done .tk-new,.task.moved .tk-new{background:var(--soft);color:var(--muted)}
 .b3-mk{width:26px;height:26px;margin:-13px 0 0 -13px}
 .links #tourBtn,.links label:has(#dReply){display:none!important}
+.sc-cmp{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0 10px}
+.sc-pane{position:relative;border-radius:16px;overflow:hidden;background:#1B273D;box-shadow:0 10px 26px rgba(27,39,61,.16)}
+.sc-cap{position:absolute;left:10px;top:10px;z-index:1;padding:3px 10px;border-radius:999px;background:rgba(255,255,255,.16);color:#fff;font-size:11.5px;font-weight:600;letter-spacing:.02em}
+.sc-img{display:block;width:100%;height:auto}
+.sc-sweep{fill:#6FA9CF;stroke:#6FA9CF;stroke-width:2;opacity:0}
+.sc-cmp.busy .sc-sweep{opacity:.8;animation:scSweep 1.4s cubic-bezier(.4,0,.2,1) 1 both}
+@keyframes scSweep{from{transform:translateX(0)}to{transform:translateX(220px)}}
+.sc-mark{fill:none;stroke:var(--amber);stroke-width:2.5;opacity:0;transition:opacity .25s}
+.sc-mark.on{opacity:1}
+.sc-cmp:has(.sc-res.urgent) .sc-mark,.sc-cmp:has(~ .sc-res.urgent) .sc-mark{stroke:var(--red)}
+.sc-res{margin:0 0 6px;padding:10px 14px;border-radius:12px;background:var(--soft);color:var(--ink);font-size:14px;font-weight:500;line-height:1.4}
+.sc-res:empty{display:none}
+.sc-res.ok{background:var(--ok-soft);color:var(--ok)}
+.sc-res.watch{background:var(--watch-soft);color:var(--watch)}
+.sc-res.urgent{background:var(--urgent-soft);color:var(--urgent)}
+.sc-note{margin:0 0 10px;font-size:12.5px;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){.sc-cmp.busy .sc-sweep{animation:none;opacity:0}}
