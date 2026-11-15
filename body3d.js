@@ -4,11 +4,11 @@ const LABEL = {head: "Head", eyes: "Eyes", neck: "Neck", heart: "Heart", lungs: 
 const WORDS = {ok: "OK", watch: "Amber, worth a look", urgent: "Red, needs attention"};
 const RANK = {ok: 0, watch: 1, urgent: 2};
 const TILT = 18 * Math.PI / 180;
-const CENTER = 0.88;
+const CENTER = 3.6;
 let T = null, box = null, canvas = null, layer = null, renderer = null, scene = null, camera = null, pivot = null, fig = null;
 let meshes = {}, anchors = {}, sex = "", areas = [], levels = {}, isNew = {}, btns = {}, mounted = null;
-const view = {yaw: -0.25, tilt: 0.05, vy: 0}, anim = {from: null, to: null, t0: 0, dur: 700}, drag = {on: false, id: 0, x: 0, y: 0, lx: 0, lt: 0, moved: 0};
-let raf = 0, inertia = false;
+const view = {yaw: -0.28, tilt: 0.05, vy: 0}, anim = {from: null, to: null, t0: 0, dur: 700}, drag = {on: false, id: 0, x: 0, y: 0, lx: 0, lt: 0, moved: 0};
+let raf = 0, inertia = false, pieces = {};
 
 const ease = t => 1 - Math.pow(1 - t, 3);
 const wrap = a => Math.atan2(Math.sin(a), Math.cos(a));
@@ -21,7 +21,7 @@ function mount(container) {
   mounted = (async () => {
     if (!container || !hasGL()) return false;
     try { T = await import(URL3); } catch (e) { return false; }
-    try { setup(container); return true; } catch (e) { teardown(); return false; }
+    try { setup(container); build("f"); sex = "f"; return true; } catch (e) { teardown(); return false; }
   })();
   return mounted;
 }
@@ -44,11 +44,14 @@ function setup(container) {
   box.appendChild(canvas);
   box.appendChild(layer);
   scene = new T.Scene();
-  camera = new T.PerspectiveCamera(28, 1, 0.1, 50);
-  scene.add(new T.HemisphereLight(0xffffff, 0xc8d8ec, 1.55));
-  const key = new T.DirectionalLight(0xffffff, 1.25);
-  key.position.set(-2.2, 3.4, 3.2);
+  camera = new T.PerspectiveCamera(26, 1, 0.1, 100);
+  scene.add(new T.HemisphereLight(0xffffff, 0xbfd3ea, 2.1));
+  const key = new T.DirectionalLight(0xffffff, 1.1);
+  key.position.set(-4, 7, 6);
   scene.add(key);
+  const fill = new T.DirectionalLight(0xffffff, 0.45);
+  fill.position.set(5, 2, 3);
+  scene.add(fill);
   pivot = new T.Group();
   pivot.position.y = CENTER;
   scene.add(pivot);
@@ -63,110 +66,86 @@ function resize() {
   if (!w || !h) return;
   renderer.setSize(w, h, false);
   camera.aspect = w / h;
-  const tv = Math.tan(14 * Math.PI / 180), dv = 1.0 / tv, dh = 0.4 / (tv * camera.aspect);
+  const tv = Math.tan(13 * Math.PI / 180), dv = 7.2 / 0.82 / 2 / tv, dh = 3.4 / 0.82 / 2 / (tv * camera.aspect);
   camera.position.set(0, CENTER + 0.04, Math.max(dv, dh));
   camera.lookAt(0, CENTER, 0);
   camera.updateProjectionMatrix();
   draw();
 }
 
-function bodyMat() { return new T.MeshStandardMaterial({color: 0xdce9f7, roughness: 0.6, metalness: 0, emissive: 0x000000, emissiveIntensity: 0}); }
-let lineMat = null;
-function outlineMat() {
-  if (lineMat) return lineMat;
-  lineMat = new T.MeshBasicMaterial({color: 0x4e86be, side: T.BackSide});
-  lineMat.onBeforeCompile = s => { s.vertexShader = s.vertexShader.replace("#include <begin_vertex>", "#include <begin_vertex>\ntransformed += normal * 0.0085;"); };
-  return lineMat;
-}
-
-function part(group, geo, name, pos, quat) {
-  const m = new T.Mesh(geo, bodyMat());
-  const o = new T.Mesh(geo, outlineMat());
-  [m, o].forEach(x => { if (pos) x.position.copy(pos); if (quat) x.quaternion.copy(quat); group.add(x); });
-  o.renderOrder = -1;
-  (meshes[name] = meshes[name] || []).push(m);
+const BASE = 0xdce9f7, TINT = {watch: 0xf3d27a, urgent: 0xf0a49b};
+function piece(name, geo, pos, rz) {
+  const m = new T.Mesh(geo, new T.MeshStandardMaterial({color: BASE, roughness: 0.7, metalness: 0}));
+  m.position.copy(pos);
+  if (rz) m.rotation.z = rz;
+  fig.add(m);
+  pieces[name] = m;
   return m;
 }
-const ell = (rx, ry, rz) => { const g = new T.SphereGeometry(1, 48, 32); g.scale(rx, ry, rz); return g; };
-const ball = r => new T.SphereGeometry(r, 36, 24);
 
-function limb(group, name, a, b, radii, seg) {
-  const dir = new T.Vector3().subVectors(b, a), len = dir.length(), n = 28, pts = [];
-  const curve = new T.CatmullRomCurve3(radii.map((r, i) => new T.Vector3(r, i / (radii.length - 1), 0)));
-  for (let i = 0; i <= n; i++) { const p = curve.getPoint(i / n); pts.push(new T.Vector2(Math.max(0.004, p.x), p.y * len)); }
-  const g = new T.LatheGeometry(pts, seg || 36);
-  const q = new T.Quaternion().setFromUnitVectors(new T.Vector3(0, 1, 0), dir.clone().normalize());
-  part(group, g, name, a, q);
+function torsoGeo() {
+  const top = SH.top, h = SH.th, bot = top - h, mid = (top + bot) / 2, w = SH.w, n = 2.35, pts = [];
+  for (let i = 0; i <= 96; i++) {
+    const a = -Math.PI / 2 + Math.PI * i / 96, c = Math.cos(a), sn = Math.sin(a);
+    const e = sn > 0 ? 3.2 : n, y = mid + h / 2 * Math.sign(sn) * Math.pow(Math.abs(sn), 2 / e);
+    const k = (y - bot) / h, ww = w * (0.86 + 0.14 * Math.pow(k, 0.7));
+    pts.push(new T.Vector2(Math.max(0.0001, ww * Math.pow(Math.max(0, c), 2 / e)), y - mid));
+  }
+  const g = new T.LatheGeometry(pts, 64);
+  g.scale(1, 1, SH.zs);
+  g.computeVertexNormals();
+  return g;
 }
 
-function build(s) {
-  if (fig) { pivot.remove(fig); fig.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material && o.material !== lineMat) o.material.dispose(); }); }
-  meshes = {}; anchors = {};
+const SH = {head: 0.55, hy: 6.6, top: 5.85, th: 2.6, w: 0.75, zs: 0.58, ar: 0.19, al: 2.3, atop: 5.62, agap: 0.13, tilt: 5 * Math.PI / 180, lr: 0.27, lgap: 0.12, ltop: 3.17};
+function build() {
+  if (fig) { pivot.remove(fig); fig.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); }); }
+  pieces = {}; anchors = {};
   fig = new T.Group();
   fig.position.y = -CENTER;
   pivot.add(fig);
-  const f = s === "f", V = (x, y, z) => new T.Vector3(x, y, z || 0);
-  const prof = f
-    ? [[0.045, 1.53], [0.1, 1.505], [0.15, 1.47], [0.168, 1.42], [0.165, 1.36], [0.162, 1.3], [0.148, 1.24], [0.125, 1.15], [0.12, 1.1], [0.14, 1.02], [0.172, 0.95], [0.178, 0.9], [0.165, 0.86], [0.11, 0.83], [0.02, 0.815]]
-    : [[0.05, 1.535], [0.12, 1.51], [0.18, 1.475], [0.2, 1.42], [0.195, 1.36], [0.185, 1.3], [0.172, 1.23], [0.158, 1.15], [0.152, 1.08], [0.155, 1.0], [0.16, 0.94], [0.158, 0.89], [0.145, 0.855], [0.09, 0.83], [0.02, 0.82]];
-  const tc = new T.CatmullRomCurve3(prof.map(([r, y]) => new T.Vector3(r, y, 0)), false, "centripetal");
-  const tp = tc.getPoints(64).reverse().map(p => new T.Vector2(Math.max(0.002, p.x), p.y));
-  const torso = new T.LatheGeometry(tp, 64);
-  torso.scale(1, 1, 0.6);
-  part(fig, torso, "torso");
-  const hip = f ? 0.17 : 0.152;
-  part(fig, ell(hip * 0.96, 0.105, hip * 0.66), "pelvis", V(0, 0.9));
-  part(fig, ell(0.085, 0.118, 0.1), "head", V(0, 1.632));
-  part(fig, ell(0.018, 0.026, 0.02), "head", V(0, 1.618, 0.098));
-  part(fig, ell(0.012, 0.024, 0.016), "head", V(0.084, 1.625, -0.004));
-  part(fig, ell(0.012, 0.024, 0.016), "head", V(-0.084, 1.625, -0.004));
-  limb(fig, "neck", V(0, 1.44), V(0, 1.585), [0.052, 0.047, 0.045, 0.046], 40);
-  const sx = f ? 0.158 : 0.19, sy = f ? 1.425 : 1.43, ang = 11 * Math.PI / 180, ua = f ? 0.29 : 0.3, fa = f ? 0.245 : 0.26;
-  [1, -1].forEach(side => {
-    const sh = V(side * sx, sy), dv = V(side * Math.sin(ang), -Math.cos(ang)), el = sh.clone().addScaledVector(dv, ua), dv2 = V(side * Math.sin(ang * 0.7), -Math.cos(ang * 0.7), 0.06).normalize(), wr = el.clone().addScaledVector(dv2, fa);
-    const r0 = f ? 0.044 : 0.054;
-    part(fig, ball(r0), "arms", sh);
-    limb(fig, "arms", sh, el, [r0, r0 * 0.93, r0 * 0.86, r0 * 0.74, r0 * 0.7]);
-    part(fig, ball(r0 * 0.7), "arms", el);
-    limb(fig, "arms", el, wr, [r0 * 0.7, r0 * 0.74, r0 * 0.64, r0 * 0.5, r0 * 0.46]);
-    const hq = new T.Quaternion().setFromUnitVectors(new T.Vector3(0, 1, 0), dv2.clone().negate());
-    part(fig, ell(f ? 0.019 : 0.022, f ? 0.068 : 0.075, f ? 0.038 : 0.043), "arms", wr.clone().addScaledVector(dv2, 0.06), hq);
-    const lx = side * (f ? 0.092 : 0.088), hp = V(lx, 0.9), kn = V(side * 0.075, 0.485), an = V(side * 0.07, 0.085);
-    const t0 = f ? 0.098 : 0.09;
-    part(fig, ball(t0 * 0.92), "legs", hp);
-    limb(fig, "legs", hp, kn, [t0, t0 * 0.97, t0 * 0.86, t0 * 0.7, t0 * 0.58]);
-    part(fig, ball(t0 * 0.58), "legs", kn);
-    limb(fig, "legs", kn, an, [t0 * 0.56, t0 * 0.64, t0 * 0.6, t0 * 0.44, t0 * 0.34, t0 * 0.33]);
-    part(fig, ball(t0 * 0.34), "legs", an);
-    part(fig, ell(f ? 0.036 : 0.04, 0.034, f ? 0.1 : 0.11), "legs", V(side * 0.07, 0.035, 0.045));
+  const V = (x, y, z) => new T.Vector3(x, y, z || 0);
+  piece("head", new T.SphereGeometry(SH.head, 64, 48), V(0, SH.hy));
+  piece("torso", torsoGeo(), V(0, SH.top - SH.th / 2));
+  const ax = SH.w + SH.agap + SH.ar, alen = SH.al - 2 * SH.ar;
+  [1, -1].forEach(sd => {
+    const dir = V(sd * Math.sin(SH.tilt), -Math.cos(SH.tilt)), c = V(sd * ax, SH.atop - SH.ar).addScaledVector(dir, alen / 2);
+    piece(sd > 0 ? "armL" : "armR", new T.CapsuleGeometry(SH.ar, alen, 20, 56), c, sd * SH.tilt);
+    const llen = SH.ltop - 2 * SH.lr;
+    piece(sd > 0 ? "legL" : "legR", new T.CapsuleGeometry(SH.lr, llen, 20, 56), V(sd * (SH.lgap / 2 + SH.lr), SH.ltop / 2));
   });
-  const ray = new T.Raycaster(), hit = (name, o, d) => { ray.set(o, d.clone().normalize()); const h = ray.intersectObjects(meshes[name], false)[0]; return h ? h.point.clone() : o.clone(); };
   pivot.rotation.set(0, 0, 0);
   pivot.updateMatrixWorld(true);
-  const toLocal = p => fig.worldToLocal(p);
-  const A = (key, name, o, d, n) => { anchors[key] = {p: toLocal(hit(name, V(o[0], o[1], o[2]), V(...d))), n: V(...n).normalize()}; };
-  A("head", "head", [0, 2.4, 0.42], [0, -1, -0.55], [0, 0.85, 0.5]);
-  A("eyes", "head", [0.034, 1.64, 1], [0, 0, -1], [0.15, 0.05, 1]);
-  A("neck", "neck", [1, 1.5, 0.008], [-1, 0, 0], [1, 0, 0.15]);
-  A("heart", "torso", [0.065, 1.31, 1], [0, 0, -1], [0.25, 0.1, 1]);
-  A("lungs", "torso", [-0.075, 1.34, -1], [0, 0, 1], [-0.2, 0.1, -1]);
-  A("abdomen", "torso", [0, 1.06, 1], [0, 0, -1], [0, 0, 1]);
-  A("legs", "legs", [0.073, 0.36, -1], [0, 0, 1], [0.1, 0, -1]);
+  const ray = new T.Raycaster();
+  const hit = (name, o, d) => { ray.set(o, d.clone().normalize()); const h = ray.intersectObject(pieces[name], false)[0]; return h ? fig.worldToLocal(h.point.clone()) : fig.worldToLocal(o.clone()); };
+  const sph = d => V(0, SH.hy).addScaledVector(d.clone().normalize(), SH.head);
+  anchors.head = {p: sph(V(0, 0.78, 0.62)), n: V(0, 0.78, 0.62).normalize()};
+  anchors.eyes = {p: sph(V(0, 0, 1)), n: V(0, 0.05, 1).normalize()};
+  const gy = (SH.hy - SH.head + SH.top) / 2;
+  anchors.neck = {p: V(0.25, gy, 0.06), n: V(1, 0, 0.55).normalize()};
+  const W = V;
+  anchors.heart = {p: hit("torso", W(0.3, 5.12, 3), V(0, 0, -1)), n: V(0.25, 0.1, 1).normalize()};
+  anchors.lungs = {p: hit("torso", W(-0.32, 5.12, -3), V(0, 0, 1)), n: V(-0.25, 0.1, -1).normalize()};
+  anchors.abdomen = {p: hit("torso", W(0, 3.85, 3), V(0, 0, -1)), n: V(0, 0, 1)};
+  const lx = SH.lgap / 2 + SH.lr;
+  anchors.legs = {p: hit("legL", W(lx, 0.95, -3), V(0, 0, 1)), n: V(0.1, 0, -1).normalize()};
   tint();
 }
 
-const PART_OF = {head: ["head"], eyes: ["head"], neck: ["neck"], heart: ["torso"], lungs: ["torso"], abdomen: ["pelvis"], legs: ["legs"]};
+const PART_OF = {head: "head", eyes: "head", heart: "torso", lungs: "torso", abdomen: "torso", legs: "legL"};
 function tint() {
   const worst = {};
-  areas.forEach(a => PART_OF[a.key] && PART_OF[a.key].forEach(p => { if (RANK[a.level] > (RANK[worst[p]] || 0)) worst[p] = a.level; }));
-  Object.keys(meshes).forEach(p => meshes[p].forEach(m => { const l = worst[p]; m.material.emissive.set(l === "urgent" ? 0xd92d20 : l === "watch" ? 0xe0a100 : 0x000000); m.material.emissiveIntensity = l === "urgent" ? 0.26 : l === "watch" ? 0.2 : 0; }));
+  areas.forEach(a => { const p = PART_OF[a.key]; if (p && RANK[a.level] > (RANK[worst[p]] || 0)) worst[p] = a.level; });
+  const base = new T.Color(BASE);
+  Object.keys(pieces).forEach(p => { const l = worst[p]; pieces[p].material.color.copy(base); if (l) pieces[p].material.color.lerp(new T.Color(TINT[l]), 0.45); });
 }
 
 function update(data) {
   if (!renderer || !data) return;
   const s = data.sex === "m" ? "m" : "f";
   areas = (data.areas || []).filter(a => LABEL[a.key]).map(a => ({key: a.key, label: a.label || LABEL[a.key], level: RANK[a.level] !== undefined ? a.level : "ok", fresh: !!a.fresh}));
-  if (s !== sex) { sex = s; build(s); } else tint();
+  sex = s;
+  tint();
   const turn = [];
   areas.forEach(a => {
     const prev = levels[a.key];
@@ -199,7 +178,7 @@ function focus(key) {
   anim.from = {yaw: view.yaw, tilt: view.tilt}; anim.to = {yaw: tgt, tilt: clampT(tl)}; anim.t0 = performance.now(); anim.dur = 700;
   kick();
 }
-function reset() { if (!renderer) return; inertia = false; view.vy = 0; anim.from = {yaw: view.yaw, tilt: view.tilt}; anim.to = {yaw: Math.round(view.yaw / (2 * Math.PI)) * 2 * Math.PI - 0.25, tilt: 0.05}; anim.t0 = performance.now(); anim.dur = 600; kick(); }
+function reset() { if (!renderer) return; inertia = false; view.vy = 0; anim.from = {yaw: view.yaw, tilt: view.tilt}; anim.to = {yaw: Math.round(view.yaw / (2 * Math.PI)) * 2 * Math.PI - 0.28, tilt: 0.05}; anim.t0 = performance.now(); anim.dur = 600; kick(); }
 
 function kick() { if (!raf) raf = requestAnimationFrame(frame); }
 function frame(now) {

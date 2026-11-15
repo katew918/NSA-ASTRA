@@ -969,9 +969,10 @@ const STEP = {
       html: `<div class="grid2"><div><span class="lab">Heart rate</span><input type="number" id="hr" value="${CONN.hr ? v.hr : dv[0]}"></div><div><span class="lab">Temperature °C</span><input type="number" id="tp" step=".1" value="${dv[3]}"></div><div><span class="lab">Blood pressure (top)</span><input type="number" id="bp" value="${dv[1]}"></div><div><span class="lab">Blood pressure (bottom)</span><input type="number" id="bpd" value="${dv[2]}"></div><div><span class="lab">Blood sugar mg/dL</span><input type="number" id="gl" value="${dv[4]}"></div></div>`,
       save() { Object.assign(scratch, {hr: +$("#hr").value, sbp: +$("#bp").value, dbp: +$("#bpd").value, temp: +$("#tp").value, glu: +$("#gl").value}); },
       after() { L().daily = Object.assign({}, L().daily || {}, scratch, {entered: true}); CALV++; }}; },
-  rt: () => ({title: "Reflex game", sub: "Tap the box as soon as it turns blue. 10 taps (the real test runs 3 minutes).", needs: true, html: `<div class="pad" id="pad" tabindex="0">Tap to start</div><div class="box" id="rto" hidden></div>`,
-    init() { const pad = $("#pad"); let st = "idle", t0 = 0, ts = [], tm; const nx = () => { st = "wait"; pad.classList.remove("go2"); pad.textContent = "Wait for it…"; tm = setTimeout(() => { st = "go"; pad.classList.add("go2"); pad.textContent = "Tap!"; t0 = performance.now(); }, 800 + Math.random() * 1700); };
-      const hit = () => { if (st === "idle") { ts = []; nx(); } else if (st === "wait") { clearTimeout(tm); pad.textContent = "A bit early. Wait for blue"; setTimeout(nx, 700); }
+  rt: () => ({title: "Reflex game", sub: "Tap the box as soon as it turns blue. 10 taps.", needs: true, html: `<div class="pad" id="pad" tabindex="0">Tap to start</div><div class="box" id="rto" hidden></div>`,
+    init() { const pad = $("#pad"); let st = "idle", t0 = 0, ts = [], tm, pv = 0; this.stop = () => { clearTimeout(tm); st = "done"; };
+      const nx = () => { st = "wait"; pad.classList.remove("go2"); pad.textContent = "Wait for it…"; let d; do d = 1200 + Math.random() * 3600; while (Math.abs(d - pv) < 400); pv = d; tm = setTimeout(() => { st = "go"; pad.classList.add("go2"); pad.textContent = "Tap!"; t0 = performance.now(); }, d); };
+      const hit = () => { if (st === "idle") { ts = []; nx(); } else if (st === "wait") { clearTimeout(tm); st = "early"; pad.textContent = "A bit early. Wait for blue"; tm = setTimeout(nx, 700); }
         else if (st === "go") { ts.push(performance.now() - t0); if (ts.length >= 10) { st = "done"; pad.classList.remove("go2"); const m = Math.round(ts.sort((a, b) => a - b)[5]); L().rt = m;
           pad.textContent = "Done"; $("#rto").hidden = false; $("#rto").innerHTML = `Your speed: <b>${m} ms</b>${phase() === "training" ? " · added to your normal" : ` · your normal ${f(base().rt)} ms`}`; $("#goBtn").disabled = false; } else nx(); } };
       pad.onclick = hit; pad.onkeydown = e => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); hit(); } }; }}),
@@ -1015,8 +1016,8 @@ const STEP = {
 };
 function runStep(id) { const [n, a, b] = id.split(":"); return ["si", "sp", "sr", "ss"].includes(n) ? STEP[n](a, b !== undefined ? +b : undefined) : STEP[id](); }
 function openFlow(list, item) { flow = expand(list); k = 0; scratch = {}; running = item || null; $("#scrim").classList.add("on"); $("#sheet").classList.add("on"); show(); }
-function closeFlow() { $("#scrim").classList.remove("on"); $("#sheet").classList.remove("on"); render(); }
-function show() { cur = runStep(flow[k]);
+function closeFlow() { cur && cur.stop && cur.stop(); $("#scrim").classList.remove("on"); $("#sheet").classList.remove("on"); render(); }
+function show() { cur && cur.stop && cur.stop(); cur = runStep(flow[k]);
   $("#prog").style.visibility = flow.length > 1 ? "visible" : "hidden"; $("#prog i").style.width = `${(k + 1) / flow.length * 100}%`;
   $("#stepBody").innerHTML = `${cur.ill ? `<div class="illu">${cur.ill}</div>` : ""}<p class="st">${cur.title}</p>${cur.sub ? `<p class="ss">${cur.sub}</p>` : ""}${cur.html || ""}`;
   $("#goBtn").hidden = false; $("#goBtn").disabled = !!cur.needs; $("#goBtn").textContent = cur.go || (k === flow.length - 1 ? "Done" : "Next");

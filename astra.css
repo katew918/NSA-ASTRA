@@ -1016,3 +1016,16 @@ rect.ch-cursor{fill:var(--navy);stroke:none;opacity:.06}
 @media (max-width:640px){#holoFig.is3d{height:290px}.hmid:has(#holoFig.is3d){grid-template-columns:minmax(0,.9fr) minmax(130px,1.4fr) minmax(0,.9fr) 18px}}
 #holoFig.is3d{height:380px}
 @media (max-width:640px){#holoFig.is3d{height:300px}}
+.mh-next{display:grid;gap:14px}
+.mh-next-h{font-size:17px;font-weight:500;letter-spacing:-.01em}
+.mh-steps{display:grid;gap:2px}
+.mh-step{display:grid;grid-template-columns:28px minmax(0,1fr) auto;align-items:center;gap:12px;padding:12px 2px;border-top:1px solid var(--line)}
+.mh-step:first-child{border-top:0}
+.mh-step-n{width:26px;height:26px;border-radius:50%;background:var(--soft);color:var(--muted);display:grid;place-items:center;font-size:12px;font-weight:500}
+.mh-step div{display:flex;flex-direction:column;min-width:0;line-height:1.35}
+.mh-step div b{font-size:14.5px;font-weight:500}
+.mh-step div span{font-size:12.5px;color:var(--muted)}
+.mh-step.on .mh-step-n{background:var(--watch-soft);color:var(--watch)}
+.mh-next>.btn{justify-self:stretch}
+@media (max-width:640px){.mh-step{grid-template-columns:28px minmax(0,1fr)}.mh-step .btn,.mh-step .hbtn{grid-column:2;justify-self:start}}
+.hgrid>div:first-child .nextcard{flex:0 0 auto!important;margin-top:auto!important;min-height:0!important;height:auto!important;display:block!important}
