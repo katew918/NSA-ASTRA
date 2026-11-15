@@ -1166,3 +1166,12 @@ rect.ch-cursor{fill:var(--navy);stroke:none;opacity:.06}
 .resp.watch .resp-step:first-child{background:var(--watch-soft);color:var(--watch)}
 .nudge{box-shadow:0 0 0 4px var(--sky-soft);transition:box-shadow .3s}
 @media (max-width:640px){.resp-steps{flex-direction:column;align-items:flex-start}}
+.b3-lab{display:none!important}
+.b3-mk.pin i,.b3-mk.pin.watch i,.b3-mk.pin.urgent i{width:12px;height:12px}
+.b3-mk.pin.watch i{background:var(--amber);box-shadow:0 0 0 2.5px #fff,0 0 0 9px rgba(224,161,0,.34)}
+.b3-mk.pin.urgent i{background:var(--red);box-shadow:0 0 0 2.5px #fff,0 0 0 9px rgba(217,45,32,.36)}
+.b3-mk.pin:hover i,.b3-mk.pin:focus-visible i{transform:scale(1.2)}
+.tk-new{display:inline-flex;align-items:center;height:18px;margin-left:8px;padding:0 7px;border-radius:999px;background:var(--brand);color:#fff;font-size:10.5px;font-weight:600;letter-spacing:.02em;line-height:1;vertical-align:1.5px;text-decoration:none}
+.task.added{position:relative}
+.task.added::before{content:"";position:absolute;left:-10px;top:10px;bottom:10px;width:3px;border-radius:3px;background:var(--brand)}
+.task.done .tk-new,.task.moved .tk-new{background:var(--soft);color:var(--muted)}
