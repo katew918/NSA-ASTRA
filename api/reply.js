@@ -1,7 +1,12 @@
 const MAX_BYTES = 1536;
 const LIMIT = 40;
 const WINDOW_MS = 60000;
-const TIMEOUT_MS = 4000;
+const TIMEOUT_MS = 8000;
+// Mini Astra replies come from DeepSeek. The key is read from the DEEPSEEK_API_KEY
+// environment variable on Vercel and never reaches the browser.
+const DEEPSEEK_BASE = "https://api.deepseek.com";
+const DEEPSEEK_MODEL = "deepseek-flash";
+// Older setting, kept so an existing OpenRouter key still works if no DeepSeek key is set.
 const DEFAULT_BASE = "https://openrouter.ai/api/v1";
 const DEFAULT_MODEL = "qwen/qwen3-30b-a3b-instruct-2507";
 const BANDS = ["low", "mid", "high"];
@@ -96,7 +101,7 @@ function validate(b) {
 function systemPrompt(v) {
   const day = v.missionDay === null ? "an ongoing day" : String(v.missionDay);
   const who = v.name ? " Their first name is " + v.name + "." : "";
-  return "You are ASTRA, a private check-in companion for an astronaut on a long space mission. The crew member is on mission day " + day + "; it is " + v.partOfDay + " on board." + who + " They just answered one check-in question by tapping an option. Reply with ONE short, warm sentence (at most 14 words) that acknowledges their answer in a natural, human way, like a calm crewmate. Match the tone to the answer: gentle and steady if it was a hard answer, quietly glad if it was a good one, neutral if in between. Do not ask a question. Do not give advice, instructions or opinions about their health. Do not mention scores, moods, stress, measurements, diagnoses or what the question measures. Do not use their name more than once. Plain text only, no quotes, no emoji.";
+  return "You are Mini Astra, the private check-in companion inside ASTRA, talking with an astronaut on a long space mission. The crew member is on mission day " + day + "; it is " + v.partOfDay + " on board." + who + " They just answered one check-in question by tapping an option. Reply with ONE short, warm sentence (at most 14 words) that acknowledges their answer in a natural, human way, like a calm crewmate. Match the tone to the answer: gentle and steady if it was a hard answer, quietly glad if it was a good one, neutral if in between. Do not ask a question. Do not give advice, instructions or opinions about their health. Do not mention scores, moods, stress, measurements, diagnoses or what the question measures. Do not use their name more than once. Plain text only, no quotes, no emoji.";
 }
 
 function tidy(text) {
@@ -123,27 +128,35 @@ function acceptable(s) {
   return !DENY.some(function (w) { return low.includes(w); });
 }
 
+function provider() {
+  const ds = (process.env.DEEPSEEK_API_KEY || "").trim();
+  if (ds) return {deepseek: true, key: ds, base: (process.env.DEEPSEEK_BASE_URL || DEEPSEEK_BASE).replace(/\/+$/, ""), model: process.env.DEEPSEEK_MODEL || DEEPSEEK_MODEL};
+  const key = (process.env.LLM_API_KEY || "").trim();
+  if (key) return {deepseek: false, key, base: (process.env.LLM_BASE_URL || DEFAULT_BASE).replace(/\/+$/, ""), model: process.env.LLM_MODEL || DEFAULT_MODEL};
+  return null;
+}
+
 async function askModel(v) {
-  const key = process.env.LLM_API_KEY;
-  if (!key) return "";
-  const base = (process.env.LLM_BASE_URL || DEFAULT_BASE).replace(/\/+$/, "");
-  const model = process.env.LLM_MODEL || DEFAULT_MODEL;
+  const p = provider();
+  if (!p) return "";
+  const key = p.key, base = p.base, model = p.model;
   const ctrl = new AbortController();
   const timer = setTimeout(function () { ctrl.abort(); }, TIMEOUT_MS);
   try {
     const r = await fetch(base + "/chat/completions", {
       method: "POST",
       signal: ctrl.signal,
-      headers: {"Content-Type": "application/json", "Authorization": "Bearer " + key, "X-Title": "ASTRA"},
-      body: JSON.stringify({
+      headers: Object.assign({"Content-Type": "application/json", "Authorization": "Bearer " + key}, p.deepseek ? {} : {"X-Title": "ASTRA"}),
+      body: JSON.stringify(Object.assign({
         model,
         temperature: 0.8,
         max_tokens: 40,
+        stream: false,
         messages: [
           {role: "system", content: systemPrompt(v)},
           {role: "user", content: "Question: \"" + v.question + "\" Answer: \"" + v.answer + "\" (this was a " + v.band + " answer)."}
         ]
-      })
+      }, p.deepseek ? {thinking: {type: "disabled"}} : {}))
     });
     if (!r.ok) return "";
     const j = await r.json();

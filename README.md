@@ -20,9 +20,10 @@ ASTRA does not stop at basic vital signs. It also follows the harder conditions 
 | `astra.css` | The visual design layer |
 | `datacard.js` | The Data box: tabs, graphs, time range and the table of numbers |
 | `feeds.js` | Live fetches: NASA ISS Live, NASA DONKI, NOAA SWPC GOES, station position |
-| `checkin.js` | The mood check-in: five fixed questions in a scripted personal voice, with an optional read-aloud using the browser's built-in speech |
+| `checkin.js` | Mini Astra - Companion, the mind and mood check-in: short questions with tap answers and a one-line reply after each |
+| `api/reply.js` | The small server function that asks DeepSeek for Mini Astra's reply line |
 | `body3d.js` | The rotatable 3D body figure with a marker for every area (three.js, loaded on demand) |
-| `today.js` | The Today to-do list with wellbeing permissions (delay or hand over, within team-set limits) and the Mind card |
+| `today.js` | The Today to-do list with wellbeing permissions (delay or hand over, within team-set limits) and the Mini Astra - Companion card |
 | `chart.js` | The shared chart module |
 | `compare.js`, `compare.css` | The "How ASTRA works" strip and the "Compare crew" tab |
 | `data.js` | Demo and reference data loaded by the page |
@@ -31,7 +32,17 @@ There is no build step. Vercel serves the files as they are, and every push to `
 
 ## How it stores data
 
-Everything stays in the browser on that device. There is no sign-in and nothing is sent to a server. The four crew are named after Apollo astronauts and their profiles and health data are simulated; every day of sleep, mood and resting heart rate comes from real PMData rows.
+Everything stays in the browser on that device. There is no sign-in. The one exception is Mini Astra (below): for each tapped answer, the question, the option and the crew member's first name are sent to DeepSeek to write a reply. The four crew are named after Apollo astronauts and their profiles and health data are simulated; every day of sleep, mood and resting heart rate comes from real PMData rows.
+
+## Mini Astra - Companion (DeepSeek)
+
+The mind and mood check-in is called Mini Astra - Companion. After each tapped answer it shows one short, warm line written by DeepSeek's `deepseek-flash` model, with thinking mode switched off so replies come back quickly.
+
+- The browser calls `/api/reply` on our own site. That function holds the key and calls DeepSeek, so the key never reaches the browser.
+- Only the question, the option tapped, the time of day, the mission day and the first name are sent. Free text the crew member types is never sent; it is only checked on the device for crisis words.
+- Every reply is checked before it is shown (one sentence, no questions, no numbers, no medical words). If DeepSeek is slow, fails, or no key is set, Mini Astra uses its built-in scripted replies instead.
+
+**Setting the key:** in Vercel, open the `nsa-astra` project, then Settings → Environment Variables, and add `DEEPSEEK_API_KEY` for Production and Preview. Redeploy for it to take effect. Never put the key in a file in this repository.
 
 ## How to try it
 
@@ -74,4 +85,4 @@ None of the thresholds have been validated in astronauts.
 
 ## Use of AI
 
-AI tools (Claude) were used to help write and organise code, set up the database, hosting and this README, and to review the project. The team chose the concept and the problems it covers.
+AI tools (Claude) were used to help write and organise code, set up the database, hosting and this README, and to review the project. The team chose the concept and the problems it covers. While the app runs, DeepSeek writes Mini Astra's one-line check-in replies.

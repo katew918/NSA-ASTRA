@@ -270,7 +270,7 @@
   var speakOn = getPref(PREF_SPEAK, false);
   var hasSpeech = typeof window.speechSynthesis !== "undefined" && typeof window.SpeechSynthesisUtterance !== "undefined";
   var st = null, runId = 0, durMs = DURATION_MS;
-  var REPLY_URL = "/api/reply", REPLY_WAIT_MS = 4500, served = false, misses = 2;
+  var REPLY_URL = "/api/reply", REPLY_WAIT_MS = 9000, served = false, misses = 0;
 
   function todayLog() { return A.L(); }
   function name() { return firstName(A.S && A.S.name); }
@@ -283,7 +283,7 @@
 
   function paint() {
     var note = $("#mhNote"), sp = $("#mhSpeak");
-    if (note) note.innerHTML = served ? "Private to you. Replies are written by a small open-source model on ASTRA's server from the question and the option you tapped; nothing is stored." : "Private to you. Your answers stay on this device. <span class=\"simtag\">Demo</span>";
+    if (note) note.innerHTML = served ? "Private to you. Mini Astra's replies are written by DeepSeek from the question, the option you tapped and your first name. Anything you type yourself is never sent, and ASTRA's server stores nothing." : "Private to you. Your answers stay on this device. <span class=\"simtag\">Demo</span>";
     if (sp) { sp.hidden = !hasSpeech; sp.setAttribute("aria-pressed", speakOn ? "true" : "false"); }
   }
 
@@ -417,7 +417,7 @@
   function supportNow() { try { A.realFill(); } catch (e) {} return supportUnlocked(A.L().daily, shortSleepNow()); }
   function nextHTML(on) {
     return "<div class=\"mh-next\" id=\"mhNext\"><b class=\"mh-next-h\">Saved. Only you see this.</b><div class=\"mh-steps\">" +
-      "<div class=\"mh-step\"><span class=\"mh-step-n\">1</span><div><b>Your Mind card is updated</b><span>Today's check-in is on your screen only.</span></div></div>" +
+      "<div class=\"mh-step\"><span class=\"mh-step-n\">1</span><div><b>Your Mini Astra card is updated</b><span>Today's check-in is on your screen only.</span></div></div>" +
       "<div class=\"mh-step" + (on ? " on" : "") + "\"><span class=\"mh-step-n\">2</span><div><b>Support options</b><span>" + (on ? "Available today: delay a task or hand one over." : "Not needed today.") + "</span></div>" + (on ? "<button class=\"btn sm\" type=\"button\" data-next=\"support\">Open Today</button>" : "") + "</div>" +
       "<div class=\"mh-step\"><span class=\"mh-step-n\">3</span><div><b>Talk to your flight surgeon</b><span>Private medical conference, or a message now.</span></div><button class=\"hbtn\" type=\"button\" data-next=\"surgeon\">Message</button></div>" +
       "<div class=\"mh-step\"><span class=\"mh-step-n\">4</span><div><b>Next check-in</b><span>Tomorrow.</span></div></div>" +
@@ -448,7 +448,7 @@
   }
 
   A.STEP.mind = function () {
-    return {title: "ASTRA check-in", go: "Done",
+    return {title: "Mini Astra - Companion", go: "Done",
       html: "<div class=\"mh\"><div class=\"mh-prog\" id=\"mhProg\"><i></i></div><span class=\"mh-count\" id=\"mhCount\"></span><div class=\"mh-log\" id=\"mhLog\"></div><div class=\"mh-chips\" id=\"mhChips\"></div><form class=\"mh-form\" id=\"mhForm\"><input id=\"mhInput\" maxlength=\"300\" placeholder=\"Or say it in your own words\" autocomplete=\"off\"><button class=\"btn sm\" type=\"submit\">Send</button></form>" +
         "<button class=\"hbtn\" id=\"mhFinish\" type=\"button\" hidden>Finish now</button>" +
         "<div class=\"mh-ai\"><button class=\"hbtn\" id=\"mhSpeak\" type=\"button\" aria-pressed=\"false\">Read aloud</button></div>" +

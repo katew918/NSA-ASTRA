@@ -265,7 +265,7 @@
     }).join("");
     var trend = [];
     for (var x = d - 13; x <= d; x++) { var r = A.realFill(x) || A.L(x).daily; trend.push(r && r.mood != null ? +r.mood : null); }
-    var html = "<div class=\"chead\"><div class=\"th\"><h2>Mind</h2><span class=\"mc-priv\">Only you see this</span></div><button class=\"btn sm\" id=\"mhBtn\" type=\"button\">" + (ck ? "Check in again" : "Check in") + "</button></div>" +
+    var html = "<div class=\"chead\"><div class=\"th\"><h2>Mini Astra - Companion</h2><span class=\"mc-priv\">Only you see this</span></div><button class=\"btn sm\" id=\"mhBtn\" type=\"button\">" + (ck ? "Check in again" : "Check in") + "</button></div>" +
       "<div class=\"mind-scores\" id=\"mindScores\">" + items + "</div>" +
       "<div class=\"mind-trend\"><span class=\"ms-k\">Mood, last 14 days</span><div id=\"mindTrend\"></div></div>" +
       "<div class=\"support" + (g.unlocked ? " on" : "") + "\" id=\"supportBox\"><b>Support options</b><span id=\"supportSt\">" + (g.unlocked ? "Available today · " + (g.can ? g.left + (g.left === 1 ? " change" : " changes") + " left" : "limit reached") : "Not active today") + "</span></div>";

@@ -1,0 +1,8 @@
+# Secrets: never commit API keys
+.env
+.env.*
+deepseek-key.txt
+*.key
+
+# Vercel local settings
+.vercel
