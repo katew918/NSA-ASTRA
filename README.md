@@ -16,6 +16,7 @@ It compares a crew member with their own normal, from training on Earth through 
 | `astra.css` | The visual design layer |
 | `datacard.js` | The Data box: tabs, graphs, time range and the table of numbers |
 | `feeds.js` | Live fetches: NASA ISS Live, NASA DONKI, NOAA SWPC GOES, station position |
+| `checkin.js`, `checkin-worker.js` | The mood check-in: five fixed questions, scripted voice, optional open-source model (Qwen2.5-0.5B, Apache-2.0) run in the browser with WebLLM |
 | `live.js` | The live monitor page (replays a real heart-rate recording) |
 | `compare.js`, `compare.css` | The "How ASTRA works" strip and the "Compare crew" tab |
 | `data.js` | Demo and reference data loaded by the page |
@@ -24,7 +25,7 @@ There is no build step. Vercel serves the files as they are, and every push to `
 
 ## How it stores data
 
-Everything stays in the browser on that device. There is no sign-in and nothing is sent to a server. The four crew profiles are simulated; every day of sleep, mood and resting heart rate comes from real PMData rows.
+Everything stays in the browser on that device. There is no sign-in and nothing is sent to a server. The optional AI voice in the mood check-in downloads an open-source model and runs it on the device; typed words never leave it. The four crew profiles are simulated; every day of sleep, mood and resting heart rate comes from real PMData rows.
 
 ## How to try it
 
@@ -34,11 +35,26 @@ Everything stays in the browser on that device. There is no sign-in and nothing 
 
 ## Data and sources
 
-- **Simulated crew:** PMData lifelogging dataset (Simula, CC BY 4.0), with volunteers relabelled as crew members.
-- **Stand-up test curves:** CVES dataset on PhysioNet (ODC-By 1.0). These are older adults on Earth, not astronauts.
-- **Cabin air:** NASA ISS Live public telemetry.
-- **Space weather and radiation samples:** NASA DONKI and NASA OSDR RadLab.
-- **Limits:** NASA-STD-3001 where NASA sets a number; otherwise clinical scores, labelled as non-NASA in the app.
+Bundled in `data.js`:
+
+| Dataset | Used for | Licence | Link |
+|---|---|---|---|
+| PMData (Simula) | Daily sleep, mood and resting heart rate for the four crew. Volunteers p06, p07, p01 and p09, Nov 2019 to Mar 2020, relabelled as crew. | CC BY 4.0 | https://datasets.simula.no/pmdata/ |
+| CVES (PhysioNet) | Stand-up heart-rate curve (67 recordings) and the two traces replayed on the live monitor. These are older adults on Earth, not astronauts. | ODC-By 1.0 | https://physionet.org/content/cves/1.0.0/ |
+| Inspiration4 crew blood data (NASA OSDR) | The real-astronaut chart on the Compare page. | Not confirmed | https://osdr.nasa.gov/bio/repo/data/studies/OSD-575 and https://osdr.nasa.gov/bio/repo/data/studies/OSD-569 |
+| NASA OSDR RadLab | Radiation dose rate by ISS module, sample from 5 Dec 2019. | Not confirmed | https://visualization.osdr.nasa.gov/radlab/api/ |
+| NASA DONKI | Space-weather notifications, used as the fallback sample. | Not confirmed | https://ccmc.gsfc.nasa.gov/DONKI-API/get/ |
+| NASA ISS Live snapshot | Cabin air values, used when the live feed is down. | Not confirmed | https://push.lightstreamer.com |
+| NASA-STD-3001 Vol 1 and Vol 2 | The limits where NASA sets a number. Other limits are clinical scores, labelled as non-NASA in the app. | Not confirmed | https://standards.nasa.gov/ |
+
+Fetched live when the page loads:
+
+| Source | What it gives | Link |
+|---|---|---|
+| NASA ISS Live | Cabin CO2, pressure and temperature, each with its real age | https://push.lightstreamer.com |
+| NASA DONKI | Space-weather events | https://ccmc.gsfc.nasa.gov/DONKI-API/get/notifications |
+| NOAA SWPC GOES | Proton flux for the last 24 hours | https://services.swpc.noaa.gov/json/goes/primary/integral-protons-1-day.json |
+| wheretheiss.at | The station's position now | https://api.wheretheiss.at/v1/satellites/25544 |
 
 None of the thresholds have been validated in astronauts.
 

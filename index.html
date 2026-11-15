@@ -304,6 +304,7 @@ input[type=text]:focus,input[type=number]:focus,input[type=date]:focus,input[typ
         <h1 class="hello" id="hello"></h1>
         <div class="mood"><span class="pill" id="statusPill"></span><span id="statusTxt"></span></div>
         <div class="datachip" id="dataDate"></div>
+        <div class="mindcard" id="mindCard"><div class="mc-q" id="mcLine"></div><div class="mc-row"><button class="btn sm" id="mhBtn" type="button">Start mood check-in</button><span class="mc-note">Private · 5 questions · about a minute</span></div></div>
         <div class="tl" id="tl"></div>
         <section class="nextcard">
           <div class="next"><div class="ic" id="nextIc"></div><div class="tx"><div class="sub" id="nextWhen"></div><b id="nextWhat"></b><div class="sub" id="nextWhy"></div></div><button class="btn white" id="mainBtn">Start</button></div>
@@ -547,7 +548,7 @@ function render() {
     const rest = q.filter(x => !x.done && x !== next); $("#later").innerHTML = rest.map(x => `<div>Later: <b>${x.what}</b> · ${x.when} · ${x.dur}</div>`).join(""); }
   else if (p === "launch") { setNext("rocket", "Launch day", "Checked in. Enjoy the ride!", "Your suit and the vehicle look after you now. Next reading: when you arrive.", false); $("#later").innerHTML = ""; }
   else { setNext("check", "Today", "All done. Nice work!", inFlight() ? "Monitoring keeps running in the background. See you tomorrow morning." : "Nothing else for you today.", false); $("#later").innerHTML = ""; }
-  renderScan(); renderChat(); renderTiles(); renderHolo(false); refreshAstra(); renderBars(); renderAlerts(st); save(); renderView();
+  renderScan(); renderChat(); renderTiles(); renderHolo(false); refreshAstra(); renderBars(); renderAlerts(st); save(); renderView(); if (window.renderMind) window.renderMind();
 }
 function setNext(ic, when, what, why, btn) { $("#nextIc").innerHTML = I[ic]; $("#nextWhen").innerHTML = when; $("#nextWhat").textContent = what; $("#nextWhy").textContent = why; $("#mainBtn").hidden = !btn; }
 
@@ -776,10 +777,8 @@ async function connect(id) {
       setRes(id, `<b>Live, last 30 days:</b> ${Object.entries(c).map(([k2, n]) => `${n} ${names[k2] || k2}`).join(" · ") || "quiet"}. ${c.SEP ? "A particle event was reported: your flight surgeon may ask you to shelter." : "No solar particle events: nothing for you to do."}`);
     }
     if (id === "radlab") {
-      setRes(id, "Asking NASA OSDR RadLab…");
-      try { const r = await fetch("https://visualization.osdr.nasa.gov/radlab/api/?query=(timestamp%3E=2019-12-05)AND(timestamp%3C2019-12-05T01:00)&fields+=absorbed_dose_rate,module&format=csv"); await r.text(); setRes(id, "<b>Connected.</b>"); }
-      catch (e) { const m = (SM.radlab && SM.radlab.modules) || [], n3 = m.find(x => x.module === "Node 3") || m[0];
-        setRes(id, `NASA's RadLab server doesn't allow direct calls from a web page (no CORS header), so this shows the sample our script fetched from the same API: ${SM.radlab ? SM.radlab.query_window : ""}, ${SM.radlab ? SM.radlab.rows : 0} readings. ${n3 ? `${n3.module} (${n3.instrument}): ${f(n3.mean_uGy_h, 1)} µGy/h ≈ ${f(n3.mean_uGy_h * 24 / 1000, 2)} mGy a day, in line with the 0.5 mSv/day used here.` : ""} A real app would call it from a small server.`); }
+      { const m = (SM.radlab && SM.radlab.modules) || [], n3 = m.find(x => x.module === "Node 3") || m[0];
+        setRes(id, `NASA's RadLab server doesn't allow direct calls from a web page (no CORS header), so ASTRA does not call it from the browser and shows the sample our script fetched (Sample · NASA OSDR RadLab, 5 Dec 2019) from the same API: ${SM.radlab ? SM.radlab.query_window : ""}, ${SM.radlab ? SM.radlab.rows : 0} readings. ${n3 ? `${n3.module} (${n3.instrument}): ${f(n3.mean_uGy_h, 1)} µGy/h ≈ ${f(n3.mean_uGy_h * 24 / 1000, 2)} mGy a day, in line with the 0.5 mSv/day used here.` : ""} A real app would call it from a small server.`); }
     }
   } catch (e) { setRes(id, `Not connected: ${e.message || e}.`); }
 }
@@ -893,7 +892,7 @@ $("#daybar").onclick = e => { const b = e.target.closest("[data-day],[data-step]
 $("#simMenu").onclick = e => { const b = e.target.closest("[data-sim]"); if (!b || b.disabled) return; closeMenus(); simulate(b.dataset.sim); render(); };
 $("#dReset").onclick = () => { APP = freshApp(); S = APP.crew.c1; Object.keys(SEEN).forEach(k2 => delete SEEN[k2]); render(); };
 setInterval(() => { if (!document.hidden && APP.view === "crew") renderHolo(false); const now = Date.now(); if ([...S.msgs.map(m => m.at), ...S.scans.map(s => s.repliedAt)].some(t => t > now - 1500) && !$("#sheet").classList.contains("on")) render(); }, 1000);
-window.ASTRA_API = {get APP() { return APP; }, get S() { return S; }, D, CONN, L, day, base, realFill, key, dayChip, setDay, me, save, render};
+window.ASTRA_API = {get APP() { return APP; }, get S() { return S; }, D, CONN, L, day, base, realFill, key, dayChip, setDay, me, save, render, phase, openFlow, closeFlow, STEP, ensureDaily, delayMs, nearDoctors, bump: () => { CALV++; }};
 render();
 window.addEventListener("load", () => { window.renderGuide && window.renderGuide(document.getElementById("guideStrip")); renderView(); });
 })();
@@ -902,5 +901,6 @@ window.addEventListener("load", () => { window.renderGuide && window.renderGuide
 <script src="live.js"></script>
 <script src="feeds.js"></script>
 <script src="datacard.js"></script>
+<script src="checkin.js"></script>
 </body>
 </html>

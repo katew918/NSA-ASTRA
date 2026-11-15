@@ -59,9 +59,7 @@
   }
 
   function radlab() {
-    get("https://visualization.osdr.nasa.gov/radlab/api/?query=(timestamp%3E=2019-12-05)AND(timestamp%3C2019-12-05T01:00)&fields+=absorbed_dose_rate,module&format=csv", true)
-      .then(function () { F.rad = {state: "live", at: Date.now(), modules: (SM().radlab || {}).modules || []}; changed("rad"); })
-      .catch(function () { F.rad = {state: "sample", modules: (SM().radlab || {}).modules || []}; changed("rad"); });
+    F.rad = {state: "sample", label: "Sample · NASA OSDR RadLab, 5 Dec 2019", modules: (SM().radlab || {}).modules || []}; changed("rad");
   }
 
   function start() {
