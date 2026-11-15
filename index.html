@@ -677,7 +677,7 @@ function renderHolo(full) {
   if (!B3.tried && window.ASTRABody && $("#holoFig")) { B3.tried = true; window.ASTRABody.mount($("#holoFig")).then(ok => { if (!ok) return; B3.on = true; const fg = $("#holoFig"); fg.classList.add("is3d");
     if (!$("#bodyReset")) fg.insertAdjacentHTML("beforeend", '<button class="b3-reset" id="bodyReset" type="button" aria-label="Front view"></button>');
     $("#bodyReset").onclick = e => { e.stopPropagation(); hideTip(); window.ASTRABody.reset(); };
-    window.ASTRABody.onPick = k2 => { TIP.hover = false; clearTimeout(TIP.hideT); showTip(k2); };
+    window.ASTRABody.onPick = k2 => { TIP.hover = false; clearTimeout(TIP.hideT); showTip(k2); TIP.pin = true; };
     window.ASTRABody.onFrame = () => { const t = $("#bodyTip"); if (t && !t.hidden && TIP.key) anchorTip(t, TIP.key); };
     renderAreas(); }).catch(() => {}); }
   if (full || !$("#holoFig svg") || renderHolo.sex !== S.sex) { renderHolo.sex = S.sex; const parts = bodyParts(), old = $("#holoFig .hsvg");
@@ -805,23 +805,24 @@ function clearSim() { stopResp(APP.active); const l = L(); delete l.daily; delet
 function simulate(id) { CALV++;
   if (id === "clear") { clearSim(); return; }
   const x = SIMS.find(y => y.id === id); if (!x || simOff(id)) return;
-  clearSim(); const now = Date.now(), b = base();
+  clearSim(); const now = Date.now(), b = base(); let mt = null;
   if (id === "hard") { const hd = ensureDaily(); hd.mood = 2; hd.checkin = {stress: 2, fatigue: 2, sleep: 3, readiness: 2, at: now, sim: true}; hd.sim = true; }
   else if (x.scan) simScan(x.scan[0], x.scan[1], day(), x.scan[2]);
-  else if (id === "miss") { const t = missTarget(), end = occEnd(t.k, t.d); S.missed = S.missed || {}; S.missed[missKey(t.k, t.d)] = true;
+  else if (id === "miss") { const t = mt = missTarget(), end = occEnd(t.k, t.d); S.missed = S.missed || {}; S.missed[missKey(t.k, t.d)] = true;
     S.scans = S.scans.filter(s => !(s.mission === S.mission && s.area === t.a && s.day >= t.d && s.day < end)); }
   else if (id === "rt") L().rt = Math.round(b.rt * 1.35);
   else { const d = ensureDaily(); d.sim = true; if (id === "sleep") d.sleep = Math.max(3, Math.round((b.sleep - 2.5) * 2) / 2); if (id === "hr") d.hr = Math.round(b.hr + 25); if (id === "vhr") d.hr = 136; }
-  startResp(x); }
-function startResp(x) { const id = APP.active, red = x.l === "urgent", R = RESP[id] = {id, k: key(), d: day(), mission: S.mission, at: Date.now(), cls: x.id === "hard" ? "private" : x.l, steps: [], hold: {send: x.id !== "hard", call: red}};
+  const far = mars() && !nearDoctors(), added = id === "hard" || !window.ASTRA_TODAY_ADD ? [] : window.ASTRA_TODAY_ADD(APP.active, day(), mt ? {id, far, name: examName(mt), area: mt.a} : {id, far});
+  startResp(x, added); }
+function startResp(x, added = []) { const id = APP.active, red = x.l === "urgent", R = RESP[id] = {id, k: key(), d: day(), mission: S.mission, at: Date.now(), cls: x.id === "hard" ? "private" : x.l, steps: [], hold: {send: x.id !== "hard", call: red}};
   const live = () => { if (APP.active === id) render(); else refreshAstra(); };
   const send = () => { R.hold.send = false; if (x.id === "vhr") withMember(id, () => { const n0 = S.msgs.length; autoVitals(); S.msgs.slice(n0).forEach(m => { m.sim = true; }); }); live(); };
   const call = () => { R.hold.call = false; const far = withMember(id, () => mars() && !nearDoctors()); live(); return far ? "Voice message sent to Earth" : "Calling Earth"; };
   const rest = () => { if (window.ASTRA_TODAY_PAUSE) window.ASTRA_TODAY_PAUSE(id, R.d); live(); };
   const nudge = () => { const b = $("#mhBtn"); if (APP.active === id && b) { b.classList.add("nudge"); setTimeout(() => { const b2 = $("#mhBtn"); if (b2) b2.classList.remove("nudge"); }, 3000); } };
   const steps = x.id === "hard" ? [["Kept private"], ["Support options on"], ["Check-in offered", nudge]]
-    : x.id === "miss" ? [["Flagged amber: exam overdue"], ["Sent to doctor", send], ["Moved to today's list"]]
-    : [[`Flagged ${red ? "red" : "amber"}: ${x.st}`], ["Pinned on the body"], ["Sent to doctor", send]].concat(red ? [["Calling Earth", call], ["Today's tasks set to rest", rest]] : [["Shown on today's record"]]);
+    : x.id === "miss" ? [["Flagged amber: exam overdue"], ["Sent to doctor", send], [added.length ? `Moved to today's list: ${added.join(", ")}` : "Moved to today's list"]]
+    : [[`Flagged ${red ? "red" : "amber"}: ${x.st}`], ["Pinned on the body"], ["Sent to doctor", send]].concat(red ? [["Calling Earth", call], ["Today's tasks set to rest", rest]] : [["Shown on today's record"]]).concat(added.length ? [[`Added to Today: ${added.join(", ")}`]] : []);
   RT[id] = steps.map((p, i) => setTimeout(() => { if (RESP[id] !== R) return; const t = p[1] ? p[1]() : ""; R.steps.push(t || p[0]); renderResp(); }, i * 600)); }
 function renderResp() { const R = APP.view === "compare" ? null : respOf(APP.active); let b = $("#respBox");
   if (!R) { if (b) b.remove(); return; }
@@ -883,7 +884,7 @@ const SCAN_SPOT = {eyes: "eyes", neck: "neck", heart: "heart", lungs: "lungs", b
 const SPOT_XY = {head: [100, 30], forehead: [100, 19], eyes: [93, 43], neck: [100, 76], heart: [114, 124], lungs: [84, 116], abdomen: [100, 182], legs: [82, 285]};
 const SPOT_FOCUS = {forehead: "head"};
 const SEV = {watch: "Amber · worth a look", urgent: "Red · needs attention"};
-let SPOTS = {}, AR = {}, B3 = {on: false, tried: false}, TIP = {sig: "", key: "", hover: false, hideT: 0, autoT: 0};
+let SPOTS = {}, AR = {}, B3 = {on: false, tried: false}, TIP = {sig: "", key: "", hover: false, pin: false, hideT: 0};
 const AREA_KEYS = ["head", "eyes", "neck", "heart", "lungs", "abdomen", "legs"], AREA_LBL = {head: "Brain", eyes: "Eyes", neck: "Neck veins", heart: "Heart", lungs: "Lungs", abdomen: "Abdomen (kidneys, bladder, pancreas)", legs: "Leg bones and veins"}, CHIP_LBL = Object.assign({}, AREA_LBL, {abdomen: "Abdomen"});
 let ISS = [];
 const AREA_OF = {forehead: "head"}, AREA_SCAN = {eyes: "eyes", neck: "neck", heart: "heart", lungs: "lungs", abdomen: "bladder", legs: "legs"}, RK = {ok: 0, watch: 1, urgent: 2}, AWORD = {ok: "OK", watch: "Worth a look", urgent: "Needs attention"};
@@ -897,7 +898,7 @@ function okFact(a) { const d = L().daily, b = base(), sc = AREA_SCAN[a], s = sc 
 function tipEl() { let t = $("#bodyTip"); if (t) return t; const h = $(".holo"); if (!h) return null;
   t = document.createElement("div"); t.className = "tip"; t.id = "bodyTip"; t.setAttribute("role", "tooltip"); t.hidden = true;
   t.innerHTML = '<b class="tip-sev"></b><span class="tip-what"></span><span class="tip-route"></span><i class="tip-arrow"></i>'; h.appendChild(t); return t; }
-function hideTip() { const t = $("#bodyTip"); clearTimeout(TIP.hideT); TIP.sig = ""; TIP.key = ""; TIP.hover = false; if (t) t.hidden = true; }
+function hideTip() { const t = $("#bodyTip"); clearTimeout(TIP.hideT); TIP.sig = ""; TIP.key = ""; TIP.hover = false; TIP.pin = false; if (t) t.hidden = true; }
 function showTip(k2) { const a = AREA_OF[k2] || k2, ar = AR[a], t = tipEl(); if (!ar || !t) return; const ok = ar.l === "ok", ro = ok ? "" : ar.routes.join(" · ");
   t.querySelector(".tip-sev").textContent = ok ? "OK" : SEV[ar.l]; t.querySelector(".tip-what").textContent = ok ? okFact(a) : ar.texts.join(" · ");
   const re = t.querySelector(".tip-route"); re.textContent = ro; re.hidden = !ro;
@@ -909,8 +910,8 @@ function anchorTip(t, a) { const h = $(".holo"), fig = $("#holoFig"); if (!h || 
 function placeTip(t, h, r) { const hr = h.getBoundingClientRect(), cx = r.left + r.width / 2 - hr.left, tw = t.offsetWidth, th = t.offsetHeight, gap = 7, rw = h.querySelector(".hrow"), wr = rw && rw.getBoundingClientRect();
   const left = Math.max(4, Math.min(h.clientWidth - tw - 4, cx - tw / 2)), above = r.top - hr.top - th - gap, hit = wr && r.top - th - gap < wr.bottom && r.top - gap > wr.top && hr.left + left < wr.right && hr.left + left + tw > wr.left, below = above < 0 || r.top - th - gap < 0 || !!hit;
   t.classList.toggle("below", below); t.style.left = `${Math.round(left)}px`; t.style.top = `${Math.round(below ? r.bottom - hr.top + gap : above)}px`; t.style.setProperty("--ax", `${Math.round(cx - left)}px`); }
-function renderAreas() { const fig = $("#holoFig"), g = $("#areaG"), keep = TIP.sig;
-  SPOTS = {}; ISS = []; let freshKey = "";
+function renderAreas() { const fig = $("#holoFig"), g = $("#areaG"), keep = TIP.hover || TIP.pin ? TIP.sig : "", hv = TIP.hover, pn = TIP.pin;
+  SPOTS = {}; ISS = [];
   ALERT.list.forEach(x => (x.spots || []).forEach(([k2, l, txt, pin, stn, fact]) => { const sp = SPOTS[k2] = SPOTS[k2] || {l: "watch", texts: [], routes: [], fresh: false};
     if (stn) { const ex = ISS.find(y => y.st === stn && y.a === (AREA_OF[k2] || k2)); if (!ex) ISS.push({a: AREA_OF[k2] || k2, l, st: stn, fact, anchor: pin && pin.anchor}); else if (RK[l] > RK[ex.l]) Object.assign(ex, {l, fact}); }
     if (pin && (!sp.pin || l === "urgent")) sp.pin = pin;
@@ -918,7 +919,6 @@ function renderAreas() { const fig = $("#holoFig"), g = $("#areaG"), keep = TIP.
     if (ALERT.fresh.has(akey(x))) sp.fresh = true; }));
   const keys = Object.keys(SPOTS), top = keys.find(k2 => SPOTS[k2].l === "urgent") || keys[0] || "";
   if (fig) { fig.setAttribute("data-focus", top ? (SPOT_FOCUS[top] || top) : ""); fig.setAttribute("data-level", top ? SPOTS[top].l : ""); }
-  freshKey = keys.find(k2 => SPOTS[k2].fresh && SPOTS[k2].l === "urgent") || keys.find(k2 => SPOTS[k2].fresh) || "";
   AR = {}; AREA_KEYS.forEach(a => { AR[a] = {l: "ok", texts: [], routes: [], fresh: false}; });
   keys.forEach(k2 => { const sp = SPOTS[k2], ar = AR[AREA_OF[k2] || k2]; if (!ar) return; if (RK[sp.l] > RK[ar.l]) ar.l = sp.l;
     sp.texts.forEach(x => { if (!ar.texts.includes(x)) ar.texts.push(x); }); sp.routes.forEach(x => { if (!ar.routes.includes(x)) ar.routes.push(x); }); if (sp.fresh) ar.fresh = true; if (sp.pin && (!ar.pin || sp.l === "urgent")) ar.pin = sp.pin; });
@@ -929,15 +929,12 @@ function renderAreas() { const fig = $("#holoFig"), g = $("#areaG"), keep = TIP.
   if (fig) fig.classList.toggle("is3d", B3.on);
   if (g) g.innerHTML = keys.map(k2 => { const sp = SPOTS[k2], [cx, cy] = SPOT_XY[k2];
     return `<g class="spot ${sp.l}${sp.fresh ? " new" : ""}" data-spot="${k2}" tabindex="0" role="img" aria-label="${escH(`${sp.l === "urgent" ? "Red, needs attention" : "Amber, worth a look"}: ${sp.texts.join(" · ")}`)}"><circle class="spot-hit" cx="${cx}" cy="${cy}" r="26"/><circle class="spot-ring" cx="${cx}" cy="${cy}" r="13"/><circle class="spot-dot" cx="${cx}" cy="${cy}" r="5.5"/></g>`; }).join("");
-  const again = AREA_KEYS.find(a => areaSig(a) === keep); if (again) showTip(again);
-  if (freshKey) { clearTimeout(TIP.autoT); const sig = areaSig(AREA_OF[freshKey] || freshKey);
-    TIP.autoT = setTimeout(() => { const k2 = AREA_KEYS.find(x => areaSig(x) === sig); if (!k2) return; showTip(k2);
-      clearTimeout(TIP.hideT); TIP.hideT = setTimeout(() => { if (!TIP.hover) hideTip(); }, 4000); }, 800); } }
+  const again = keep && AREA_KEYS.find(a => areaSig(a) === keep); if (again) { showTip(again); TIP.hover = hv; TIP.pin = pn; } }
 function wireSpots() { const fig = $(".holo"); if (!fig || wireSpots.done) return; wireSpots.done = true;
   const SEL = ".spot, .b3-mk";
   const on = e => { const s = e.target.closest && e.target.closest(SEL); if (s) { TIP.hover = true; clearTimeout(TIP.hideT); showTip(s.dataset.spot); } };
   const off = e => { const s = e.target.closest && e.target.closest(SEL); if (!s || (e.relatedTarget && s.contains(e.relatedTarget))) return; hideTip(); };
-  const chip = e => { const c = e.target.closest && e.target.closest(".area-chip"); if (!c) return on(e); const a = c.dataset.spot; TIP.hover = false; clearTimeout(TIP.hideT); if (B3.on) try { window.ASTRABody.focus(a, c.dataset.pin || undefined); } catch (er) {} showTip(a); };
+  const chip = e => { const c = e.target.closest && e.target.closest(".area-chip"); if (!c) return on(e); const a = c.dataset.spot; TIP.hover = false; clearTimeout(TIP.hideT); if (B3.on) try { window.ASTRABody.focus(a, c.dataset.pin || undefined); } catch (er) {} showTip(a); TIP.pin = true; };
   fig.addEventListener("mouseover", on); fig.addEventListener("focusin", on); fig.addEventListener("click", chip);
   fig.addEventListener("mouseout", off); fig.addEventListener("focusout", off);
   document.addEventListener("click", e => { if (!e.target.closest(".spot, .b3-mk, .area-chip, #bodyReset") && !e.target.closest("#bodyTip")) hideTip(); });

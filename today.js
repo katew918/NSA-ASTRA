@@ -133,6 +133,26 @@
   function rec(id, d, make) { var t = store(id), k = A.key(d); if (make && !t[k]) t[k] = {done: {}, ch: []}; var r = t[k] || {done: {}, ch: []}; r.done = r.done || {}; r.ch = r.ch || []; return r; }
   function snap(t) { return {uid: t.uid, name: t.name, cat: t.cat, start: t.start, dur: t.dur}; }
 
+  var REPEAT = {neck: ["Repeat neck-vein ultrasound", "neck"], broken: ["Repeat leg scan", "legs"], kidney: ["Repeat kidney ultrasound", "bladder"]};
+  var FOLLOW = {bone: ["Follow-up heel-bone scan", "legs"], eye: ["Follow-up eye exam", "eyes"]};
+  function added(c, d, own) {
+    var out = [], a = rec(c.id, d).add, f = rec(c.id, d - 7).add;
+    function put(slug, name, cat, dur, locked, x) { out.push(Object.assign({uid: c.id + ":" + A.S.mission + ":" + d + ":new:" + slug, name: name, cat: cat, start: "14:00", dur: dur, locked: locked, added: true}, x || {})); }
+    if (a && a.id) {
+      var call = a.far ? "Voice message to flight surgeon" : "Call with flight surgeon";
+      if (a.id === "sleep") put("rest", "Rest block", "Rest", 45, false);
+      if (a.id === "hr") put("hr", "Repeat heart-rate check", "Health", 5, true);
+      if (a.id === "rt") put("rt", "Repeat cognitive test", "Health", 3, true);
+      if (FOLLOW[a.id] && !own.some(function (r) { return r.link === "conf"; })) put("conf", "Private medical conference", "Health", 15, true);
+      if (a.id === "miss" && a.name) put("miss", a.name, "Health", areaMin(a.area), true, {link: "scan", area: a.area});
+      if (a.id === "vhr" || REPEAT[a.id]) put("call", call, "Health", 15, true);
+      if (a.id === "vhr") put("hr", "Repeat heart-rate check", "Health", 5, true);
+      if (REPEAT[a.id]) put("scan", REPEAT[a.id][0], "Health", areaMin(REPEAT[a.id][1]), true);
+    }
+    if (f && FOLLOW[f.id]) put("follow", FOLLOW[f.id][0], "Health", areaMin(FOLLOW[f.id][1]), true);
+    return out;
+  }
+
   function list(c, d) {
     var own = A.withMember(c.id, function () { return gen(c, d); });
     var late = rec(c.id, d - 1).ch.filter(function (x) { return x.type === "delay"; }).map(function (x) { return Object.assign(snap(x.task), {late: true}); });
@@ -142,7 +162,12 @@
     inc.sort(byStart).forEach(function (r) { var s = toMin(r.start), hit = true;
       while (hit) { hit = false; busy.forEach(function (b) { if (s < b[1] && s + r.dur > b[0]) { s = b[1]; hit = true; } }); }
       if (s !== toMin(r.start)) { r.was = r.start; r.start = fromMin(s); } busy.push([s, s + r.dur]); });
-    var mine = rec(c.id, d).ch, rows = late.concat(own.concat(inc).sort(byStart));
+    var adds = added(c, d, own), from = toMin("14:00");
+    busy.forEach(function (b) { if (b[0] < toMin("18:00") && b[1] > from) from = b[1]; });
+    adds.forEach(function (r) { var s = from, hit = true;
+      while (hit) { hit = false; busy.forEach(function (b) { if (s < b[1] && s + r.dur > b[0]) { s = b[1]; hit = true; } }); }
+      r.start = fromMin(s); busy.push([s, s + r.dur]); from = s + r.dur; });
+    var mine = rec(c.id, d).ch, rows = late.concat(own.concat(inc, adds).sort(byStart));
     rows.forEach(function (r) { var m = mine.find(function (x) { return x.uid === r.uid; }); if (m) r.moved = m; });
     return rows;
   }
@@ -214,7 +239,7 @@
     html += "<div class=\"tasks\" id=\"tasks\">" + rows.map(function (t) {
       var ls = t.link && !t.late && !t.incoming ? linkState(t) : null;
       var done = ls ? ls.done : !!rec(c.id, d).done[t.uid];
-      var cls = ["task"]; if (done && !t.moved) cls.push("done"); if (t.moved) cls.push("moved"); if (t.late) cls.push("late"); if (t.locked) cls.push("locked"); if (t.incoming) cls.push("incoming");
+      var cls = ["task"]; if (done && !t.moved) cls.push("done"); if (t.moved) cls.push("moved"); if (t.late) cls.push("late"); if (t.locked) cls.push("locked"); if (t.incoming) cls.push("incoming"); if (t.added) cls.push("added");
       var state = "";
       if (t.moved) state = t.moved.type === "pause" ? "Paused" : t.moved.type === "delay" ? "Tomorrow" : "Handed to " + first((crewById(t.moved.to) || {}).name);
       else if (t.incoming) state = "From " + first((crewById(t.from) || {}).name) + (t.was ? ", moved from " + t.was : "");
@@ -226,7 +251,7 @@
         if (!t.late && nextH + t.dur / 60 <= DAY_LIMIT_H) acts += "<button class=\"tk-btn\" data-act=\"delay\" type=\"button\">Delay a day</button>";
         acts += "<button class=\"tk-btn\" data-act=\"hand\" type=\"button\" aria-haspopup=\"menu\" aria-expanded=\"" + (UI.menu === t.uid) + "\">Hand over</button>";
       }
-      var name = "<b class=\"tk-name\">" + esc(t.name) + "</b>";
+      var name = "<b class=\"tk-name\">" + esc(t.name) + (t.added || t.incoming ? "<span class=\"tk-new\">New</span>" : "") + "</b>";
       var menu = "";
       if (UI.menu === t.uid && acts.indexOf("data-act=\"hand\"") >= 0) {
         menu = "<div class=\"tk-menu\" role=\"menu\">" + crew().filter(function (o) { return o.id !== c.id; }).map(function (o) {
@@ -302,11 +327,17 @@
     }
   }
 
-  window.clearToday = function () { var c = me(), d = A.day(), t = store(c.id), k = A.key(d); if (t[k]) t[k].ch = []; UI.menu = null; UI.todayHTML = ""; UI.mindHTML = ""; };
+  window.clearToday = function () { var c = me(), d = A.day(), t = store(c.id), k = A.key(d); if (t[k]) { t[k].ch = []; delete t[k].add; } UI.menu = null; UI.todayHTML = ""; UI.mindHTML = ""; };
   window.ASTRA_TODAY_PAUSE = function (id, d) {
     var c = crewById(id); if (!c) return 0; var r = rec(id, d, true), n = 0, now = Date.now();
-    list(c, d).forEach(function (t) { if (t.locked || t.late || t.incoming || t.moved || t.cat === "Rest") return; r.ch.push({type: "pause", uid: t.uid, task: snap(t), at: now}); n++; });
+    list(c, d).forEach(function (t) { if (t.added || t.locked || t.late || t.incoming || t.moved || t.cat === "Rest") return; r.ch.push({type: "pause", uid: t.uid, task: snap(t), at: now}); n++; });
     UI.menu = null; UI.todayHTML = ""; A.save(); return n;
+  };
+  window.ASTRA_TODAY_ADD = function (id, d, x) {
+    var c = crewById(id); if (!c) return []; rec(id, d, true).add = x; UI.todayHTML = ""; A.save();
+    var names = list(c, d).filter(function (t) { return t.added; }).map(function (t) { return t.name; });
+    if (FOLLOW[x.id]) names.push(FOLLOW[x.id][0] + " on " + A.dayChip(d + 7));
+    return names;
   };
   window.renderToday = renderToday;
 
