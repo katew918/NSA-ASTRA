@@ -265,7 +265,7 @@
   var speakOn = getPref(PREF_SPEAK, false);
   var hasSpeech = typeof window.speechSynthesis !== "undefined" && typeof window.SpeechSynthesisUtterance !== "undefined";
   var st = null, runId = 0, durMs = DURATION_MS;
-  var REPLY_URL = "/api/reply", REPLY_WAIT_MS = 4500, served = false, misses = 2;
+  var REPLY_URL = "/api/reply", REPLY_WAIT_MS = 9000, served = false, misses = 0;
 
   function todayLog() { return A.L(); }
   function name() { return firstName(A.S && A.S.name); }
@@ -278,7 +278,7 @@
 
   function paint() {
     var note = $("#mhNote"), sp = $("#mhSpeak");
-    if (note) note.innerHTML = served ? "Private to you. Replies are written by a small open-source model on ASTRA's server from the question and the option you tapped; nothing is stored." : "Private to you. Your answers stay on this device. <span class=\"simtag\">Demo</span>";
+    if (note) note.innerHTML = served ? "Private to you. Mini Astra's replies are written by DeepSeek from the question, the option you tapped, your earlier taps in this check-in, your first name and role, the mission day and the time of day. Anything you type yourself and your health readings are never sent, and ASTRA's server stores nothing." : "Private to you. Your answers stay on this device. <span class=\"simtag\">Demo</span>";
     if (sp) { sp.hidden = !hasSpeech; sp.setAttribute("aria-pressed", speakOn ? "true" : "false"); }
   }
 
@@ -321,7 +321,7 @@
 
   function begin() {
     if (st && st.tick) clearInterval(st.tick);
-    st = {i: 0, got: [], done: false, qs: [], recent: recentIds(), used: {}, clock: makeClock(durMs)};
+    st = {i: 0, got: [], hist: [], done: false, qs: [], recent: recentIds(), used: {}, clock: makeClock(durMs)};
     runId++;
     stopSpeech();
     addRound();
@@ -329,18 +329,22 @@
     chips(cur());
     st.clock.start(); startTick(); prog();
   }
-  function modelReply(q, label, band, done) {
+  function modelReply(q, label, band, hist, done) {
     if (misses >= 2 || typeof fetch !== "function") return done(null);
     var ctrl = typeof AbortController !== "undefined" ? new AbortController() : null, over = false;
     var timer = setTimeout(function () { if (over) return; over = true; if (ctrl) ctrl.abort(); miss(); done(null); }, REPLY_WAIT_MS);
     function miss() { misses++; }
     function end(text) { if (over) return; over = true; clearTimeout(timer); if (text) { misses = 0; if (!served) { served = true; paint(); } } else miss(); done(text); }
-    var day = null; try { day = Math.round(Number(A.day())); } catch (e) {}
-    var body = {name: name(), question: short(q.q, 140), answer: short(label, 40), band: band, partOfDay: timeOfDay(new Date().getHours()), missionDay: isFinite(day) ? day : null};
+    var day = null, ph = "", chip = "", role = "";
+    try { day = Math.round(Number(A.day())); } catch (e) {}
+    try { ph = String(A.phase() || ""); } catch (e) {}
+    try { chip = String(A.dayChip() || ""); } catch (e) {}
+    try { role = String((A.me() || {}).role || ""); } catch (e) {}
+    var body = {name: name(), role: short(role, 30), phase: short(ph, 12), dayLabel: short(chip, 12), question: short(q.q, 140), answer: short(label, 40), band: band, partOfDay: timeOfDay(new Date().getHours()), missionDay: isFinite(day) ? day : null, history: hist};
     try {
       fetch(REPLY_URL, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body), cache: "no-store", credentials: "same-origin", signal: ctrl ? ctrl.signal : undefined})
         .then(function (r) { return r.ok ? r.json() : null; })
-        .then(function (j) { end(j && typeof j.say === "string" && j.say.trim() ? short(j.say.trim(), 110) : null); }, function () { end(null); });
+        .then(function (j) { end(j && typeof j.say === "string" && j.say.trim() ? short(j.say.trim(), 160) : null); }, function () { end(null); });
     } catch (e) { end(null); }
   }
   function onChip(idx) {
@@ -348,6 +352,7 @@
     var q = cur(), v = scoreOf(q, idx); if (!q || !v) return;
     add("me", q.o[idx]);
     st.got.push({k: q.k, v: v});
+    var hist = st.hist.slice(-2); st.hist.push({q: short(q.q, 140), a: short(q.o[idx], 40)});
     var band = bandOf(v), reply = pickReply(q.k, band, st.used);
     var ending = afterAnswer(st.got.length, st.clock.elapsed(), st.clock.dur()) === "end";
     var nq = ending ? null : nextQ();
@@ -361,7 +366,7 @@
     if (misses >= 2) return go(null);
     var my = runId, me = st, w = add("ai wait", "…");
     st.busy = true; chips(null);
-    modelReply(q, q.o[idx], band, function (text) {
+    modelReply(q, q.o[idx], band, hist, function (text) {
       if (w && w.parentNode) w.parentNode.removeChild(w);
       if (my !== runId || st !== me) return;
       me.busy = false;
@@ -411,7 +416,7 @@
   function supportNow() { try { A.realFill(); return (A.statuses ? A.statuses() : []).some(function (x) { return x.l === "watch" || x.l === "urgent"; }); } catch (e) { return false; } }
   function nextHTML(on) {
     return "<div class=\"mh-next\" id=\"mhNext\"><b class=\"mh-next-h\">Saved. Only you see this.</b><div class=\"mh-steps\">" +
-      "<div class=\"mh-step\"><span class=\"mh-step-n\">1</span><div><b>Your Mind card is updated</b><span>Today's check-in is on your screen only.</span></div></div>" +
+      "<div class=\"mh-step\"><span class=\"mh-step-n\">1</span><div><b>Your Mini Astra card is updated</b><span>Today's check-in is on your screen only.</span></div></div>" +
       "<div class=\"mh-step" + (on ? " on" : "") + "\"><span class=\"mh-step-n\">2</span><div><b>Support options</b><span>" + (on ? "Available today: delay a task or hand one over." : "Your schedule is fixed today.") + "</span></div>" + (on ? "<button class=\"btn sm\" type=\"button\" data-next=\"support\">Open Today</button>" : "") + "</div>" +
       "<div class=\"mh-step\"><span class=\"mh-step-n\">3</span><div><b>Talk to your flight surgeon</b><span>Private medical conference, or a message now.</span></div><button class=\"hbtn\" type=\"button\" data-next=\"surgeon\">Message</button></div>" +
       "<div class=\"mh-step\"><span class=\"mh-step-n\">4</span><div><b>Next check-in</b><span>Tomorrow.</span></div></div>" +
@@ -442,7 +447,7 @@
   }
 
   A.STEP.mind = function () {
-    return {title: "ASTRA check-in", go: "Done",
+    return {title: "Mini Astra - Companion", go: "Done",
       html: "<div class=\"mh\"><div class=\"mh-prog\" id=\"mhProg\"><i></i></div><span class=\"mh-count\" id=\"mhCount\"></span><div class=\"mh-log\" id=\"mhLog\"></div><div class=\"mh-chips\" id=\"mhChips\"></div><form class=\"mh-form\" id=\"mhForm\"><input id=\"mhInput\" maxlength=\"300\" placeholder=\"Or say it in your own words\" autocomplete=\"off\"><button class=\"btn sm\" type=\"submit\">Send</button></form>" +
         "<button class=\"hbtn\" id=\"mhFinish\" type=\"button\" hidden>Finish now</button>" +
         "<div class=\"mh-ai\"><button class=\"hbtn\" id=\"mhSpeak\" type=\"button\" aria-pressed=\"false\">Read aloud</button></div>" +

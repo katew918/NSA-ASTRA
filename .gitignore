@@ -1,0 +1,6 @@
+.env
+.env.*
+deepseek-key.txt
+*.key
+
+.vercel
