@@ -1,5 +1,5 @@
 #guideStrip, #compareView {
-  --c-card: #FFFFFF; --c-line: #DCE7F4; --c-ink: #0E2240; --c-sub: #5F7390; --c-acc: #2563EB;
+  --c-card: #FFFFFF; --c-line: #E3EAF3; --c-ink: #16233A; --c-sub: #667892; --c-acc: #2F6FB6;
   --c-ok: #1E7F4F; --c-ok-bg: #E6F4EC; --c-am: #8A5200; --c-am-bg: #FFF4D6; --c-am-bd: #E0A100;
   --c-rd: #B42318; --c-rd-bg: #FDE7E4; --c-rd-bd: #D92D20;
   color: var(--c-ink);
@@ -34,7 +34,7 @@
 #compareView h4 { margin: 14px 0 6px; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--c-sub); font-weight: 600; }
 #compareView .c-note, #compareView .c-src { font-size: 13px; color: var(--c-sub); margin: 8px 0 0; line-height: 1.45; }
 #compareView .c-key { margin: 10px 0 0; font-weight: 600; font-size: 14px; }
-#compareView .c-rule { margin: 10px 0 0; padding: 8px 10px; border-left: 3px solid var(--c-acc); background: #F3F8FE; font-size: 13px; }
+#compareView .c-rule { margin: 10px 0 0; padding: 8px 10px; border-left: 3px solid var(--c-acc); background: #F5F8FC; font-size: 13px; }
 
 #compareView .c-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
 #compareView .c-card { border: 1px solid var(--c-line); border-left-width: 4px; border-radius: 10px; padding: 10px 12px; min-width: 0; }

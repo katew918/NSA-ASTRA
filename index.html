@@ -276,9 +276,6 @@ input[type=text]:focus,input[type=number]:focus,input[type=date]:focus,input[typ
 .crewtabs,.daybar,.simbar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:10px 0}
 .crewtabs .crewtab{display:flex;gap:6px;align-items:center;cursor:pointer}
 .crewnote{font-size:12px;margin:0 0 8px}
-.daybar .days{display:flex;gap:6px;overflow-x:auto;flex:1 1 200px;min-width:0}
-.daybar .daybtn{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;cursor:pointer}
-#dayNow{flex-basis:100%;font-size:13px}
 .simbar .simbtn{cursor:pointer}
 .simbar .simbtn[disabled]{opacity:.5;cursor:not-allowed}
 .alertbox{display:grid;gap:6px;margin:10px 0}
@@ -292,10 +289,27 @@ input[type=text]:focus,input[type=number]:focus,input[type=date]:focus,input[typ
 <body>
 <div class="hero">
   <div class="wrap">
-    <header class="bar" id="bar">
-    <div class="top"><div class="brand"><span>ASTRA<small>Autonomous System for Telemetry, Risk, and Assessment</small></span></div><div class="topr hctl"><label class="daychip">Mission <select id="mission" aria-label="Mission"><option value="iss">ISS</option><option value="mars">Mars</option></select></label><span class="daychip" id="dayChip"></span><div class="crewpick"><button id="crewBtn" class="crewbtn" type="button" aria-haspopup="listbox" aria-expanded="false"></button><div id="crewMenu" class="crewmenu" role="listbox" hidden></div></div><button class="icon-btn" id="helpBtn" aria-label="How ASTRA works">?</button></div></div>
-    <div class="ctl"><div class="daybar" id="daybar"><button class="daystep" data-step="-1" aria-label="Previous day">‹</button><div class="days" id="days"></div><button class="daystep" data-step="1" aria-label="Next day">›</button></div><div class="simpick" id="simPick"><button id="simBtn" class="simtoggle" type="button" aria-expanded="false">Simulate an issue<span class="chev" aria-hidden="true"></span></button><div id="simMenu" class="simmenu" hidden></div></div></div>
-    </header>
+    <header class="bar" id="bar"><div class="top">
+      <a class="brand" href="./" aria-label="ASTRA home"><img class="logo" src="logo.png" alt="ASTRA" width="720" height="324"></a>
+      <div class="topr">
+        <div class="calpick" id="calPick">
+          <button class="daystep" data-step="-1" type="button" aria-label="Previous day">‹</button>
+          <button id="calBtn" class="calbtn" type="button" aria-haspopup="dialog" aria-expanded="false"><span class="cb-day"></span><span class="cb-sub"></span><span class="chev" aria-hidden="true"></span></button>
+          <button class="daystep" data-step="1" type="button" aria-label="Next day">›</button>
+          <div id="calPop" class="calpop" role="dialog" aria-label="Mission calendar" hidden>
+            <div class="cal-head"><button class="cal-nav" data-m="-1" type="button" aria-label="Previous month">‹</button><b id="calTitle"></b><button class="cal-nav" data-m="1" type="button" aria-label="Next month">›</button></div>
+            <div class="cal-dow"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
+            <div class="cal-grid" id="calGrid"></div>
+            <div class="cal-ms" id="calMs"></div>
+            <div class="cal-key"><span><i class="dot watch"></i>Amber day</span><span><i class="dot urgent"></i>Red day</span></div>
+          </div>
+        </div>
+        <label class="daychip mis"><span class="sr">Mission</span><select id="mission" aria-label="Mission"><option value="iss">ISS</option><option value="mars">Mars</option></select></label>
+        <div class="simpick" id="simPick"><button id="simBtn" class="simtoggle" type="button" aria-expanded="false">Simulate an issue<span class="chev" aria-hidden="true"></span></button><div id="simMenu" class="simmenu" hidden></div></div>
+        <div class="crewpick"><button id="crewBtn" class="crewbtn" type="button" aria-haspopup="listbox" aria-expanded="false"></button><div id="crewMenu" class="crewmenu" role="listbox" hidden></div></div>
+        <button class="icon-btn" id="helpBtn" aria-label="How ASTRA works">?</button>
+      </div>
+    </div></header>
     <section id="guideStrip" hidden></section>
     <div id="alerts" class="alertbox" aria-live="polite"></div>
     <div class="hgrid" id="crewGrid">
@@ -409,7 +423,7 @@ const CREW = [
   {id: "c4", name: "Sam Okafor", sex: "m", age: 41, height: 177, weight: 74, role: "Mission specialist", idx: 3},
 ];
 const SHARED = ["mission", "launch", "travel", "reply"];
-const DEF = {name: "", sex: "f", age: 38, height: 172, weight: 68, mission: "iss", launch: todayIdx(), travel: 50, reply: "followup", log: {}, scans: [], msgs: [], open: null, seeded: {}};
+const DEF = {name: "", sex: "f", age: 38, height: 172, weight: 68, mission: "iss", launch: todayIdx() - 50, travel: 0, reply: "followup", log: {}, scans: [], msgs: [], open: null, seeded: {}};
 const STORE_KEY = "astra-v1";
 let APP = null; try { APP = JSON.parse(localStorage.getItem(STORE_KEY) || "null"); } catch (e) { APP = null; }
 const freshApp = () => { const a = {active: "c1", view: "crew", crew: {}};
@@ -537,7 +551,6 @@ function render() {
   const fresh = p === "training" && baseInfo().n === 0 && !st.length;
   $("#statusPill").className = "pill " + (fresh ? "none" : worst); $("#statusPill").textContent = fresh ? "Welcome" : {ok: "You're doing well", watch: "Worth a look", urgent: "Needs attention"}[worst];
   $("#statusTxt").textContent = fresh ? "Let's start learning your normal during training." : st.length ? cap(st[0].what) : `${dueN ? `${pl(dueN, "thing")} for you today` : "All done for today"}`;
-  $("#dayChip").textContent = dayChip();
   { const dd = L().daily, fmtD = x => new Date(x + "T00:00:00Z").toLocaleDateString("en-GB", {day: "numeric", month: "short", year: "numeric", timeZone: "UTC"});
     $("#dataDate").innerHTML = !dd ? "" : dd.sim ? `<span class="simtag">Simulated</span>` : dd.entered ? `<span>Entered today</span>` : dd.date ? `<span class="realtag">Real data</span><span>PMData · recorded <b>${fmtD(dd.date)}</b></span>` : ""; }
   $("#dayTxt").textContent = p === "training" ? `${PHASE_LABEL.training()} · ${pl(-d, "day")} to launch` : p === "orbit" ? `${PHASE_LABEL.orbit()} · ${pl(LAND() - d, "day")} to ${mars() ? "Mars landing" : "going home"}` : PHASE_LABEL[p]();
@@ -690,10 +703,11 @@ const AREA_SHAPE = {head: ['<ellipse cx="100" cy="44" rx="27" ry="31"/>', 100, 4
   chest: ['<ellipse cx="100" cy="128" rx="40" ry="36"/>', 100, 128], legs: ['<rect x="58" y="252" width="84" height="160" rx="20"/>', 100, 330], whole: ['', 100, 200]};
 function renderAlerts(st) { const id = APP.active, prev = SEEN[id] || new Set();
   ALERT = {list: st, fresh: new Set(st.map(akey).filter(k2 => !prev.has(k2)))}; SEEN[id] = new Set(st.map(akey));
-  $("#alerts").innerHTML = st.length ? st.map(x => `<div class="alert ${x.l}${ALERT.fresh.has(akey(x)) ? " new" : ""}"><b class="sev">${x.l === "urgent" ? "Red · needs attention" : "Amber · worth a look"}</b><span class="what">${escH(cap(x.what))}</span><span class="route">${route(x)}</span></div>`).join("")
-    : `<div class="alert ok"><span class="what">Nothing off your normal today.</span></div>`;
+  $("#alerts").innerHTML = st.length ? st.map(x => `<div class="alert ${x.l}${ALERT.fresh.has(akey(x)) ? " new" : ""}"><b class="sev">${x.l === "urgent" ? "Red · needs attention" : "Amber · worth a look"}</b><span class="what">${escH(cap(x.what))}</span><span class="route">${route(x)}</span></div>`).join("") : "";
   renderAreas(); }
-function renderAreas() { const g = $("#areaG"), all = $("#bodyAll"); if (!g || !all) return; const by = {}, fresh = {};
+function renderAreas() { const fig = $("#holoFig"), top = ALERT.list.find(x => x.l === "urgent") || ALERT.list.find(x => x.l === "watch");
+  if (fig) { fig.setAttribute("data-focus", top ? areaOf(top) : ""); fig.setAttribute("data-level", top ? top.l : ""); }
+  const g = $("#areaG"), all = $("#bodyAll"); if (!g || !all) return; const by = {}, fresh = {};
   ALERT.list.forEach(x => { const a = areaOf(x); if (by[a] !== "urgent") by[a] = x.l; if (ALERT.fresh.has(akey(x))) fresh[a] = by[a]; });
   all.setAttribute("class", "hs" + (by.whole ? ` area ${by.whole}` : ""));
   g.innerHTML = Object.entries(by).filter(([a]) => a !== "whole").map(([a, l]) => AREA_SHAPE[a][0].replace(/^<(\w+)/, `<$1 class="area ${l}"`)).join("")
@@ -704,8 +718,6 @@ function refreshAstra() {
       base: Object.assign({}, base()), status: w, statusText: st.length ? `${WORD[w]}: ${cap(st[0].what)}${st.length > 1 ? ` (and ${st.length - 1} more)` : ""}` : "Nothing off their normal today", issues: st.map(x => ({l: x.l, what: x.what})),
       today: (dd => dd ? {sleep: dd.sleep, mood: dd.mood, hr: dd.hr, date: dd.date || null} : null)(L().daily)}; })),
     live: {id: "c1"}, activeId: APP.active, dayChip: dayChip(), phase: phase(), mission: S.mission}; }
-function dayMarks() { const L1 = LAND(), mr = mars();
-  return [[-30, "Training"], [-7, "Training"], [0, "Launch"], [1, "Arrival"], [30, "Eyes scan"], [50, "Neck scan"], [90, "Heart scan"], [120, "Eyes scan"], [150, "Neck scan"], [L1 - 1, "Last day"], [L1, mr ? "Mars landing" : "Landing"], [L1 + 3, mr ? "On Mars" : "Recovery"]]; }
 let CALV = 0; const CAL = {};
 function calMarks() { const L1 = LAND(), m = {}; m[-30] = "Training"; m[0] = "Launch"; m[1] = "Arrival";
   Object.entries(SCHED).forEach(([a, xs]) => xs.forEach(x => { if (x < L1 - 1) m[x] = a[0].toUpperCase() + a.slice(1) + " scan"; }));
@@ -715,10 +727,31 @@ function calLevels() { const k2 = `${APP.active}:${S.mission}:${S.scans.length}:
   const keep = S.travel, v = {};
   try { for (let x = -30; x <= LAND() + 3; x++) { S.travel = x + S.launch - todayIdx(); v[x] = worstOf(statuses().filter(y => !y.private)); } } finally { S.travel = keep; }
   CAL[APP.active] = {k: k2, v}; return v; }
-function calCells(lv, d) { const L1 = LAND(), m = calMarks(); let h = "";
-  for (let x = -30; x <= L1 + 3; x++) { const ml = m[x], sh = x < 0 ? String(x).replace("-", "−") : x === 0 ? "L" : x < L1 ? String(x) : x === L1 ? "R" : `+${x - L1}`, ph = x < 0 ? "training" : x < L1 ? "flight" : "return";
-    h += `<button class="daybtn${x === d ? " on" : ""}${ml ? " ms" : ""}${lv[x] && lv[x] !== "ok" ? " " + lv[x] : ""} ph-${ph}" data-day="${x}" title="${dayChip(x)}${ml ? " · " + ml : ""}" aria-label="${dayChip(x)}${ml ? ", " + ml : ""}">${ml ? `<span class="ml">${ml}</span>` : ""}<b>${sh}</b><i></i></button>`; }
-  return h; }
+const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"], WDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const dateOf = x => new Date((S.launch + x) * DAY);
+const ymOf = t => t.getUTCFullYear() * 12 + t.getUTCMonth();
+const fmtDay = t => `${WDAYS[t.getUTCDay()]} ${t.getUTCDate()} ${MONTHS[t.getUTCMonth()].slice(0, 3)} ${t.getUTCFullYear()}`;
+const shortChip = x => x < 0 ? `L−${-x}` : x === 0 ? "L−0" : x < LAND() ? `D${x}` : `R+${x - LAND()}`;
+const calRange = () => [ymOf(dateOf(-30)), ymOf(dateOf(LAND() + 3))];
+let CALYM = 0;
+function renderCalBtn() { const d = day(), ml = calMarks()[d];
+  $("#calPick .cb-day").textContent = dayChip(d); $("#calPick .cb-sub").textContent = (ml ? ml + " · " : "") + fmtDay(dateOf(d)); }
+function renderCal() { const [lo, hi] = calRange(); CALYM = Math.max(lo, Math.min(hi, CALYM));
+  const y = Math.floor(CALYM / 12), mo = CALYM % 12, L1 = LAND(), d = day(), m = calMarks(), lv = calLevels();
+  const first = Date.UTC(y, mo, 1) / DAY, n = new Date(Date.UTC(y, mo + 1, 0)).getUTCDate(), lead = (new Date(first * DAY).getUTCDay() + 6) % 7;
+  $("#calTitle").textContent = `${MONTHS[mo]} ${y}`;
+  $("#calPop").querySelector('[data-m="-1"]').disabled = CALYM <= lo; $("#calPop").querySelector('[data-m="1"]').disabled = CALYM >= hi;
+  let h = '<span class="cal-blank"></span>'.repeat(lead);
+  for (let i = 1; i <= n; i++) { const x = first + i - 1 - S.launch, inR = x >= -30 && x <= L1 + 3;
+    if (!inR) { h += `<button class="cal-day out" data-day="${x}" type="button" disabled aria-label="${i} ${MONTHS[mo]} ${y}"><b>${i}</b><small></small><i></i></button>`; continue; }
+    const ml = m[x], ph = x < 0 ? "training" : x < L1 ? "flight" : "return", l = lv[x] && lv[x] !== "ok" ? " " + lv[x] : "";
+    h += `<button class="cal-day${x === d ? " on" : ""}${ml ? " ms" : ""}${l} ph-${ph}" data-day="${x}" type="button" title="${dayChip(x)}${ml ? " · " + ml : ""}" aria-label="${i} ${MONTHS[mo]} ${y}, ${dayChip(x)}${ml ? ", " + ml : ""}"${x === d ? ' aria-current="date"' : ""}><b>${i}</b><small>${shortChip(x)}</small><i></i></button>`; }
+  h += '<span class="cal-blank"></span>'.repeat((7 - (lead + n) % 7) % 7);
+  $("#calGrid").innerHTML = h;
+  $("#calMs").innerHTML = Object.keys(m).map(Number).sort((a, b) => a - b).map(x => `<button class="cal-chip" data-day="${x}" type="button">${/ scan$/.test(m[x]) ? `${m[x]} · D${x}` : m[x]}</button>`).join(""); }
+function openCal() { CALYM = ymOf(dateOf(day())); renderCal(); $("#calPop").hidden = false; $("#calBtn").setAttribute("aria-expanded", "true");
+  const f = $("#calGrid .cal-day.on") || $("#calGrid .cal-day:not([disabled])"); if (f) f.focus(); }
+function closeCal(focus) { const p = $("#calPop"); if (!p || p.hidden) return; p.hidden = true; $("#calBtn").setAttribute("aria-expanded", "false"); if (focus) $("#calBtn").focus(); }
 function renderBars() { const A = window.ASTRA, cmp = APP.view === "compare", lv = APP.view === "live";
   const ini = n => n.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase(), SW = {ok: "OK", watch: "Worth a look", urgent: "Needs attention"};
   const who = c => `<span class="av">${ini(c.name)}</span><span class="who"><span class="nm">${c.name}</span><span class="rl">${c.role} · ${c.sex.toUpperCase()}</span></span>`, cur = A.crew.find(c => c.id === APP.active);
@@ -726,14 +759,13 @@ function renderBars() { const A = window.ASTRA, cmp = APP.view === "compare", lv
   $("#crewMenu").innerHTML = A.crew.map(c => `<button class="crewopt" role="option" data-id="${c.id}" aria-selected="${!cmp && !lv && c.id === APP.active}">${who(c)}<span class="st ${c.status}"><span class="dot ${c.status}"></span>${SW[c.status]}</span></button>`).join("")
     + `<button class="crewopt live" role="option" data-id="live" aria-selected="${lv}"><span class="av">LV</span><span class="who"><span class="nm">Live monitor</span><span class="rl">Maya Ortiz · heart rate now</span></span><span class="st"><span class="dot ok"></span>Live</span></button>`
     + `<button class="crewopt cmp" role="option" data-id="compare" aria-selected="${cmp}"><span class="av">4</span><span class="who"><span class="nm">Compare crew</span><span class="rl">All four side by side</span></span></button>`;
-  const d = day(), cl = calLevels(); $("#days").innerHTML = calCells(cl, d);
-  { const box = $("#days"), on = box.querySelector(".daybtn.on"); if (on) box.scrollLeft = on.offsetLeft - box.offsetLeft - (box.clientWidth - on.offsetWidth) / 2; }
+  renderCalBtn(); if (!$("#calPop").hidden) renderCal();
   $("#simMenu").innerHTML = SIMS.map(x => { const off = simOff(x.id); return `<button class="simbtn ${x.l}" data-sim="${x.id}"${off ? ` disabled title="${off}"` : ""}><span class="dot ${x.l}"></span>${x.t}</button>`; }).join("")
     + `<button class="simbtn clear" data-sim="clear">Clear today's issues</button><span class="simtag">Simulated</span>`;
   $("#mission").value = S.mission; $("#dReply").value = S.reply; }
 function renderView() { const lv = APP.view === "live", cmp = APP.view === "compare";
-  ["#crewGrid", "#crewMain", "#simPick", "#alerts"].forEach(s => { $(s).style.display = cmp || lv ? "none" : ""; });
-  $(".ctl").hidden = lv; $("#alerts").hidden = lv;
+  ["#crewGrid", "#crewMain", "#alerts"].forEach(s => { $(s).style.display = cmp || lv ? "none" : ""; });
+  $("#calPick").hidden = lv; $("#simPick").hidden = lv; if (lv) closeCal(false); $("#alerts").hidden = lv;
   const lvEl = $("#liveView"), wasLive = !lvEl.hidden; lvEl.hidden = !lv; if (lv && !wasLive && window.renderLive) window.renderLive(lvEl, window.ASTRA); if (!lv && wasLive && window.stopLive) window.stopLive();
   $("#compareView").hidden = !cmp; if (cmp && window.renderCompare) window.renderCompare($("#compareView"), window.ASTRA); }
 const setDay = x => { S.travel = Math.max(-60, Math.min(LAND() + 30, x)) + S.launch - todayIdx(); S.open = null; render(); };
@@ -878,17 +910,21 @@ const tour = () => openFlow(["welcome1", "welcome2", "welcome3"]);
 $("#helpBtn").onclick = () => { const g = $("#guideStrip"); g.hidden = !g.hidden; }; $("#tourBtn").onclick = tour; $("#rulesBtn").onclick = () => openFlow(["rules"]);
 $("#mission").onchange = e => { S.mission = e.target.value; S.open = null; render(); };
 $("#dReply").onchange = e => { S.reply = e.target.value; render(); };
-const closeMenus = () => { [["#crewMenu", "#crewBtn"], ["#simMenu", "#simBtn"]].forEach(([m, b]) => { $(m).hidden = true; $(b).setAttribute("aria-expanded", "false"); }); };
+const closeMenus = () => { closeCal(false); [["#crewMenu", "#crewBtn"], ["#simMenu", "#simBtn"]].forEach(([m, b]) => { $(m).hidden = true; $(b).setAttribute("aria-expanded", "false"); }); };
 const toggleMenu = (m, b) => { const open = $(m).hidden; closeMenus(); $(m).hidden = !open; $(b).setAttribute("aria-expanded", String(open)); };
 $("#crewBtn").onclick = e => { e.stopPropagation(); toggleMenu("#crewMenu", "#crewBtn"); };
 $("#simBtn").onclick = e => { e.stopPropagation(); toggleMenu("#simMenu", "#simBtn"); };
-document.addEventListener("click", e => { if (!e.target.closest(".crewpick") && !e.target.closest(".simpick")) closeMenus(); });
-document.addEventListener("keydown", e => { if (e.key === "Escape") closeMenus(); });
+document.addEventListener("click", e => { if (!e.target.closest(".crewpick") && !e.target.closest(".simpick") && !e.target.closest(".calpick")) closeMenus(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape") { const wasOpen = !$("#calPop").hidden; closeMenus(); if (wasOpen) $("#calBtn").focus(); } });
 $("#crewMenu").onclick = e => { const t = e.target.closest("[data-id]"); if (!t) return; const id = t.dataset.id; closeMenus();
   if (id === "compare" || id === "live") APP.view = id;
   else { const n = APP.crew[id]; SHARED.forEach(k2 => { n[k2] = S[k2]; }); S = n; APP.active = id; APP.view = "crew"; S.open = null; }
   render(); };
-$("#daybar").onclick = e => { const b = e.target.closest("[data-day],[data-step]"); if (!b) return; setDay(b.dataset.day !== undefined ? +b.dataset.day : day() + +b.dataset.step); };
+$("#calPick").onclick = e => { e.stopPropagation(); const st = e.target.closest("[data-step]"), nav = e.target.closest("[data-m]"), dd = e.target.closest("[data-day]");
+  if (e.target.closest("#calBtn")) { const open = $("#calPop").hidden; closeMenus(); if (open) openCal(); return; }
+  if (st) { setDay(day() + +st.dataset.step); return; }
+  if (nav) { CALYM = Math.max(calRange()[0], Math.min(calRange()[1], CALYM + +nav.dataset.m)); renderCal(); return; }
+  if (dd && !dd.disabled) { closeCal(true); setDay(+dd.dataset.day); } };
 $("#simMenu").onclick = e => { const b = e.target.closest("[data-sim]"); if (!b || b.disabled) return; closeMenus(); simulate(b.dataset.sim); render(); };
 $("#dReset").onclick = () => { APP = freshApp(); S = APP.crew.c1; Object.keys(SEEN).forEach(k2 => delete SEEN[k2]); render(); };
 setInterval(() => { if (!document.hidden && APP.view === "crew") renderHolo(false); const now = Date.now(); if ([...S.msgs.map(m => m.at), ...S.scans.map(s => s.repliedAt)].some(t => t > now - 1500) && !$("#sheet").classList.contains("on")) render(); }, 1000);
