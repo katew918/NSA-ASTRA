@@ -342,7 +342,6 @@ input[type=text]:focus,input[type=number]:focus,input[type=date]:focus,input[typ
 
 <div class="wrap">
   <section id="compareView" hidden></section>
-  <section id="liveView" hidden></section>
   <main id="crewMain">
     <section class="card datacard" id="dataCard">
       <div class="dc-head"><h2>Data</h2><span id="dcTag"></span></div>
@@ -429,6 +428,7 @@ let APP = null; try { APP = JSON.parse(localStorage.getItem(STORE_KEY) || "null"
 const freshApp = () => { const a = {active: "c1", view: "crew", crew: {}};
   CREW.forEach(c => { a.crew[c.id] = Object.assign(structuredClone(DEF), {name: c.name, sex: c.sex, age: c.age, height: c.height, weight: c.weight}); }); return a; };
 if (!APP || !APP.crew || !CREW.every(c => APP.crew[c.id])) APP = freshApp();
+if (APP.view !== "crew" && APP.view !== "compare") { APP.view = "crew"; APP.active = "c1"; }
 let S = APP.crew[APP.active] || APP.crew.c1;
 const syncShared = () => CREW.forEach(c => SHARED.forEach(k2 => { APP.crew[c.id][k2] = S[k2]; }));
 const save = () => { syncShared(); try { localStorage.setItem(STORE_KEY, JSON.stringify(APP)); } catch (e) {} };
@@ -482,18 +482,25 @@ const AREAS = {
 const mins = a => AREAS[a].time.replace(" with setup", "").replace("about ", "~");
 const longTime = a => AREAS[a].time.replace(" min", " minutes");
 
-const SCHED = {eyes: [30, 120], neck: [50, 150], heart: [90]};
+const SCAN_ROT = ["eyes", "neck", "heart", "lungs", "bladder"];
+const scanFor = x => x >= 1 && x <= LAND() - 1 ? SCAN_ROT[(x - 1) % SCAN_ROT.length] : null;
+const lastSlot = (a, upto) => { const i = SCAN_ROT.indexOf(a); if (i < 0) return 0; const top = Math.min(upto, LAND() - 1), x = top - (((top - 1 - i) % 5) + 5) % 5; return x >= 1 ? x : 0; };
+const missKey = x => `${S.mission}:${x}`;
+const isMissed = x => !!(S.missed && S.missed[missKey(x)]);
 const scanDone = (a, from, to = Infinity) => S.scans.some(s => s.mission === S.mission && s.area === a && s.day >= from && s.day < to && s.day <= day());
-function schedule() {
-  const out = []; for (const a in SCHED) SCHED[a].forEach((x, i) => { if (x < LAND() - 1) out.push({a, d: x, done: scanDone(a, x, SCHED[a][i + 1] ?? Infinity)}); });
-  return out.sort((p, q) => p.d - q.d);
-}
-const dueScans = () => inFlight() ? schedule().filter(x => x.d <= day() && !x.done) : phase() === "landed" && !scanDone("legs", LAND()) ? [{a: "legs", d: LAND(), done: false}] : [];
+const slotRec = x => { const a = scanFor(x), d = day(); let r = null; S.scans.forEach(s => { if (s.mission === S.mission && s.area === a && s.day >= x && s.day < x + 5 && s.day <= d) r = s; }); return r; };
+const slotDone = x => !!slotRec(x) || (x < day() && !isMissed(x)) || (x + 5 < day() && !isMissed(x + 5));
+const slot = x => ({a: scanFor(x), d: x, done: slotDone(x)});
+function dueScans() { const d = day();
+  if (inFlight()) { const out = Object.keys(S.missed || {}).filter(k2 => k2.startsWith(S.mission + ":")).map(k2 => +k2.split(":")[1]).filter(x => x < d && scanFor(x)).sort((p, q) => p - q).map(slot).filter(x => !x.done);
+    const t = slot(d); if (!t.done) out.push(t); return out; }
+  return phase() === "landed" && !scanDone("legs", LAND()) ? [{a: "legs", d: LAND(), done: false}] : []; }
 const trainingScans = () => new Set(S.scans.filter(s => s.mission === S.mission && s.day <= 0).map(s => s.area));
 const missingBase = () => { const ts = trainingScans(); return Object.keys(AREAS).filter(a => !ts.has(a)); };
 const standBase = () => Object.entries(S.log).some(([k2, v]) => k2.startsWith(S.mission + ":") && +k2.split(":")[1] < 0 && v.stand);
 function scanState(area) {
-  const s = [...S.scans].reverse().find(x => x.area === area && x.mission === S.mission && x.day <= day()); if (!s) return {l: "none", line: "Not scanned yet"};
+  const s = [...S.scans].reverse().find(x => x.area === area && x.mission === S.mission && x.day <= day()), v = lastSlot(area, day() - 1);
+  if (!s || (v && v > s.day && !isMissed(v))) return v ? {l: "ok", line: "Doctors: looks like your baseline"} : {l: "none", line: "Not scanned yet"};
   if (s.repliedAt > Date.now()) return {l: "pending", line: `Sent · reply in about ${clock(s.repliedAt - Date.now())}`};
   return {l: {normal: "ok", followup: "watch", urgent: "urgent"}[s.reply], line: {normal: "Doctors: looks like your baseline", followup: "Doctors: follow-up scan next week", urgent: "Doctors want to talk now"}[s.reply]};
 }
@@ -617,6 +624,9 @@ function renderHolo(full) {
 
 let scanTarget = null;
 function ringSvg(n, t, col) { const c = 2 * Math.PI * 24, p = t ? n / t : 0; return `<svg class="ringp" viewBox="0 0 60 60"><circle cx="30" cy="30" r="24" fill="none" stroke="#e4e8f2" stroke-width="6"/><circle cx="30" cy="30" r="24" fill="none" stroke="${col}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${(c * (1 - p)).toFixed(1)}" transform="rotate(-90 30 30)"/><text x="30" y="35" text-anchor="middle" font-size="15" font-weight="700" fill="#131a33">${n}/${t}</text></svg>`; }
+function slotPill(x) { const r = slotRec(x); if (!r || r.reply === "normal" && !(r.repliedAt > Date.now())) return `<span class="pill ok">Done · OK</span>`;
+  if (r.repliedAt > Date.now()) return `<span class="pill none">Done · Sent</span>`;
+  return `<span class="pill ${r.reply === "urgent" ? "urgent" : "watch"}">Done · ${r.reply === "urgent" ? "Call" : "Follow-up"}</span>`; }
 function renderScan() {
   const p = phase(), d = day(), ts = trainingScans(), miss = missingBase(), due = dueScans();
   const pillFor = a => { const s = scanState(a); return s.l === "none" ? `<span class="pill ok">Done</span>` : `<span class="pill ${s.l === "pending" ? "none" : s.l}" title="${s.line}">${{pending: "Sent", ok: "OK", watch: "Follow-up", urgent: "Call"}[s.l]}</span>`; };
@@ -630,12 +640,14 @@ function renderScan() {
       + (all ? `<div class="note ok">✓ Baseline complete</div>` : !miss.length ? `<div class="note watch">6 of 6 scans · stand-up test missing</div>` : p === "launch" ? `<div class="note watch">Launch day: ${pl(miss.length, "baseline scan")}${andStand} missing</div>` : left <= 7 ? `<div class="note watch">${pl(left, "day")} to launch · ${pl(miss.length, "scan")}${andStand} missing</div>` : "");
     scanTarget = miss[0] || null; btn = miss.length ? `${ts.size ? "Continue" : "Start"}: ${AREAS[miss[0]].label} (${mins(miss[0])})` : "Scan an area again";
   } else if (inFlight() || p === "landed") {
-    const rows = p === "landed" ? [{a: "legs", d: LAND(), done: scanDone("legs", LAND())}] : schedule(), nd = rows.filter(r => r.done).length;
-    title = `Scans <span class="req">Scheduled</span>`;
-    txt = `${nd} of ${rows.length} scans done${due.length ? ` · ${due.length} due` : ""}`;
-    ring = ringSvg(nd, rows.length, due.length ? "#3f5bff" : "#16a56d");
+    const win = []; for (let x = d - 6; x <= d; x++) if (scanFor(x)) win.push(slotDone(x));
+    const rows = p === "landed" ? [{a: "legs", d: LAND(), done: scanDone("legs", LAND())}] : Array.from({length: 7}, (_, i) => d - 3 + i).filter(x => scanFor(x)).map(slot);
+    const nd = p === "landed" ? rows.filter(r => r.done).length : win.filter(Boolean).length, tot = p === "landed" ? rows.length : win.length;
+    title = `Scans <span class="req">Daily</span>`;
+    txt = `${nd} of ${tot} scans done${p === "landed" ? "" : " · last 7 days"}${due.length ? ` · ${due.length} due` : ""}`;
+    ring = ringSvg(nd, tot, due.length ? "#3f5bff" : "#16a56d");
     body = `<div class="srows">${rows.map(r => { const over = !r.done && r.d < d, now = !r.done && r.d === d;
-      return `<div class="srow ${now ? "duenow" : over ? "over" : ""}"><span class="dy">${dayChip(r.d)}</span><b>${AREAS[r.a].label}</b>${r.done ? pillFor(r.a) : now ? `<span class="pill due">Due today</span>` : over ? `<span class="pill watch">Overdue ${d - r.d} d</span>` : `<span class="when">in ${pl(r.d - d, "day")}</span>`}</div>`; }).join("")}</div>`;
+      return `<div class="srow ${now ? "duenow" : over ? "over" : ""}"><span class="dy">${dayChip(r.d)}</span><b>${AREAS[r.a].label}</b>${r.done ? (p === "landed" ? pillFor(r.a) : slotPill(r.d)) : now ? `<span class="pill due">Due today</span>` : over ? `<span class="pill watch">Overdue ${d - r.d} d</span>` : `<span class="when">${r.d - d === 1 ? "tomorrow" : `in ${pl(r.d - d, "day")}`}</span>`}</div>`; }).join("")}</div>`;
     scanTarget = due.length ? due[0].a : null; if (due.length) btn = `Start: ${AREAS[due[0].a].label} scan (${mins(due[0].a)})`;
   } else {
     txt = p === "launch" ? "6 of 6 baseline scans done" : "";
@@ -661,10 +673,6 @@ const escH = t => String(t ?? "").replace(/[&<>"']/g, c => ({"&": "&amp;", "<": 
 const me = () => CREW.find(c => c.id === APP.active) || CREW[0];
 const worstOf = st => st.some(x => x.l === "urgent") ? "urgent" : st.some(x => x.l === "watch") ? "watch" : "ok";
 const WORD = {ok: "Doing well", watch: "Worth a look", urgent: "Needs attention"};
-function slotEnd(a, i) { return SCHED[a][i + 1] ?? Infinity; }
-function fillScheduled() { const now = Date.now();
-  for (const a in SCHED) SCHED[a].forEach((x, i) => { if (x >= LAND() - 1) return;
-    if (!S.scans.some(s => s.mission === S.mission && s.area === a && s.day >= x && s.day < slotEnd(a, i))) S.scans.push({area: a, at: now, reply: "normal", repliedAt: now, mission: S.mission, day: x, seed: true}); }); }
 function seedFor(c) { const m = S.mission; S.seeded = S.seeded || {}; if (S.seeded[m]) return; S.seeded[m] = true;
   const now = Date.now();
   for (let i = 1; i <= 30; i++) { const r = realRow(-i, c.idx) || {}, l = S.log[`${m}:${-i}`] = S.log[`${m}:${-i}`] || {};
@@ -672,7 +680,6 @@ function seedFor(c) { const m = S.mission; S.seeded = S.seeded || {}; if (S.seed
       sbp: 112 + c.idx * 3 + (i * 5) % 8, dbp: 72 + c.idx + (i * 3) % 5, temp: Math.round(365 + i % 3) / 10, glu: 86 + c.idx * 2 + (i * 11) % 9};
     l.rt = 270 + c.idx * 15 + (i * 13) % 30; l.done = {train: true}; if (i === 10) l.stand = {hr: 6 + c.idx * 2, sbpDrop: 4}; }
   Object.keys(AREAS).forEach((a, i) => S.scans.push({area: a, at: now, reply: "normal", repliedAt: now, mission: m, day: -(20 - i * 2), seed: true}));
-  fillScheduled();
 }
 const ensureSeeded = () => CREW.forEach(c => withMember(c.id, () => seedFor(c)));
 function realRow(d, idx = (CREW.find(c => APP.crew[c.id] === S) || me()).idx) { const rows = (D.crew && D.crew[idx] && D.crew[idx].days) || [], n = rows.length; if (!n) return null;
@@ -681,14 +688,14 @@ function realFill(d = day()) { const l = L(d); if (l.daily) return l.daily; cons
   l.daily = {sleep: Math.round(r.sleep_min / 60 * 10) / 10, mood: r.mood ? Math.max(1, Math.min(5, Math.round(r.mood))) : Math.round(b.mood), hr: r.rhr ? Math.round(r.rhr) + 4 : b.hr, sbp: b.sbp, dbp: b.dbp, temp: b.temp, glu: b.glu, date: r.date, real: true};
   return l.daily; }
 function ensureDaily() { realFill(); const b = base(); if (!L().daily) L().daily = {sleep: b.sleep, mood: 4, hr: b.hr, sbp: b.sbp, dbp: b.dbp, temp: b.temp, glu: b.glu}; return L().daily; }
-function missTarget() { if (!inFlight()) return null; const c = schedule().filter(x => x.d <= day() - 4 && x.done); return c.length ? c[c.length - 1] : null; }
+function missTarget() { if (!inFlight()) return null; for (let x = day() - 4; x >= 1; x--) { const t = slot(x); if (t.done) return t; } return null; }
 const SIMS = [
   {id: "sleep", l: "watch", t: "Short sleep"}, {id: "hr", l: "watch", t: "Heart rate off normal"}, {id: "rt", l: "watch", t: "Slow reflexes"},
   {id: "scanf", l: "watch", t: "Scan needs a follow-up"}, {id: "miss", l: "watch", t: "Missed a required scan"},
   {id: "vital", l: "urgent", t: "Vital sign outside safe limits"}, {id: "scanu", l: "urgent", t: "Scan: doctors want a call now"}];
 function simOff(id) { if (id === "rt" && phase() === "training") return "Reflexes are only compared with your normal after launch."; if (id === "miss" && !missTarget()) return "Only in flight, at least 4 days after a scheduled scan."; return ""; }
 function simulate(id) { const now = Date.now(), b = base(); CALV++;
-  if (id === "clear") { const l = L(); delete l.daily; delete l.rt; S.scans = S.scans.filter(s => !(s.sim && s.mission === S.mission && s.day <= day())); S.msgs = S.msgs.filter(m => !(m.sim && m.mission === S.mission)); fillScheduled(); ensureDaily(); return; }
+  if (id === "clear") { const l = L(); delete l.daily; delete l.rt; S.scans = S.scans.filter(s => !(s.sim && s.mission === S.mission && s.day <= day())); S.msgs = S.msgs.filter(m => !(m.sim && m.mission === S.mission)); if (S.missed) Object.keys(S.missed).forEach(k2 => { if (k2.startsWith(S.mission + ":")) delete S.missed[k2]; }); ensureDaily(); return; }
   if (simOff(id)) return;
   const d = ensureDaily();
   if (["sleep", "hr", "vital"].includes(id)) d.sim = true;
@@ -696,11 +703,12 @@ function simulate(id) { const now = Date.now(), b = base(); CALV++;
   if (id === "hr") d.hr = Math.round(b.hr + 24);
   if (id === "rt") L().rt = Math.round(b.rt * 1.3);
   if (id === "vital") { d.hr = 136; const n0 = S.msgs.length; autoVitals(); S.msgs.slice(n0).forEach(m => { m.sim = true; }); }
-  if (id === "scanf" || id === "scanu") { const area = id === "scanf" ? "eyes" : "neck", reply = id === "scanf" ? "followup" : "urgent";
-    S.scans.push({area, at: now, reply, repliedAt: now, mission: S.mission, day: day(), sim: true});
+  if (id === "scanf" || id === "scanu") { const reply = id === "scanf" ? "followup" : "urgent"; let x = day(); while (x >= 1 && !slotDone(x)) x--;
+    const area = x >= 1 ? scanFor(x) : id === "scanf" ? "eyes" : "neck", sd = x >= 1 ? x : day();
+    S.scans.push({area, at: now, reply, repliedAt: now, mission: S.mission, day: sd, sim: true});
     S.msgs.push({me: false, sim: true, mission: S.mission, at: now, text: reply === "followup" ? `Thanks for the ${AREAS[area].label.toLowerCase()} scan. We'd like a follow-up scan next week.` : `Please call us at the next opportunity about your ${AREAS[area].label.toLowerCase()} scan.`}); }
-  if (id === "miss") { const x = missTarget(), i = SCHED[x.a].indexOf(x.d), end = slotEnd(x.a, i);
-    S.scans = S.scans.filter(s => !(s.mission === S.mission && s.area === x.a && s.day >= x.d && s.day < end)); } }
+  if (id === "miss") { const x = missTarget(); S.missed = S.missed || {}; S.missed[missKey(x.d)] = true;
+    S.scans = S.scans.filter(s => !(s.mission === S.mission && s.area === x.a && s.day >= x.d && s.day < x.d + 5)); } }
 const issueText = x => x.spots && x.spots.length ? x.spots.map(y => y[2]).join(" · ") : cap(x.what);
 const SEEN = {}; let ALERT = {list: [], fresh: new Set()};
 const akey = x => x.l + "|" + x.what;
@@ -753,10 +761,9 @@ function refreshAstra() {
     return {id: c.id, name: c.name, sex: c.sex, age: c.age, height: c.height, weight: c.weight, role: c.role, source: (D.crew && D.crew[c.idx] && D.crew[c.idx].source) || "",
       base: Object.assign({}, base()), status: w, statusText: st.length ? `${WORD[w]}: ${cap(st[0].what)}${st.length > 1 ? ` (and ${st.length - 1} more)` : ""}` : "Nothing off their normal today", issues: st.map(x => ({l: x.l, what: x.what})),
       today: (dd => dd ? {sleep: dd.sleep, mood: dd.mood, hr: dd.hr, date: dd.date || null} : null)(L().daily)}; })),
-    live: {id: "c1"}, activeId: APP.active, dayChip: dayChip(), phase: phase(), mission: S.mission}; }
+    activeId: APP.active, dayChip: dayChip(), phase: phase(), mission: S.mission}; }
 let CALV = 0; const CAL = {};
 function calMarks() { const L1 = LAND(), m = {}; m[-30] = "Training"; m[0] = "Launch"; m[1] = "Arrival";
-  Object.entries(SCHED).forEach(([a, xs]) => xs.forEach(x => { if (x < L1 - 1) m[x] = a[0].toUpperCase() + a.slice(1) + " scan"; }));
   m[L1 - 1] = "Last day"; m[L1] = mars() ? "Mars landing" : "Landing"; m[L1 + 3] = mars() ? "On Mars" : "Recovery"; return m; }
 function calLevels() { const k2 = `${APP.active}:${S.mission}:${S.scans.length}:${S.msgs.length}:${CALV}`;
   if (CAL[APP.active] && CAL[APP.active].k === k2) return CAL[APP.active].v;
@@ -771,7 +778,8 @@ const shortChip = x => x < 0 ? `L−${-x}` : x === 0 ? "L−0" : x < LAND() ? `D
 const calRange = () => [ymOf(dateOf(-30)), ymOf(dateOf(LAND() + 3))];
 let CALYM = 0;
 function renderCalBtn() { const d = day(), ml = calMarks()[d];
-  $("#calPick .cb-day").textContent = dayChip(d); $("#calPick .cb-sub").textContent = (ml ? ml + " · " : "") + fmtDay(dateOf(d)); }
+  const sa = scanFor(d); $("#calPick .cb-day").textContent = dayChip(d); $("#calPick .cb-sub").textContent = (ml ? ml + " · " : sa ? AREAS[sa].label + " scan · " : "") + fmtDay(dateOf(d)); }
+const calDesc = x => { const ml = calMarks()[x], sa = scanFor(x); return [ml, sa ? AREAS[sa].label + " scan" : ""].filter(Boolean); };
 function renderCal() { const [lo, hi] = calRange(); CALYM = Math.max(lo, Math.min(hi, CALYM));
   const y = Math.floor(CALYM / 12), mo = CALYM % 12, L1 = LAND(), d = day(), m = calMarks(), lv = calLevels();
   const first = Date.UTC(y, mo, 1) / DAY, n = new Date(Date.UTC(y, mo + 1, 0)).getUTCDate(), lead = (new Date(first * DAY).getUTCDay() + 6) % 7;
@@ -781,28 +789,25 @@ function renderCal() { const [lo, hi] = calRange(); CALYM = Math.max(lo, Math.mi
   for (let i = 1; i <= n; i++) { const x = first + i - 1 - S.launch, inR = x >= -30 && x <= L1 + 3;
     if (!inR) { h += `<button class="cal-day out" data-day="${x}" type="button" disabled aria-label="${i} ${MONTHS[mo]} ${y}"><b>${i}</b><small></small><i></i></button>`; continue; }
     const ml = m[x], ph = x < 0 ? "training" : x < L1 ? "flight" : "return", l = lv[x] && lv[x] !== "ok" ? " " + lv[x] : "";
-    h += `<button class="cal-day${x === d ? " on" : ""}${ml ? " ms" : ""}${l} ph-${ph}" data-day="${x}" type="button" title="${dayChip(x)}${ml ? " · " + ml : ""}" aria-label="${i} ${MONTHS[mo]} ${y}, ${dayChip(x)}${ml ? ", " + ml : ""}"${x === d ? ' aria-current="date"' : ""}><b>${i}</b><small>${shortChip(x)}</small><i></i></button>`; }
+    h += `<button class="cal-day${x === d ? " on" : ""}${ml ? " ms" : ""}${l} ph-${ph}" data-day="${x}" type="button" title="${[dayChip(x), ...calDesc(x)].join(" · ")}" aria-label="${[`${i} ${MONTHS[mo]} ${y}`, dayChip(x), ...calDesc(x)].join(", ")}"${x === d ? ' aria-current="date"' : ""}><b>${i}</b><small>${shortChip(x)}</small><i></i></button>`; }
   h += '<span class="cal-blank"></span>'.repeat((7 - (lead + n) % 7) % 7);
   $("#calGrid").innerHTML = h;
   $("#calMs").innerHTML = Object.keys(m).map(Number).sort((a, b) => a - b).map(x => `<button class="cal-chip" data-day="${x}" type="button">${/ scan$/.test(m[x]) ? `${m[x]} · D${x}` : m[x]}</button>`).join(""); }
 function openCal() { CALYM = ymOf(dateOf(day())); renderCal(); $("#calPop").hidden = false; $("#calBtn").setAttribute("aria-expanded", "true");
   const f = $("#calGrid .cal-day.on") || $("#calGrid .cal-day:not([disabled])"); if (f) f.focus(); }
 function closeCal(focus) { const p = $("#calPop"); if (!p || p.hidden) return; p.hidden = true; $("#calBtn").setAttribute("aria-expanded", "false"); if (focus) $("#calBtn").focus(); }
-function renderBars() { const A = window.ASTRA, cmp = APP.view === "compare", lv = APP.view === "live";
+function renderBars() { const A = window.ASTRA, cmp = APP.view === "compare";
   const ini = n => n.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase(), SW = {ok: "OK", watch: "Worth a look", urgent: "Needs attention"};
   const who = c => `<span class="av">${ini(c.name)}</span><span class="who"><span class="nm">${c.name}</span><span class="rl">${c.role} · ${c.sex.toUpperCase()}</span></span>`, cur = A.crew.find(c => c.id === APP.active);
-  $("#crewBtn").innerHTML = (lv ? `<span class="av">LV</span><span class="who"><span class="nm">Live monitor</span></span>` : cmp || !cur ? `<span class="av">4</span><span class="who"><span class="nm">Compare crew</span></span>` : who(cur) + `<span class="dot ${cur.status}" title="${SW[cur.status]}"></span><span class="sr">${SW[cur.status]}</span>`) + `<span class="chev" aria-hidden="true"></span>`;
-  $("#crewMenu").innerHTML = A.crew.map(c => `<button class="crewopt" role="option" data-id="${c.id}" aria-selected="${!cmp && !lv && c.id === APP.active}">${who(c)}<span class="st ${c.status}"><span class="dot ${c.status}"></span>${SW[c.status]}</span></button>`).join("")
-    + `<button class="crewopt live" role="option" data-id="live" aria-selected="${lv}"><span class="av">LV</span><span class="who"><span class="nm">Live monitor</span><span class="rl">Maya Ortiz · heart rate now</span></span><span class="st"><span class="dot ok"></span>Live</span></button>`
+  $("#crewBtn").innerHTML = (cmp || !cur ? `<span class="av">4</span><span class="who"><span class="nm">Compare crew</span></span>` : who(cur) + `<span class="dot ${cur.status}" title="${SW[cur.status]}"></span><span class="sr">${SW[cur.status]}</span>`) + `<span class="chev" aria-hidden="true"></span>`;
+  $("#crewMenu").innerHTML = A.crew.map(c => `<button class="crewopt" role="option" data-id="${c.id}" aria-selected="${!cmp && c.id === APP.active}">${who(c)}<span class="st ${c.status}"><span class="dot ${c.status}"></span>${SW[c.status]}</span></button>`).join("")
     + `<button class="crewopt cmp" role="option" data-id="compare" aria-selected="${cmp}"><span class="av">4</span><span class="who"><span class="nm">Compare crew</span><span class="rl">All four side by side</span></span></button>`;
   renderCalBtn(); if (!$("#calPop").hidden) renderCal();
   $("#simMenu").innerHTML = SIMS.map(x => { const off = simOff(x.id); return `<button class="simbtn ${x.l}" data-sim="${x.id}"${off ? ` disabled title="${off}"` : ""}><span class="dot ${x.l}"></span>${x.t}</button>`; }).join("")
     + `<button class="simbtn clear" data-sim="clear">Clear today's issues</button><span class="simtag">Simulated</span>`;
   $("#mission").value = S.mission; $("#dReply").value = S.reply; }
-function renderView() { const lv = APP.view === "live", cmp = APP.view === "compare";
-  ["#crewGrid", "#crewMain", "#alerts"].forEach(s => { $(s).style.display = cmp || lv ? "none" : ""; });
-  $("#calPick").hidden = lv; $("#simPick").hidden = lv; if (lv) closeCal(false); $("#alerts").hidden = lv;
-  const lvEl = $("#liveView"), wasLive = !lvEl.hidden; lvEl.hidden = !lv; if (lv && !wasLive && window.renderLive) window.renderLive(lvEl, window.ASTRA); if (!lv && wasLive && window.stopLive) window.stopLive();
+function renderView() { const cmp = APP.view === "compare";
+  ["#crewGrid", "#crewMain", "#alerts"].forEach(s => { $(s).style.display = cmp ? "none" : ""; });
   $("#compareView").hidden = !cmp; if (cmp && window.renderCompare) window.renderCompare($("#compareView"), window.ASTRA); }
 const setDay = x => { S.travel = Math.max(-60, Math.min(LAND() + 30, x)) + S.launch - todayIdx(); S.open = null; render(); };
 
@@ -859,7 +864,7 @@ const PH_DEF = {training: [7.5, 62, 118, 76, 36.6, 90], launch: [6, 70, 124, 80,
 const STEP = {
   welcome1: () => ({ill: I.hand, title: "Hi, I'm ASTRA", sub: "I help you notice changes in your body, from your first training day to the day you're home. I compare you with you, not with anyone else."}),
   welcome2: () => ({ill: I.lock, title: "Your data is yours", sub: "Your check-ins stay with you. Scan images and anything that could affect your safety go to your flight surgeon, and you'll always see exactly what was sent."}),
-  welcome3: () => ({ill: I.list, title: "How it works", html: `<div class="check"><span>1</span>During training: a short check every day builds your normal, plus 6 baseline scans.</div><div class="check"><span>2</span>One last check before you board, one when you arrive.</div><div class="check"><span>3</span>In space: 90 seconds a day, monitoring runs on its own, and I guide every scan.</div><div class="check"><span>4</span>One check before you go home, and one when you land.</div>`}),
+  welcome3: () => ({ill: I.list, title: "How it works", html: `<div class="check"><span>1</span>During training: a short check every day builds your normal, plus 6 baseline scans.</div><div class="check"><span>2</span>One last check before you board, one when you arrive.</div><div class="check"><span>3</span>In space: 90 seconds a day, monitoring runs on its own, and I guide every scan. One guided scan each day, five areas in rotation.</div><div class="check"><span>4</span>One check before you go home, and one when you land.</div>`}),
   d1: () => { const v = (PH_DEF[phase()] || PH_DEF.training)[0];
     return {title: "How long did you sleep?", html: `<div class="bigval"><span id="slv">${v}</span> h</div><input type="range" id="sl" min="3" max="10" step=".5" value="${v}">`, init() { $("#sl").oninput = e => $("#slv").textContent = e.target.value; }, save() { scratch.sleep = +$("#sl").value; }}; },
   d2: () => ({title: "How are you feeling?", sub: "Only you see this.", needs: !scratch.mood, html: `<div class="faces" id="fc">${["Very low", "Low", "Okay", "Good", "Great"].map((e, i) => `<button data-v="${i + 1}" class="${scratch.mood === i + 1 ? "on" : ""}" aria-label="${["Very low", "Low", "Okay", "Good", "Great"][i]}">${e}</button>`).join("")}</div>`,
@@ -953,7 +958,7 @@ $("#simBtn").onclick = e => { e.stopPropagation(); toggleMenu("#simMenu", "#simB
 document.addEventListener("click", e => { if (!e.target.closest(".crewpick") && !e.target.closest(".simpick") && !e.target.closest(".calpick")) closeMenus(); });
 document.addEventListener("keydown", e => { if (e.key === "Escape") { const wasOpen = !$("#calPop").hidden; closeMenus(); if (wasOpen) $("#calBtn").focus(); } });
 $("#crewMenu").onclick = e => { const t = e.target.closest("[data-id]"); if (!t) return; const id = t.dataset.id; closeMenus();
-  if (id === "compare" || id === "live") APP.view = id;
+  if (id === "compare") APP.view = id;
   else { const n = APP.crew[id]; SHARED.forEach(k2 => { n[k2] = S[k2]; }); S = n; APP.active = id; APP.view = "crew"; S.open = null; }
   render(); };
 $("#calPick").onclick = e => { e.stopPropagation(); const st = e.target.closest("[data-step]"), nav = e.target.closest("[data-m]"), dd = e.target.closest("[data-day]");
@@ -970,8 +975,8 @@ render();
 window.addEventListener("load", () => { window.renderGuide && window.renderGuide(document.getElementById("guideStrip")); renderView(); });
 })();
 </script>
+<script src="chart.js"></script>
 <script src="compare.js"></script>
-<script src="live.js"></script>
 <script src="feeds.js"></script>
 <script src="datacard.js"></script>
 <script src="checkin.js"></script>

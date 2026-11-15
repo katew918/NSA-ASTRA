@@ -17,7 +17,6 @@ It compares a crew member with their own normal, from training on Earth through 
 | `datacard.js` | The Data box: tabs, graphs, time range and the table of numbers |
 | `feeds.js` | Live fetches: NASA ISS Live, NASA DONKI, NOAA SWPC GOES, station position |
 | `checkin.js` | The mood check-in: five fixed questions in a scripted personal voice, with an optional read-aloud using the browser's built-in speech |
-| `live.js` | The live monitor page (replays a real heart-rate recording) |
 | `compare.js`, `compare.css` | The "How ASTRA works" strip and the "Compare crew" tab |
 | `data.js` | Demo and reference data loaded by the page |
 
@@ -29,9 +28,9 @@ Everything stays in the browser on that device. There is no sign-in and nothing 
 
 ## How to try it
 
-1. Pick a crew member from the dropdown at the top right (four people, "Live monitor" and "Compare crew").
+1. Pick a crew member from the dropdown at the top right (four people and "Compare crew").
 2. Pick a mission day, from training to recovery.
-3. Press a "Simulate an issue" button and watch the status turn amber or red.
+3. Press "Demo · trigger an alert" at the bottom right and watch the status turn amber or red.
 
 ## Data and sources
 
