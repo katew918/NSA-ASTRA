@@ -16,7 +16,8 @@ const DAY_LABEL = /^(Day \d{1,5}|L[\u2212-]\d{1,5}|[MR]\+\d{1,5})$/;
 const ROLE = /^[A-Za-z][A-Za-z -]{0,29}$/;
 const MAX_HISTORY = 2;
 const NAME_RATE = 0.35;
-const DENY = ["diagnos", "disorder", "depress", "anxiety", "medicat", "prescri", "therap", "suicid", "as an ai", "language model", "chatbot", "should", "you need", "try to", "doctor"];
+const DENY = ["diagnos", "disorder", "depress", "anxiety", "medicat", "prescri", "therap", "suicid", "as an ai", "language model", "chatbot"];
+const DENY_WORDS = /\b(should|you need|try to|doctor)\b/;
 const hits = new Map();
 
 function send(res, status, body) {
@@ -176,6 +177,7 @@ function acceptable(s, name) {
   if (/[?\uff1f]/.test(s) || /\d/.test(s)) return false;
   if (/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(s)) return false;
   const low = (name ? s.split(name).join(" ") : s).toLowerCase();
+  if (DENY_WORDS.test(low)) return false;
   return !DENY.some(function (w) { return low.includes(w); });
 }
 
