@@ -794,3 +794,66 @@ body{font-variant-numeric:normal}
 #guideStrip .g-card.is-hidden{padding:12px 20px}
 .links label.sub{flex:1 1 100%;flex-direction:column;gap:6px}
 }
+
+.holo .tip,.holo .tip.below{transform:none}
+.holo .tip{max-width:min(280px,calc(100% - 8px))}
+.hero .hgrid>div:first-child,.hero .holo{padding:28px}
+.hero .hello{font-size:44px;margin:12px 0 18px}
+.hero .mood{margin-bottom:12px}
+.hero .datachip{margin-bottom:28px}
+.hero .nextcard{padding:20px}
+.holo .hrow{gap:12px}
+.holo .hstats div{display:flex;flex-direction:column-reverse;align-items:center;gap:2px}
+.holo .lvl span{font-size:11px}
+.holo .hbtn{display:inline-flex;align-items:center;height:36px;padding:0 16px}
+.hero #alerts.alertbox{margin-bottom:18px}
+.alertbox .alert{padding:12px 18px;border-left:0}
+.alertbox .alert .sev::before{content:"";display:inline-block;width:8px;height:8px;margin-right:8px;border-radius:50%;background:var(--amber);vertical-align:1px}
+.alertbox .alert.urgent .sev::before{background:var(--red)}
+.bar .calpop{width:min(344px,calc(100vw - 32px));padding:16px}
+.calpop .cal-dow span{font-size:11.5px}
+.calpop .cal-day,.calpop .cal-blank{height:46px}
+.calpop .cal-day{gap:1px}
+.calpop .cal-day b{font-size:14px}
+.calpop .cal-day small{font-size:10px;letter-spacing:0}
+.calpop .cal-day i{right:4px;top:4px;width:7px;height:7px}
+.calpop .cal-chip{height:32px;padding:0 13px;font-size:12.5px}
+.calpop .cal-key{font-size:12px}
+.hero #guideStrip{margin:0 0 18px;font-family:inherit}
+.hero #guideStrip .g-card{padding:22px 28px;border:0;border-radius:22px;box-shadow:none}
+.hero #guideStrip .g-card.is-hidden{padding:14px 28px}
+.hero #guideStrip h2{font-size:16px;font-weight:500;letter-spacing:-.01em;text-transform:none;color:var(--ink)}
+.hero #guideStrip .g-toggle{height:32px;padding:0 14px;border-radius:999px;font-size:12.5px;font-weight:500;color:var(--ink)}
+.hero #guideStrip .g-toggle:hover{background:var(--soft)}
+.hero #guideStrip .g-steps{margin-top:14px;gap:20px}
+.hero #guideStrip .g-n{width:26px;height:26px;margin-top:-2px;background:var(--soft);color:var(--navy);font-size:12.5px;font-weight:500}
+.hero #guideStrip .g-steps b{font-weight:500}
+.hero #guideStrip .g-steps p{line-height:1.45}
+@media (min-width:861px){
+.hero .hello{font-size:clamp(34px,4vw,52px);line-height:1.08;letter-spacing:-.04em;margin:14px 0 22px}
+.hero .hello span{display:block}
+.hero .nextcard{flex:1 1 auto;display:flex;margin-top:0;padding:24px}
+.hero .next{flex:1 1 auto;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:1fr auto;align-items:end;gap:16px 14px}
+.hero .next .ic{grid-column:1 / -1;align-self:start;justify-self:start;width:44px}
+.hero .next .tx b{font-size:24px;font-weight:400;letter-spacing:-.02em}
+}
+@media (min-width:700px) and (max-width:980px){
+.hero .bar .top{height:68px;flex-wrap:nowrap;padding:0}
+.hero .bar .topr{flex:0 1 auto;flex-wrap:nowrap;justify-content:flex-end}
+}
+@media (max-width:640px){
+.bar .topr>.crewpick{position:absolute;top:13px;right:46px;flex:0 0 auto;max-width:calc(100% - 160px)}
+.bar .crewbtn{width:auto;max-width:100%}
+.bar #helpBtn{position:absolute;top:13px;right:0}
+.bar .crewmenu{left:auto;right:-46px}
+.bar .calpick{flex:1 1 auto}
+.bar .calbtn{flex:1 1 auto;justify-content:space-between}
+.hero .hgrid>div:first-child,.hero .holo{padding:20px}
+.hero .hello{font-size:32px;margin:10px 0 16px}
+.hero .datachip{margin-bottom:22px}
+.hero .nextcard{padding:18px}
+.holo .lvl span{font-size:10px}
+.holo .hsrc>span:last-child{flex:1 1 100%}
+.holo .hsrc .hbtn{flex:1 1 0;justify-content:center}
+.alertbox .alert .what,.alertbox .alert .route{flex:1 1 100%}
+}
