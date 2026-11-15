@@ -929,3 +929,23 @@ body{font-variant-numeric:normal}
 @media (max-width:640px){.simtoggle .lbl-long{display:none}.simtoggle .lbl-short{display:inline}}
 button.tk-main{background:none;border:0;padding:4px 0;margin:0;font:inherit;color:inherit;text-align:left;cursor:pointer;width:100%}
 button.tk-main:hover .tk-name{color:var(--brand)}
+.mon-tabs{display:flex;gap:2px;padding:4px;background:var(--soft);border-radius:999px;margin-bottom:12px;overflow-x:auto;scrollbar-width:none}
+.mon-tabs::-webkit-scrollbar{display:none}
+.mon-tab{flex:1 0 auto;display:inline-flex;align-items:center;justify-content:center;gap:7px;height:34px;padding:0 14px;border:0;border-radius:999px;background:none;color:var(--muted);font:inherit;font-size:13px;font-weight:500;white-space:nowrap;cursor:pointer}
+.mon-tab:hover{color:var(--ink)}
+.mon-tab[aria-selected="true"]{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(27,39,61,.1)}
+.mon-tab .dot{width:7px;height:7px}
+.mon-list{display:grid}
+.mon-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:4px 12px;padding:11px 2px;border-top:1px solid var(--line)}
+.mon-row:first-child{border-top:0}
+.mon-main{display:flex;flex-direction:column;min-width:0;line-height:1.3}
+.mon-name{font-size:14.5px;font-weight:500}
+.mon-meta{font-size:12px;color:var(--muted)}
+.mon-src{grid-column:1;grid-row:2;justify-self:start;font-size:11px;color:var(--muted);padding:1px 8px;border-radius:999px;background:var(--soft)}
+.mon-state{grid-column:2;grid-row:1 / span 2;font-size:12.5px;color:var(--muted);white-space:nowrap;padding:3px 10px;border-radius:999px;background:var(--soft)}
+.mon-go{grid-column:3;grid-row:1 / span 2}
+.mon-row.done .mon-state{background:var(--ok-soft);color:var(--ok)}
+.mon-row.due .mon-state{background:var(--brand-soft);color:var(--brand)}
+.mon-row.overdue .mon-state{background:var(--watch-soft);color:var(--watch)}
+#scanOther{display:block;margin:14px auto 0}
+@media (max-width:640px){.mon-row{grid-template-columns:minmax(0,1fr) auto}.mon-go{grid-column:1 / -1;grid-row:auto;justify-self:start}.mon-state{grid-row:1}}
