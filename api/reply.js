@@ -185,9 +185,32 @@ function provider() {
   return null;
 }
 
+function scrub(s, key) {
+  let t = String(s || "");
+  if (key) t = t.split(key).join("");
+  t = t.replace(/sk-[A-Za-z0-9_-]{8,}/g, "").replace(/Bearer\s+\S+/gi, "Bearer");
+  return clean(t, 160);
+}
+
+function upstreamDetail(text, key) {
+  let msg = "";
+  try {
+    const j = JSON.parse(text);
+    if (j && j.error && typeof j.error.message === "string") msg = j.error.message;
+    else if (j && typeof j.error === "string") msg = j.error;
+  } catch (e) {}
+  return scrub(msg || String(text || "").slice(0, 400), key);
+}
+
+function fallback(why, detail) {
+  const out = {fallback: true, why: why || "unknown"};
+  if (detail) out.detail = detail;
+  return out;
+}
+
 async function askModel(v, useName) {
   const p = provider();
-  if (!p) return "";
+  if (!p) return {text: "", why: "nokey"};
   const key = p.key, base = p.base, model = p.model;
   const ctrl = new AbortController();
   const timer = setTimeout(function () { ctrl.abort(); }, TIMEOUT_MS);
@@ -207,12 +230,22 @@ async function askModel(v, useName) {
         ]
       }, p.deepseek ? {thinking: {type: "disabled"}} : {}))
     });
-    if (!r.ok) return "";
+    if (!r.ok) {
+      let text = "";
+      try { text = await r.text(); } catch (e) {}
+      return {text: "", why: "upstream_" + r.status, detail: upstreamDetail(text, key)};
+    }
     const j = await r.json();
-    const msg = j && j.choices && j.choices[0] && j.choices[0].message;
-    return msg && typeof msg.content === "string" ? msg.content : "";
+    const choice = j && j.choices && j.choices[0];
+    const msg = choice && choice.message;
+    const finish = choice && typeof choice.finish_reason === "string" ? "finish_reason=" + scrub(choice.finish_reason, key) : "";
+    if (msg && typeof msg.content === "string" && msg.content.trim()) return {text: msg.content};
+    const reasoning = msg && typeof msg.reasoning_content === "string" && msg.reasoning_content.trim();
+    return {text: "", why: reasoning ? "empty_reasoning_only" : "empty", detail: finish};
   } catch (e) {
-    return "";
+    if (ctrl.signal.aborted || (e && e.name === "AbortError")) return {text: "", why: "timeout"};
+    const code = e && e.cause && typeof e.cause.code === "string" ? " " + e.cause.code : "";
+    return {text: "", why: "network", detail: scrub((e && e.name ? e.name : "Error") + code, key)};
   } finally {
     clearTimeout(timer);
   }
@@ -232,11 +265,13 @@ async function handler(req, res) {
     try { body = typeof req.body === "object" && req.body !== null && !Buffer.isBuffer(req.body) ? req.body : JSON.parse(raw); } catch (e) { return send(res, 400, {error: "bad request"}); }
     const v = validate(body);
     if (!v) return send(res, 400, {error: "bad request"});
-    const say = tidy(await askModel(v, Math.random() < NAME_RATE));
-    if (!acceptable(say, v.name)) return send(res, 200, {fallback: true});
+    const out = await askModel(v, Math.random() < NAME_RATE);
+    if (!out.text) return send(res, 200, fallback(out.why, out.detail));
+    const say = tidy(out.text);
+    if (!acceptable(say, v.name)) return send(res, 200, fallback("rejected", scrub(say)));
     return send(res, 200, {say});
   } catch (e) {
-    return send(res, 200, {fallback: true});
+    return send(res, 200, fallback("error", e && e.name ? scrub(e.name) : ""));
   }
 }
 
