@@ -168,12 +168,35 @@
   function me() { return crewById(A.APP.active) || crew()[0]; }
   function linkState(t) {
     var pl = A.plan ? A.plan() : [];
-    if (t.link === "health") { var h = pl.find(function (x) { return x.flow && x.flow[0] === "daily"; }); return {done: h ? !!h.done : false, open: function () { if (h) A.openFlow(h.flow, h.id); }}; }
+    var lg = A.L ? A.L() : {}, dn = lg.done || {};
+    if (t.link === "health") { var h = pl.find(function (x) { return x.flow && x.flow[0] === "daily"; }); return {done: !!lg.checkDone || (h ? !!h.done : false), open: function () { if (h) A.openFlow(h.flow, h.id); }}; }
     if (t.link === "conf") { var cf = pl.find(function (x) { return x.id === "conf"; }); return {done: cf ? !!cf.done : true, open: function () { if (A.markConf) A.markConf(); }}; }
-    if (t.link === "cog") { var cg = pl.find(function (x) { return x.id === "cog"; }); return {done: !cg, open: function () { A.openFlow(["rt", "fin"], "cog"); }}; }
+    if (t.link === "cog") { return {done: !!(lg.rt && dn.cog), open: function () { A.openFlow(["rt", "fin"], "cog"); }}; }
     if (t.link === "bscan") { var b = pl.find(function (x) { return x.id === "bscan"; }); return {done: !b, open: function () { A.openFlow(b ? b.flow : ["scan:" + t.area], null); }}; }
-    var s = pl.find(function (x) { return x.id !== "bscan" && x.flow && x.flow[0] === "scan:" + t.area; });
-    return {done: !s, open: function () { A.openFlow(["scan:" + t.area], null); }};
+    var S = A.S || {}, d0 = A.day();
+    return {done: (S.scans || []).some(function (x) { return x.mission === S.mission && x.area === t.area && x.day === d0; }), open: function () { A.openFlow(["scan:" + t.area], null); }};
+  }
+
+  var toastT = 0, toastO = 0;
+  function toast(msg) {
+    var old = document.querySelector(".toast"); if (old) old.remove();
+    clearTimeout(toastT); clearTimeout(toastO);
+    var el = document.createElement("div"); el.className = "toast"; el.setAttribute("role", "status"); el.textContent = msg;
+    document.body.appendChild(el);
+    toastO = setTimeout(function () { el.classList.add("out"); }, 1950);
+    toastT = setTimeout(function () { el.remove(); }, 2200);
+  }
+  var seen = {key: "", st: {}};
+  function noteLinked(c, d, rows) {
+    var k = c.id + ":" + A.S.mission + ":" + d, fresh = seen.key !== k, st = {};
+    rows.forEach(function (t) {
+      if (!t.link || t.late || t.incoming || t.moved) return;
+      var on = linkState(t).done, was = seen.st[t.uid]; st[t.uid] = on;
+      if (fresh || was === undefined || was === on) return;
+      if (on) toast(t.name + (t.link === "scan" || t.link === "bscan" ? " sent" : " done"));
+      else if (t.link === "conf") toast(t.name + " not done");
+    });
+    seen = {key: k, st: st};
   }
 
   function nasaLim() {
@@ -186,6 +209,7 @@
   function renderTodayCard(c, d) {
     var box = $("#todayCard"); if (!box) return;
     var rows = list(c, d), g = gates(c, d), h = load(c, d, rows), pct = h / DAY_LIMIT_H;
+    noteLinked(c, d, rows);
     var lv = pct > 1.15 ? " urgent" : pct >= 1 ? " watch" : "";
     var sr = sinceRest(c, d), nextH = load(c, d + 1);
     var html = "<div class=\"chead\"><div class=\"th\"><h2>Today</h2><span class=\"simtag\">Simulated schedule</span></div>" +
@@ -269,15 +293,15 @@
     var act = b.classList.contains("tk-check") ? "check" : b.dataset.act || (b.classList.contains("tk-opt") ? "to" : "");
     var ls = t.link && !t.late && !t.incoming ? linkState(t) : null;
     if (act === "open" || (act === "check" && ls)) { if (ls) ls.open(); return; }
-    if (act === "check") { if (t.moved) return; var r = rec(c.id, d, true); if (r.done[uid]) delete r.done[uid]; else r.done[uid] = true; return changed(); }
+    if (act === "check") { if (t.moved) return; var r = rec(c.id, d, true); if (r.done[uid]) delete r.done[uid]; else r.done[uid] = true; changed(); return toast(t.name + (r.done[uid] ? " done" : " not done")); }
     if (act === "undo") { var r2 = rec(c.id, d, true); r2.ch = r2.ch.filter(function (x) { return x.uid !== uid; }); UI.menu = null; return changed(); }
     var g = gates(c, d); if (!g.can || t.locked || t.incoming || t.moved || t.cat === "Rest") return;
-    if (act === "delay" && !t.late && load(c, d + 1) + t.dur / 60 <= DAY_LIMIT_H) { rec(c.id, d, true).ch.push({type: "delay", uid: uid, task: snap(t), at: Date.now()}); UI.menu = null; return changed(); }
+    if (act === "delay" && !t.late && load(c, d + 1) + t.dur / 60 <= DAY_LIMIT_H) { rec(c.id, d, true).ch.push({type: "delay", uid: uid, task: snap(t), at: Date.now()}); UI.menu = null; changed(); return toast("Moved to tomorrow"); }
     if (act === "hand") { UI.menu = UI.menu === uid ? null : uid; UI.todayHTML = ""; renderToday(); var first0 = $(".tk-menu .tk-opt:not([disabled])"); if (first0) first0.focus(); return; }
     if (act === "to" && !b.disabled) {
       var o = crewById(b.dataset.to); if (!o || o.id === c.id) return;
       if (load(o, d) + t.dur / 60 > DAY_LIMIT_H || hardDay(o)) return;
-      rec(c.id, d, true).ch.push({type: "hand", uid: uid, to: o.id, task: snap(t), at: Date.now()}); UI.menu = null; return changed();
+      rec(c.id, d, true).ch.push({type: "hand", uid: uid, to: o.id, task: snap(t), at: Date.now()}); UI.menu = null; changed(); return toast("Handed to " + first(o.name));
     }
   }
 

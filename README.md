@@ -64,6 +64,8 @@ Fetched live when the page loads:
 | NOAA SWPC GOES | Proton flux for the last 24 hours | https://services.swpc.noaa.gov/json/goes/primary/integral-protons-1-day.json |
 | wheretheiss.at | The station's position now | https://api.wheretheiss.at/v1/satellites/25544 |
 
+The 3D body figure is the X Bot character by Mixamo (Adobe), loaded from the three.js examples.
+
 None of the thresholds have been validated in astronauts.
 
 ## Use of AI

@@ -334,7 +334,7 @@ input[type=text]:focus,input[type=number]:focus,input[type=date]:focus,input[typ
         </div>
         <div class="areas" id="areaList"></div>
         <div class="hstats" id="hstats"></div>
-        <div class="hsrc"><span class="live" id="liveTxt"></span><span style="display:flex;gap:6px"><button class="hbtn" id="enterBtn">Enter readings</button><button class="hbtn pri" id="connBtn">Connect</button></span></div>
+        <div class="hsrc"><span class="live" id="liveTxt"></span><span style="display:flex;gap:6px"><button class="hbtn pri" id="connBtn">Connect real equipment</button></span></div>
       </section>
     </div>
   </div>
@@ -493,17 +493,21 @@ const AREAS = {
 const mins = a => AREAS[a].time.replace(" with setup", "").replace("about ", "~");
 const longTime = a => AREAS[a].time.replace(" min", " minutes");
 const FINDINGS = [
-  {id: "eye_r", area: "eyes", site: "Back of the right eye", change: "Thicker than the pre-flight scan", pin: "eye_r"},
-  {id: "eye_l", area: "eyes", site: "Back of the left eye", change: "Thicker than the pre-flight scan", pin: "eye_l"},
-  {id: "neck_slow", area: "neck", site: "Left neck vein", change: "Blood flow slower than the last scan", pin: "neck_l"},
-  {id: "neck_noflow", area: "neck", site: "Left neck vein", change: "An area with no flow, not seen on the last scan", pin: "neck_l"},
-  {id: "heart_pump", area: "heart", site: "Left side of the heart", change: "Pumping less than the pre-flight scan", pin: "heart"},
-  {id: "lung_lines", area: "lungs", site: "Lower right lung", change: "Bright lines not seen on the last scan", pin: "lung_r_low"},
-  {id: "kidney_spot", area: "bladder", site: "Left kidney", change: "A bright spot not seen on the last scan", pin: "kidney_l"},
-  {id: "bladder_full", area: "bladder", site: "Bladder", change: "Fuller after emptying than the pre-flight scan", pin: "bladder"},
-  {id: "heel_bone", area: "legs", site: "Left heel bone", change: "Less dense than the pre-flight scan", pin: "heel_l"},
-  {id: "shin_bone", area: "legs", site: "Left shin bone", change: "Less dense than the pre-flight scan", pin: "shin_l"},
-  {id: "calf_vein", area: "legs", site: "Left calf vein", change: "Blood flow slower than the last scan", pin: "calf_l"}];
+  {id: "eye_r", area: "eyes", site: "Optic nerve head, right eye", change: "Thicker than the pre-flight scan", pin: "eye_r"},
+  {id: "eye_l", area: "eyes", site: "Optic nerve head, left eye", change: "Thicker than the pre-flight scan", pin: "eye_l"},
+  {id: "neck_slow", area: "neck", site: "Left internal jugular vein", change: "Blood flow slower than the last scan", pin: "neck_l"},
+  {id: "neck_noflow", area: "neck", site: "Left internal jugular vein", change: "A segment with no flow, not seen on the last scan", pin: "neck_l"},
+  {id: "heart_pump", area: "heart", site: "Left ventricle", change: "Pumping less than the pre-flight scan", pin: "heart"},
+  {id: "lung_lines", area: "lungs", site: "Right lower lobe of the lung", change: "B-lines not seen on the last scan", pin: "lung_r_low"},
+  {id: "kidney_spot", area: "bladder", site: "Left kidney", change: "A bright focus not seen on the last scan", pin: "kidney_l"},
+  {id: "bladder_full", area: "bladder", site: "Urinary bladder", change: "More urine left after emptying than on the pre-flight scan", pin: "bladder"},
+  {id: "heel_bone", area: "legs", site: "Left calcaneus (heel bone)", change: "Less dense than the pre-flight scan", pin: "heel_l"},
+  {id: "shin_bone", area: "legs", site: "Left tibia (shin bone)", change: "Less dense than the pre-flight scan", pin: "shin_l"},
+  {id: "calf_vein", area: "legs", site: "Left popliteal vein (behind the knee)", change: "Blood flow slower than the last scan", pin: "popliteal_l"}];
+const pinLbl = s => { const t = s.replace(/\s*\(.*?\)\s*/g, " ").trim(); return t.length > 28 ? t.slice(0, 27).trim() + "…" : t; };
+const spotOf = (a, l, st, fact, anchor, line) => [a, l, line || `${st}: ${fact}`, {anchor, label: pinLbl(st)}, st, fact];
+const BASE_SITE = {eyes: ["Optic nerve heads", "eye_r"], neck: ["Internal jugular veins", "neck_l"], heart: ["Left ventricle", "heart"], lungs: ["Lungs", "lung_r_low"], bladder: ["Kidneys and urinary bladder", "bladder"], legs: ["Leg bones and veins", "heel_l"], stand: ["Heart and leg veins (standing response)", "popliteal_l"]};
+const EXAM_SITE = {eyes: ["Optic nerve heads", "eye_r", "eyes"], neck: ["Internal jugular veins", "neck_l", "neck"], cog: ["Brain", "brain", "head"], legs: ["Popliteal veins (behind the knees)", "popliteal_l", "legs"]};
 const findById = id => FINDINGS.find(x => x.id === id) || null;
 const pickFinding = area => { const l = FINDINGS.filter(x => x.area === area); return l[Math.floor(Math.random() * l.length)].id; };
 const refDay = (area, before) => S.scans.reduce((r, s) => s.mission === S.mission && s.area === area && s.day >= 1 && s.day < before && s.day > r ? s.day : r, 0);
@@ -541,7 +545,7 @@ const missKey = (k, x) => `${S.mission}:${k}:${x}`;
 const isMissed = (k, x) => !!(S.missed && S.missed[missKey(k, x)]);
 const scanDone = (a, from, to = Infinity) => S.scans.some(s => s.mission === S.mission && s.area === a && s.day >= from && s.day < to && s.day <= day());
 function examRec(k, x) { const end = Math.min(occEnd(k, x), day() + 1); let r = null;
-  if (k === "cog") { for (let y = end - 1; y >= x && !r; y--) { const l = S.log[key(y)]; if (l && l.rt) r = {day: y}; } return r; }
+  if (k === "cog") { for (let y = end - 1; y >= x && !r; y--) { const l = S.log[key(y)]; if (l && l.rt && l.done && l.done.cog) r = {day: y}; } return r; }
   S.scans.forEach(s => { if (s.mission === S.mission && s.area === MON[k].a && s.day >= x && s.day < end) r = s; }); return r; }
 const examDone = (k, x) => !!examRec(k, x) || (x < day() && !isMissed(k, x));
 const confDone = (x = day()) => x < day() || !!((S.log[key(x)] || {}).done || {}).conf;
@@ -566,7 +570,7 @@ function scanState(area) {
 
 function plan() {
   const p = phase(), d = day(), l = L(), dn = l.done || {}, q = [];
-  const add = (id, ic, what, dur, when, why, flow, done = !!dn[id], req = false) => q.push({id, ic, what, dur, when, why, flow, done, req});
+  const add = (id, ic, what, dur, when, why, flow, done = !!dn[id], req = false) => q.push({id, ic, what, dur, when, why, flow, done: done || (flow[0] === "daily" && !!l.checkDone), req});
   if (p === "training") {
     add("train", "sun", "Training check", "about 5 minutes", "After waking", `Sleep, mood, vitals and the reflex game. Every training day sharpens your normal (${pl(baseInfo().n, "day")} recorded).`, ["daily", "rt", "fin"]);
     const miss = missingBase(); if (miss.length) add("bscan", "probe", `Baseline scan: ${AREAS[miss[0]].label}`, longTime(miss[0]), "During training", `Needed before launch, so your doctors can compare later. ${6 - miss.length} of 6 done.`, [`scan:${miss[0]}`], false, true);
@@ -592,28 +596,28 @@ function statuses() {
   realFill();
   const d = L().daily, b = base(), p = phase(), out = [];
   if (d) {
-    if (d.mood <= 2) out.push({l: "watch", what: "your mood is low today", private: true, spots: [["head", "watch", `Mood ${d.mood} of 5 · usual ${f(b.mood)}`]]});
-    if (d.sleep < b.sleep - 1.5) out.push({l: "watch", what: "you slept a lot less than usual", spots: [["head", "watch", `Slept ${f(d.sleep, 1)} h · usual ${f(b.sleep, 1)} h`]]});
-    const vs = [];
-    if (d.hr <= 40 || d.hr >= 131) vs.push(["heart", "urgent", `Heart rate ${d.hr} bpm · safe range 41–130`]);
-    else if (d.hr >= 111 || d.hr <= 50 || Math.abs(d.hr - b.hr) >= 20) vs.push(["heart", "watch", `Heart rate ${d.hr} bpm · usual ${f(b.hr)}`]);
-    if (d.sbp <= 90 || d.sbp >= 220) vs.push(["heart", "urgent", `Blood pressure ${d.sbp}/${d.dbp} · safe range 91–219`]);
-    else if (d.sbp <= 100) vs.push(["heart", "watch", `Blood pressure ${d.sbp}/${d.dbp} · usual ${f(b.sbp)}/${f(b.dbp)}`]);
-    if (d.temp <= 35 || d.temp >= 39.1) vs.push(["forehead", "urgent", `Temperature ${f(d.temp, 1)} °C · safe range 35.1–39.0`]);
-    else if (d.temp >= 38.1) vs.push(["forehead", "watch", `Temperature ${f(d.temp, 1)} °C · usual ${f(b.temp, 1)}`]);
-    if (d.glu < 54) vs.push(["abdomen", "urgent", `Blood sugar ${d.glu} mg/dL · safe limit 54`]);
-    else if (d.glu < 70 || d.glu > 180) vs.push(["abdomen", "watch", `Blood sugar ${d.glu} mg/dL · normal 70–180`]);
+    if (d.mood <= 2) out.push({l: "watch", what: "your mood is low today", private: true, spots: [spotOf("head", "watch", "Brain", `Mood ${d.mood} of 5 · usual ${f(b.mood)}`, "brain")]});
+    if (d.sleep < b.sleep - 1.5) out.push({l: "watch", what: "you slept a lot less than usual", spots: [spotOf("head", "watch", "Brain", `Slept ${f(d.sleep, 1)} h · usual ${f(b.sleep, 1)} h`, "brain")]});
+    const vs = [], HS = "Heart", BP = "Heart and arteries", TS = "Core body temperature", GS = "Pancreas (blood glucose)";
+    if (d.hr <= 40 || d.hr >= 131) vs.push(spotOf("heart", "urgent", HS, `Heart rate ${d.hr} bpm · safe range 41–130`, "heart"));
+    else if (d.hr >= 111 || d.hr <= 50 || Math.abs(d.hr - b.hr) >= 20) vs.push(spotOf("heart", "watch", HS, `Heart rate ${d.hr} bpm · usual ${f(b.hr)}`, "heart"));
+    if (d.sbp <= 90 || d.sbp >= 220) vs.push(spotOf("heart", "urgent", BP, `Blood pressure ${d.sbp}/${d.dbp} · safe range 91–219`, "core"));
+    else if (d.sbp <= 100) vs.push(spotOf("heart", "watch", BP, `Blood pressure ${d.sbp}/${d.dbp} · usual ${f(b.sbp)}/${f(b.dbp)}`, "core"));
+    if (d.temp <= 35 || d.temp >= 39.1) vs.push(spotOf("heart", "urgent", TS, `Temperature ${f(d.temp, 1)} °C · safe range 35.1–39.0`, "core"));
+    else if (d.temp >= 38.1) vs.push(spotOf("heart", "watch", TS, `Temperature ${f(d.temp, 1)} °C · usual ${f(b.temp, 1)}`, "core"));
+    if (d.glu < 54) vs.push(spotOf("abdomen", "urgent", GS, `Blood glucose ${d.glu} mg/dL · safe limit 54`, "pancreas"));
+    else if (d.glu < 70 || d.glu > 180) vs.push(spotOf("abdomen", "watch", GS, `Blood glucose ${d.glu} mg/dL · normal 70–180`, "pancreas"));
     if (vs.some(x => x[1] === "urgent")) out.push({l: "urgent", what: "a vital sign is outside safe limits", auto: "vitals", spots: vs}); else if (vs.length) out.push({l: "watch", what: "a vital sign is off your normal", spots: vs});
   }
-  if (L().rt && p !== "training" && L().rt > b.rt * 1.15) out.push({l: "watch", what: "your reflexes are slower than usual", spots: [["head", "watch", `Reaction time ${f(L().rt)} ms · usual ${f(b.rt)} ms`]]});
-  const st = L().stand; if (st && p === "landed" && (st.hr >= 30 || st.sbpDrop >= 20)) out.push({l: "watch", what: "standing up is still hard", spots: [["legs", "watch", `Standing: heart rate +${f(st.hr)} bpm${st.sbpDrop ? ` · blood pressure −${f(st.sbpDrop)}` : ""}`]]});
+  if (L().rt && p !== "training" && L().rt > b.rt * 1.15) out.push({l: "watch", what: "your reflexes are slower than usual", spots: [spotOf("head", "watch", "Brain", `Reaction time ${f(L().rt)} ms · usual ${f(b.rt)} ms`, "brain")]});
+  const st = L().stand; if (st && p === "landed" && (st.hr >= 30 || st.sbpDrop >= 20)) out.push({l: "watch", what: "standing up is still hard", spots: [spotOf("legs", "watch", BASE_SITE.stand[0], `Standing: heart rate +${f(st.hr)} bpm${st.sbpDrop ? ` · blood pressure −${f(st.sbpDrop)}` : ""}`, "popliteal_l")]});
   if (L().meds && L().meds.some(m => m.expired)) out.push({l: "watch", what: "one landing medicine expires before landing", spots: []});
-  Object.keys(AREAS).forEach(a => { const s = scanState(a); if (s.l === "watch" || s.l === "urgent") { const fx = findById(s.rec.find), w = `${findText(s.rec)} · ${DWORD[s.l]}`; out.push({l: s.l, what: w, result: true, find: true, at: s.rec.repliedAt, spots: [[SCAN_SPOT[a], s.l, w, fx ? {anchor: fx.pin, label: fx.site} : null]]}); } });
+  Object.keys(AREAS).forEach(a => { const s = scanState(a); if (s.l === "watch" || s.l === "urgent") { const fx = findById(s.rec.find), w = `${findText(s.rec)} · ${DWORD[s.l]}`; out.push({l: s.l, what: w, result: true, find: true, at: s.rec.repliedAt, spots: [fx ? spotOf(SCAN_SPOT[a], s.l, fx.site, findText(s.rec).slice(fx.site.length + 2).replace(/^./, c => c.toUpperCase()), fx.pin, w) : [SCAN_SPOT[a], s.l, w, null]]}); } });
 
-  const missL = missingBase(), miss = missL.length, need = miss + (standBase() ? 0 : 1), bsp = miss ? SCAN_SPOT[missL[0]] : "legs";
-  if (p === "training" && need && -day() <= 7) { const w = `${pl(need, "baseline item")} still needed before launch (${pl(-day(), "day")} left)`; out.push({l: "watch", scan: true, what: w, spots: [[bsp, "watch", `Baseline · ${need} missing · ${pl(-day(), "day")} to launch`]]}); }
-  if (p === "launch" && need) { const w = `your baseline is incomplete (${need} missing): tell your flight surgeon before you board`; out.push({l: "watch", scan: true, what: w, spots: [[bsp, "watch", `Baseline · ${need} missing · launch day`]]}); }
-  dueScans().filter(x => day() - x.d > 3).forEach(x => { const n = pl(day() - x.d, "day"), w = `your ${examName(x).toLowerCase()} is ${n} overdue`; out.push({l: "watch", scan: true, what: w, spots: [[x.a ? SCAN_SPOT[x.a] : "head", "watch", `${examName(x)} · Overdue by ${n} · due ${dayChip(x.d)}`]]}); });
+  const missL = missingBase(), miss = missL.length, need = miss + (standBase() ? 0 : 1), bk = miss ? missL[0] : "stand", bsp = miss ? SCAN_SPOT[missL[0]] : "legs";
+  if (p === "training" && need && -day() <= 7) { const w = `${pl(need, "baseline item")} still needed before launch (${pl(-day(), "day")} left)`; out.push({l: "watch", scan: true, what: w, spots: [spotOf(bsp, "watch", BASE_SITE[bk][0], `Baseline · ${need} missing · ${pl(-day(), "day")} to launch`, BASE_SITE[bk][1])]}); }
+  if (p === "launch" && need) { const w = `your baseline is incomplete (${need} missing): tell your flight surgeon before you board`; out.push({l: "watch", scan: true, what: w, spots: [spotOf(bsp, "watch", BASE_SITE[bk][0], `Baseline · ${need} missing · launch day`, BASE_SITE[bk][1])]}); }
+  dueScans().filter(x => day() - x.d > 3).forEach(x => { const n = pl(day() - x.d, "day"), w = `your ${examName(x).toLowerCase()} is ${n} overdue`, es = EXAM_SITE[x.k] || EXAM_SITE.cog; out.push({l: "watch", scan: true, what: w, spots: [spotOf(es[2], "watch", es[0], `Exam overdue by ${n}`, es[1])]}); });
   return out.sort((a, b2) => (b2.l === "urgent") - (a.l === "urgent"));
 }
 
@@ -688,7 +692,7 @@ function renderHolo(full) {
   $("#lvl").innerHTML = Array.from({length: 14}, (_, i) => `<i class="${i < on ? "on" + (pct > 80 ? " w" : "") : ""}"></i>`).join("") + `<span>${f(pct)}% dose limit</span>`;
   const bmi = S.weight / Math.pow(S.height / 100, 2);
   $("#hstats").innerHTML = `<div><b>${S.age}</b>Age</div><div><b>${S.height}<small>cm</small></b>Height</div><div><b>${S.weight}<small>kg</small></b>Weight</div><div><b>${f(bmi, 1)}</b>BMI</div>`;
-  $("#liveTxt").textContent = v.src.replace(/^LIVE · /, "").replace(" (simulated)", " · simulated");
+  $("#liveTxt").textContent = !/\(simulated\)$/.test(v.src) ? v.src.replace(/^LIVE · /, "") : inFlight() ? "Vitals simulated · in flight they come from the Bio-Monitor shirt" : phase() === "training" ? "Vitals simulated · training wearable" : "Vitals simulated · wearable";
 }
 
 let scanTarget = null;
@@ -818,12 +822,12 @@ const SPOT_XY = {head: [100, 30], forehead: [100, 19], eyes: [93, 43], neck: [10
 const SPOT_FOCUS = {forehead: "head"};
 const SEV = {watch: "Amber · worth a look", urgent: "Red · needs attention"};
 let SPOTS = {}, AR = {}, B3 = {on: false, tried: false}, TIP = {sig: "", key: "", hover: false, hideT: 0, autoT: 0};
-const AREA_KEYS = ["head", "eyes", "neck", "heart", "lungs", "abdomen", "legs"], AREA_LBL = {head: "Head", eyes: "Eyes", neck: "Neck", heart: "Heart", lungs: "Lungs", abdomen: "Abdomen", legs: "Legs"};
+const AREA_KEYS = ["head", "eyes", "neck", "heart", "lungs", "abdomen", "legs"], AREA_LBL = {head: "Brain", eyes: "Eyes", neck: "Neck veins", heart: "Heart", lungs: "Lungs", abdomen: "Abdomen (kidneys, bladder, pancreas)", legs: "Leg bones and veins"}, CHIP_LBL = Object.assign({}, AREA_LBL, {abdomen: "Abdomen"});
+let ISS = [];
 const AREA_OF = {forehead: "head"}, AREA_SCAN = {eyes: "eyes", neck: "neck", heart: "heart", lungs: "lungs", abdomen: "bladder", legs: "legs"}, RK = {ok: 0, watch: 1, urgent: 2}, AWORD = {ok: "OK", watch: "Worth a look", urgent: "Needs attention"};
 const areaSig = a => AR[a] ? `${APP.active}|${a}|${AR[a].l}|${AR[a].texts.join("|")}` : "";
 function okFact(a) { const d = L().daily, b = base(), sc = AREA_SCAN[a], s = sc && AREAS[sc] ? scanState(sc) : null;
   if (a === "heart" && d && d.hr) return `Heart rate ${d.hr} bpm · usual ${f(b.hr)}`;
-  if (a === "head" && d && d.temp) return `Temperature ${f(d.temp, 1)} °C · usual ${f(b.temp, 1)}`;
   if (a === "head" && d && d.sleep) return `Slept ${f(d.sleep, 1)} h · usual ${f(b.sleep, 1)} h`;
   if (a === "abdomen" && d && d.glu) return `Blood sugar ${d.glu} mg/dL · normal 70–180`;
   if (s && s.l === "ok") return `${AREAS[sc].label} scan · ${s.line}`;
@@ -844,8 +848,9 @@ function placeTip(t, h, r) { const hr = h.getBoundingClientRect(), cx = r.left +
   const left = Math.max(4, Math.min(h.clientWidth - tw - 4, cx - tw / 2)), above = r.top - hr.top - th - gap, hit = wr && r.top - th - gap < wr.bottom && r.top - gap > wr.top && hr.left + left < wr.right && hr.left + left + tw > wr.left, below = above < 0 || r.top - th - gap < 0 || !!hit;
   t.classList.toggle("below", below); t.style.left = `${Math.round(left)}px`; t.style.top = `${Math.round(below ? r.bottom - hr.top + gap : above)}px`; t.style.setProperty("--ax", `${Math.round(cx - left)}px`); }
 function renderAreas() { const fig = $("#holoFig"), g = $("#areaG"), keep = TIP.sig;
-  SPOTS = {}; let freshKey = "";
-  ALERT.list.forEach(x => (x.spots || []).forEach(([k2, l, txt, pin]) => { const sp = SPOTS[k2] = SPOTS[k2] || {l: "watch", texts: [], routes: [], fresh: false};
+  SPOTS = {}; ISS = []; let freshKey = "";
+  ALERT.list.forEach(x => (x.spots || []).forEach(([k2, l, txt, pin, stn, fact]) => { const sp = SPOTS[k2] = SPOTS[k2] || {l: "watch", texts: [], routes: [], fresh: false};
+    if (stn) { const ex = ISS.find(y => y.st === stn && y.a === (AREA_OF[k2] || k2)); if (!ex) ISS.push({a: AREA_OF[k2] || k2, l, st: stn, fact, anchor: pin && pin.anchor}); else if (RK[l] > RK[ex.l]) Object.assign(ex, {l, fact}); }
     if (pin && (!sp.pin || l === "urgent")) sp.pin = pin;
     if (l === "urgent") sp.l = "urgent"; if (!sp.texts.includes(txt)) sp.texts.push(txt); const ro = route(x); if (!sp.routes.includes(ro)) sp.routes.push(ro);
     if (ALERT.fresh.has(akey(x))) sp.fresh = true; }));
@@ -856,8 +861,9 @@ function renderAreas() { const fig = $("#holoFig"), g = $("#areaG"), keep = TIP.
   keys.forEach(k2 => { const sp = SPOTS[k2], ar = AR[AREA_OF[k2] || k2]; if (!ar) return; if (RK[sp.l] > RK[ar.l]) ar.l = sp.l;
     sp.texts.forEach(x => { if (!ar.texts.includes(x)) ar.texts.push(x); }); sp.routes.forEach(x => { if (!ar.routes.includes(x)) ar.routes.push(x); }); if (sp.fresh) ar.fresh = true; if (sp.pin && (!ar.pin || sp.l === "urgent")) ar.pin = sp.pin; });
   hideTip();
-  const al = $("#areaList"); if (al) { const html = AREA_KEYS.map(a => `<button class="area-chip ${AR[a].l}" data-spot="${a}" type="button"><i class="dot ${AR[a].l}"></i><span>${AREA_LBL[a]}</span><b>${AWORD[AR[a].l]}</b></button>`).join(""); if (al.innerHTML !== html) al.innerHTML = html; }
-  if (B3.on) window.ASTRABody.update({sex: S.sex === "m" ? "m" : "f", areas: AREA_KEYS.map(a => ({key: a, label: AREA_LBL[a], level: AR[a].l, lines: AR[a].l === "ok" ? [okFact(a)] : AR[a].texts.slice(), route: AR[a].routes.join(" · "), fresh: AR[a].fresh, pin: AR[a].l === "ok" ? null : AR[a].pin || null}))});
+  ISS.sort((p2, q2) => RK[q2.l] - RK[p2.l]);
+  const al = $("#areaList"); if (al) { const html = ISS.filter(x => AR[x.a] && AR[x.a].l !== "ok").map(x => `<button class="area-chip ${x.l} spec" data-spot="${x.a}" data-pin="${escH(x.anchor || "")}" type="button"><i class="dot ${x.l}"></i><span>${escH(x.st)}</span><b>${escH(x.fact)}</b></button>`).join("") + AREA_KEYS.filter(a => AR[a].l === "ok" || !ISS.some(x => x.a === a)).map(a => `<button class="area-chip ${AR[a].l}" data-spot="${a}" type="button"><i class="dot ${AR[a].l}"></i><span>${CHIP_LBL[a]}</span><b>${AWORD[AR[a].l]}</b></button>`).join(""); if (al.innerHTML !== html) al.innerHTML = html; }
+  if (B3.on) try { window.ASTRABody.update({sex: S.sex === "m" ? "m" : "f", areas: AREA_KEYS.map(a => ({key: a, label: AREA_LBL[a], level: AR[a].l, lines: AR[a].l === "ok" ? [okFact(a)] : AR[a].texts.slice(), route: AR[a].routes.join(" · "), fresh: AR[a].fresh, pin: AR[a].l === "ok" ? null : AR[a].pin || null}))}); } catch (e) {}
   if (fig) fig.classList.toggle("is3d", B3.on);
   if (g) g.innerHTML = keys.map(k2 => { const sp = SPOTS[k2], [cx, cy] = SPOT_XY[k2];
     return `<g class="spot ${sp.l}${sp.fresh ? " new" : ""}" data-spot="${k2}" tabindex="0" role="img" aria-label="${escH(`${sp.l === "urgent" ? "Red, needs attention" : "Amber, worth a look"}: ${sp.texts.join(" · ")}`)}"><circle class="spot-hit" cx="${cx}" cy="${cy}" r="26"/><circle class="spot-ring" cx="${cx}" cy="${cy}" r="13"/><circle class="spot-dot" cx="${cx}" cy="${cy}" r="5.5"/></g>`; }).join("");
@@ -869,7 +875,7 @@ function wireSpots() { const fig = $(".holo"); if (!fig || wireSpots.done) retur
   const SEL = ".spot, .b3-mk";
   const on = e => { const s = e.target.closest && e.target.closest(SEL); if (s) { TIP.hover = true; clearTimeout(TIP.hideT); showTip(s.dataset.spot); } };
   const off = e => { const s = e.target.closest && e.target.closest(SEL); if (!s || (e.relatedTarget && s.contains(e.relatedTarget))) return; hideTip(); };
-  const chip = e => { const c = e.target.closest && e.target.closest(".area-chip"); if (!c) return on(e); const a = c.dataset.spot; TIP.hover = false; clearTimeout(TIP.hideT); if (B3.on) window.ASTRABody.focus(a); showTip(a); };
+  const chip = e => { const c = e.target.closest && e.target.closest(".area-chip"); if (!c) return on(e); const a = c.dataset.spot; TIP.hover = false; clearTimeout(TIP.hideT); if (B3.on) try { window.ASTRABody.focus(a, c.dataset.pin || undefined); } catch (er) {} showTip(a); };
   fig.addEventListener("mouseover", on); fig.addEventListener("focusin", on); fig.addEventListener("click", chip);
   fig.addEventListener("mouseout", off); fig.addEventListener("focusout", off);
   document.addEventListener("click", e => { if (!e.target.closest(".spot, .b3-mk, .area-chip, #bodyReset") && !e.target.closest("#bodyTip")) hideTip(); });
@@ -877,7 +883,7 @@ function wireSpots() { const fig = $(".holo"); if (!fig || wireSpots.done) retur
 function refreshAstra() {
   window.ASTRA = {crew: CREW.map(c => withMember(c.id, () => { const st = statuses().filter(x => !x.private), w = worstOf(st); autoSend(st);
     return {id: c.id, name: c.name, sex: c.sex, age: c.age, height: c.height, weight: c.weight, role: c.role, source: (D.crew && D.crew[c.idx] && D.crew[c.idx].source) || "",
-      base: Object.assign({}, base()), status: w, statusText: st.length ? `${WORD[w]}: ${cap(st[0].what)}${st.length > 1 ? ` (and ${st.length - 1} more)` : ""}` : "Nothing off their normal today", issues: st.map(x => ({l: x.l, what: x.what})),
+      base: Object.assign({}, base()), status: w, statusText: st.length ? `${WORD[w]}: ${issueText(st[0])}${st.length > 1 ? ` (and ${st.length - 1} more)` : ""}` : "Nothing off their normal today", issues: st.map(x => ({l: x.l, what: issueText(x)})),
       today: (dd => dd ? {sleep: dd.sleep, mood: dd.mood, hr: dd.hr, date: dd.date || null} : null)(L().daily)}; })),
     activeId: APP.active, dayChip: dayChip(), phase: phase(), mission: S.mission}; }
 let CALV = 0; const CAL = {};
@@ -1032,7 +1038,7 @@ const STEP = {
   meds: () => { const land = LAND(), items = [{n: "Anti-nausea (for landing)", exp: land - 10}, {n: "Pain relief", exp: land + 200}, {n: "Salt tablets (for fluid loading)", exp: land + 400}];
     return {title: "Landing medicines", sub: "Checking each expiry date against your landing day.", html: items.map(i => `<div class="check"><span style="${i.exp < land ? "background:var(--watch-soft);color:var(--watch)" : ""}">${i.exp < land ? "!" : "✓"}</span><span style="all:unset">${i.n}: ${i.exp < land ? "<b>expires before landing, use the backup pack</b>" : "fine"}</span></div>`).join("") + `<div class="sub" style="margin-top:8px">Before deorbit you'll also drink 24–48 oz of salty water (by body weight) to help your blood pressure. <span class="simtag">Simulated</span></div>`,
       after() { L().meds = items.map(i => ({n: i.n, expired: i.exp < land})); }}; },
-  connect: () => ({title: "Connect equipment", sub: "Real connections where an open API exists. Everything else stays simulated and is labelled.", go: "Done",
+  connect: () => ({title: "Connect real equipment", sub: "This is where the crew's real monitoring equipment links to ASTRA. In this demo the vitals are simulated.", go: "Done",
     html: SOURCES.map(s => `<div class="src"><div class="h"><b>${s.name}</b>${s.btn ? `<button class="btn sm" data-c="${s.id}">${CONN[s.id] ? "Reconnect" : s.btn}</button>` : '<span class="simtag">Simulated</span>'}</div><div class="d">${s.what}</div><div class="r" id="r-${s.id}"></div></div>`).join("") + `<button class="btn ghost" id="manBtn" style="width:100%;margin-top:12px">Or type readings in by hand</button>`,
     init() { $$("[data-c]").forEach(b => b.onclick = () => connect(b.dataset.c)); $("#manBtn").onclick = () => { flow = ["d4"]; k = 0; show(); }; }}),
   fin: () => { const st = statuses(); return {ill: I.done, title: st.length ? (st.length === 1 ? "Saved. One thing to keep an eye on" : `Saved. ${st.length} things to keep an eye on`) : "All saved. Nice!", sub: st.length ? cap(st.map(x => x.what).join("; ")) + "." : phase() === "training" ? `Added to your normal (${pl(baseInfo().n, "training day")} so far).` : "Everything is in line with your normal.", go: "Done"}; },
@@ -1050,6 +1056,7 @@ function advance(skipped) { if (!skipped && cur.save && cur.save() === false) re
   if (chain) flow.push(...expand(chain()));
   if (k < flow.length - 1) { k++; show(); return; }
   if (running) { const l = L(); l.done = l.done || {}; l.done[running] = true; }
+  if (flow.includes("d1")) L().checkDone = true;
   autoVitals(); closeFlow(); }
 function autoVitals() { if (statuses().some(x => x.auto === "vitals") && !S.msgs.some(m => m.autoV === key())) { const at = Date.now(), lag = nearDoctors() ? 1000 : delayMs(), d = L().daily;
   S.msgs.push({me: false, autoV: key(), mission: S.mission, at: at + 2 * lag + 2000, text: "We see your numbers. Please re-measure now and stay with a crewmate; we're on it."}); } }
@@ -1069,9 +1076,7 @@ $("#monList").onclick = e => { const b = e.target.closest("[data-go]"); if (!b) 
   if (k === "cog") return openFlow(["rt", "fin"], "cog");
   openFlow([`scan:${MON[k].a}`]); };
 $("#scanBody").onclick = e => { const t = e.target.closest("[data-a]"); if (t) openFlow([`scan:${t.dataset.a}`]); };
-$("#connBtn").onclick = () => openFlow(["connect"]);
-$("#enterBtn").onclick = () => openFlow(["d4"]);
-const tour = () => openFlow(["welcome1", "welcome2", "welcome3"]);
+$("#connBtn").onclick = () => openFlow(["connect"]);const tour = () => openFlow(["welcome1", "welcome2", "welcome3"]);
 $("#helpBtn").onclick = () => { const g = $("#guideStrip"); g.hidden = !g.hidden; }; $("#tourBtn").onclick = tour;
 $("#mission").onchange = e => { S.mission = e.target.value; S.open = null; render(); };
 $("#dReply").onchange = e => { S.reply = e.target.value; render(); };
