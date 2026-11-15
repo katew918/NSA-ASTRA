@@ -494,19 +494,19 @@ const AREAS = {
 const mins = a => AREAS[a].time.replace(" with setup", "").replace("about ", "~");
 const longTime = a => AREAS[a].time.replace(" min", " minutes");
 const FINDINGS = [
-  {id: "eye_r", area: "eyes", site: "Optic nerve head, right eye", change: "Thicker than the pre-flight scan", pin: "eye_r"},
-  {id: "eye_l", area: "eyes", site: "Optic nerve head, left eye", change: "Thicker than the pre-flight scan", pin: "eye_l"},
-  {id: "neck_slow", area: "neck", site: "Left internal jugular vein", change: "Blood flow slower than the last scan", pin: "neck_l"},
-  {id: "neck_noflow", area: "neck", site: "Left internal jugular vein", change: "A segment with no flow, not seen on the last scan", pin: "neck_l"},
-  {id: "heart_pump", area: "heart", site: "Left ventricle", change: "Pumping less than the pre-flight scan", pin: "heart"},
-  {id: "lung_lines", area: "lungs", site: "Right lower lobe of the lung", change: "B-lines not seen on the last scan", pin: "lung_r_low"},
-  {id: "kidney_spot", area: "bladder", site: "Left kidney", change: "A bright focus not seen on the last scan", pin: "kidney_l"},
-  {id: "bladder_full", area: "bladder", site: "Urinary bladder", change: "More urine left after emptying than on the pre-flight scan", pin: "bladder"},
-  {id: "heel_bone", area: "legs", site: "Left calcaneus (heel bone)", change: "Less dense than the pre-flight scan", pin: "heel_l"},
-  {id: "shin_bone", area: "legs", site: "Left tibia (shin bone)", change: "Less dense than the pre-flight scan", pin: "shin_l"},
-  {id: "calf_vein", area: "legs", site: "Left popliteal vein (behind the knee)", change: "Blood flow slower than the last scan", pin: "popliteal_l"},
-  {id: "shin_break", area: "legs", site: "Left tibia (shin bone)", change: "A break in the bone surface, not seen on the last scan", pin: "shin_l", demo: true},
-  {id: "kidney_stone", area: "bladder", site: "Left kidney", change: "A bright focus with a shadow, not seen on the last scan", pin: "kidney_l", demo: true}];
+  {id: "eye_r", area: "eyes", site: "Optic nerve head, right eye", change: "Retinal thickness increased from the pre-flight scan", pin: "eye_r"},
+  {id: "eye_l", area: "eyes", site: "Optic nerve head, left eye", change: "Retinal thickness increased from the pre-flight scan", pin: "eye_l"},
+  {id: "neck_slow", area: "neck", site: "Left internal jugular vein", change: "Venous flow velocity lower than the last scan", pin: "neck_l"},
+  {id: "neck_noflow", area: "neck", site: "Left internal jugular vein", change: "No flow in one segment, new since the last scan", pin: "neck_l"},
+  {id: "heart_pump", area: "heart", site: "Left ventricle", change: "Ejection fraction lower than the pre-flight scan", pin: "heart"},
+  {id: "lung_lines", area: "lungs", site: "Right lower lobe of the lung", change: "New B-lines since the last scan", pin: "lung_r_low"},
+  {id: "kidney_spot", area: "bladder", site: "Left kidney", change: "Echogenic focus, new since the last scan", pin: "kidney_l"},
+  {id: "bladder_full", area: "bladder", site: "Urinary bladder", change: "Post-void residual urine higher than the pre-flight scan", pin: "bladder"},
+  {id: "heel_bone", area: "legs", site: "Left calcaneus (heel bone)", change: "Bone mineral density lower than the pre-flight scan", pin: "heel_l"},
+  {id: "shin_bone", area: "legs", site: "Left tibia (shin bone)", change: "Bone mineral density lower than the pre-flight scan", pin: "shin_l"},
+  {id: "calf_vein", area: "legs", site: "Left popliteal vein (behind the knee)", change: "Venous flow velocity lower than the last scan", pin: "popliteal_l"},
+  {id: "shin_break", area: "legs", site: "Left tibia (shin bone)", change: "Cortical break, new since the last scan", pin: "shin_l", demo: true},
+  {id: "kidney_stone", area: "bladder", site: "Left kidney", change: "Echogenic focus with acoustic shadow, new since the last scan", pin: "kidney_l", demo: true}];
 const pinLbl = s => { const t = s.replace(/\s*\(.*?\)\s*/g, " ").trim(); return t.length > 28 ? t.slice(0, 27).trim() + "…" : t; };
 const spotOf = (a, l, st, fact, anchor, line) => [a, l, line || `${st}: ${fact}`, {anchor, label: pinLbl(st)}, st, fact];
 const BASE_SITE = {eyes: ["Optic nerve heads", "eye_r"], neck: ["Internal jugular veins", "neck_l"], heart: ["Left ventricle", "heart"], lungs: ["Lungs", "lung_r_low"], bladder: ["Kidneys and urinary bladder", "bladder"], legs: ["Leg bones and veins", "heel_l"], stand: ["Heart and leg veins (standing response)", "popliteal_l"]};
