@@ -8,6 +8,10 @@ It compares a crew member with their own normal, from training on Earth through 
 
 > Prototype only. Not a medical device and not medical advice. All crew data is simulated.
 
+## What makes it different
+
+ASTRA does not stop at basic vital signs. It also follows the harder conditions that spaceflight causes and that can go unnoticed: blood flow in the neck veins, changes at the back of the eye, bone density, kidney and bladder findings. Each scan is compared with the last one and the exact structure is marked. It is also a daily companion: a private check-in with random questions, replies that fit the answers, and support options on a hard day. A red finding starts a call to Earth automatically.
+
 ## What is in this repository
 
 | File | What it is |
@@ -27,7 +31,7 @@ There is no build step. Vercel serves the files as they are, and every push to `
 
 ## How it stores data
 
-Everything stays in the browser on that device. There is no sign-in and nothing is sent to a server. The four crew profiles are simulated; every day of sleep, mood and resting heart rate comes from real PMData rows.
+Everything stays in the browser on that device. There is no sign-in and nothing is sent to a server. The four crew are named after Apollo astronauts and their profiles and health data are simulated; every day of sleep, mood and resting heart rate comes from real PMData rows.
 
 ## How to try it
 

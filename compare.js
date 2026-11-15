@@ -20,7 +20,7 @@
     return a.reduce(function (s, x) { return s + x; }, 0) / a.length;
   }
   function D() { return (window.DATA || {}); }
-  function real(src) { return '<span class="realtag">Real data · ' + esc(src) + "</span>"; }
+  function real(src) { return '<span class="realtag">' + esc(src) + "</span>"; }
 
   var KEY = "astraGuideHidden";
   function getHidden() { try { return sessionStorage.getItem(KEY) === "1"; } catch (e) { return false; } }
@@ -29,7 +29,7 @@
   var STEPS = [
     ["Training on Earth", "Baseline: sleep, heart rate, mood, reflexes, scans."],
     ["Every mission day", "90-second check, wearables. Daily checks, weekly conference, exams on set flight days."],
-    ["Compare with their own normal", "Green, Amber or Red."],
+    ["Compare with their baseline", "Green, Amber or Red."],
     ["Who sees it", "Mood stays private. The rest goes to the doctor."]
   ];
 
@@ -99,11 +99,13 @@
     if (!crew.length) return "<p class=\"c-note\">No crew loaded.</p>";
     return '<div class="c-cards">' + crew.map(function (c) {
       var st = STATUS[c.status] ? c.status : "ok";
-      return '<div class="c-card st-' + st + '"><div class="c-nm">' + esc(c.name || c.id) +
+      var fl = (c.findings || []).map(function (x) { return '<li class="' + esc(x.level) + '">' + esc(x.structure) + ": " + esc(x.fact) + "</li>"; }).join("");
+      return '<div class="c-card st-' + st + '"><div class="cmp-body" data-crew="' + esc(c.id) + '"></div><div class="c-main"><div class="c-nm">' + esc(c.name || c.id) +
         ' <span class="c-sx">' + (c.sex === "f" ? "F" : c.sex === "m" ? "M" : "") + "</span></div>" +
         '<div class="c-rl">' + esc(c.role || "") + "</div>" +
         '<div class="c-st"><span class="c-dot"></span>' + STATUS[st] + "</div>" +
-        todayVals(c) + "</div>";
+        (fl ? '<ul class="c-iss">' + fl + "</ul>" : "") +
+        todayVals(c) + "</div></div>";
     }).join("") + "</div>";
   }
 
@@ -126,9 +128,9 @@
     if (!crew.length) return "";
     var order = crew.slice().sort(function (a, b) { return (a.sex === "f" ? 0 : 1) - (b.sex === "f" ? 0 : 1); });
     var nf = order.filter(function (c) { return c.sex === "f"; }).length, nm = order.length - nf;
-    var h = '<div class="c-tw"><table class="c-table"><thead><tr><th></th>' +
-      (nf ? '<th colspan="' + nf + '" class="grp">Female</th>' : "") +
-      (nm ? '<th colspan="' + nm + '" class="grp">Male</th>' : "") + "</tr><tr><th><span class=\"sr\">Measure</span></th>" +
+    var h = '<div class="c-tw"><table class="c-table"><thead>' + (nf && nm ? "<tr><th></th>" +
+      '<th colspan="' + nf + '" class="grp">Female</th>' +
+      '<th colspan="' + nm + '" class="grp">Male</th></tr>' : "") + "<tr><th><span class=\"sr\">Measure</span></th>" +
       order.map(function (c) { return "<th>" + esc(c.name || c.id) + "</th>"; }).join("") + "</tr></thead><tbody>";
     ROWS.forEach(function (r) {
       h += "<tr><th>" + r[0] + "</th>" + order.map(function (c) { return "<td>" + r[1](c.base || {}) + "</td>"; }).join("") + "</tr>";
@@ -146,7 +148,7 @@
       h += '<div class="c-sp"><div class="c-sph"><b>' + esc(c.name || c.id) + '</b><span>median ' + fmt(median(vals), 1) + " h</span></div>" +
         sparkline(vals, c.name || c.id) + "</div>";
     });
-    h += '</div><p class="c-src">Sleep (h), last 30 nights · shaded = middle half of nights ' + real("PMData (volunteers relabelled as crew)") + "</p>";
+    h += '</div><p class="c-src">Sleep (h), last 30 nights · shaded = middle half of nights ' + real("PMData") + " volunteers relabelled as crew</p>";
     return h;
   }
 
@@ -161,11 +163,17 @@
     return h;
   }
 
+  function crewLabel(k, ids) {
+    var m = /(\d+)$/.exec(String(k));
+    var n = m ? parseInt(m[1], 10) : ids.indexOf(k) + 1;
+    return "Crew " + n;
+  }
+
   function i4Chart(an) {
     var tp = (D().samples && D().samples.inspiration4 && D().samples.inspiration4.timepoints) || [];
     var by = an.by_crew || {}, ids = Object.keys(by);
     if (!ids.length || tp.length < 2) return '<p class="c-note">No data.</p>';
-    var series = ids.map(function (k) { return {name: k, values: tp.map(function (_, i) { return num((by[k] || [])[i]); })}; });
+    var series = ids.map(function (k) { return {name: crewLabel(k, ids), values: tp.map(function (_, i) { return num((by[k] || [])[i]); })}; });
     var med = tp.map(function (_, i) { return median(ids.map(function (k) { return (by[k] || [])[i]; })); });
     series.push({name: "Median", values: med, emphasis: true});
     var rng = Array.isArray(an.range) && num(an.range[0]) != null && num(an.range[1]) != null ? an.range : null;
@@ -226,7 +234,7 @@
         unit: "mmHg", name: "CO₂", max: 4, label: "Cabin CO₂ snapshot", threshold: {v: 3, cls: "watch", label: "limit 3 mmHg"},
         fmt: function (v) { return fmt(v, 2); }}, "e-chart");
       out.push(card("Cabin CO₂ snapshot", '<p class="c-note">Partial pressure, mmHg · mark: 3 mmHg NASA limit</p>' + rows +
-        '<p class="c-note">Read ' + esc(iss.read || "") + "</p>", "ISS Live telemetry"));
+        '<p class="c-note">Read ' + esc(iss.read || "") + "</p>", "NASA ISS Live"));
     }
     var dk = d.samples && d.samples.donki;
     if (dk && dk.counts) {
@@ -247,12 +255,18 @@
     var crew = (astra && Array.isArray(astra.crew)) ? astra.crew.filter(Boolean) : [];
     var h = "";
     h += '<div class="c-sec"><h3>Today</h3>' + secToday(crew) + "</div>";
-    h += '<div class="c-sec"><h3>Own normal</h3>' + secBaseline(crew) + "</div>";
-    h += '<div class="c-sec"><h3>Female / Male</h3>' + secSex(crew) + "</div>";
+    h += '<div class="c-sec"><h3>Personal baseline</h3>' + secBaseline(crew) + "</div>";
+    var mixed = crew.some(function (c) { return c.sex === "f"; }) && crew.some(function (c) { return c.sex === "m"; });
+    if (mixed) h += '<div class="c-sec"><h3>Female / Male</h3>' + secSex(crew) + "</div>";
     h += '<div class="c-sec" id="cmpI4"><h3>Inspiration4 crew</h3><div class="c-i4">' + secI4() + "</div></div>";
     h += '<div class="c-sec"><h3>Reference data</h3>' + secEvidence() + "</div>";
     el.innerHTML = h;
     mountAll(el);
+    var B = window.ASTRABody;
+    if (B && typeof B.mini === "function") el.querySelectorAll(".cmp-body[data-crew]").forEach(function (b) {
+      var c = crew.filter(function (x) { return String(x.id) === b.getAttribute("data-crew"); })[0];
+      if (c) try { B.mini(b, c.areas || []); } catch (e) { b.innerHTML = ""; }
+    });
     var i4 = el.querySelector(".c-i4");
     if (i4) i4.addEventListener("click", function (ev) {
       var b = ev.target && ev.target.closest ? ev.target.closest("button[data-an]") : null;

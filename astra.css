@@ -1148,3 +1148,4 @@ rect.ch-cursor{fill:var(--navy);stroke:none;opacity:.06}
 #holoFig:has(.b2d) .b3-reset{display:none}
 #holoFig:has(.b2d){height:440px}
 @media (max-width:640px){#holoFig:has(.b2d){height:340px}}
+.crewnote{padding:8px 10px 4px;font-size:11.5px;line-height:1.35;color:var(--muted)}

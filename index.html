@@ -385,7 +385,7 @@ input[type=text]:focus,input[type=number]:focus,input[type=date]:focus,input[typ
     </div>
     <div class="links"><button class="linkbtn" id="tourBtn">How ASTRA works</button><label class="sub">Doctors' reply to new scans <select id="dReply"><option value="normal">Looks like your baseline</option><option value="followup">Wants a follow-up</option><option value="urgent">Needs a call now</option></select></label><button class="linkbtn" id="dReset">Reset demo</button></div>
   </main>
-  <footer>ASTRA prototype · not medical advice · made for the crew tablet · NASA ISS Live · NASA OSDR · NASA DONKI · NASA-STD-3001 · PhysioNet CVES · PMData (real daily rows for 4 volunteers, relabelled) · crew profiles simulated</footer>
+  <footer>ASTRA prototype · not medical advice · made for the crew tablet · NASA ISS Live · NASA OSDR · NASA DONKI · NASA-STD-3001 · PhysioNet CVES · PMData (real daily rows for 4 volunteers, relabelled) · crew profiles simulated · Named after Apollo astronauts. All health data is simulated.</footer>
 </div>
 
 <div class="scrim" id="scrim"></div>
@@ -426,18 +426,19 @@ const I = {
 const MISSIONS = {iss: {name: "ISS", delayMin: 1 / 60, doseRate: 0.5, landing: 180}, mars: {name: "Mars mission", delayMin: 20, doseRate: 1.8, landing: 210}};
 const todayIdx = () => Math.floor(Date.now() / DAY);
 const CREW = [
-  {id: "c1", name: "Maya Ortiz", sex: "f", age: 38, height: 168, weight: 61, role: "Commander", idx: 0},
-  {id: "c2", name: "Daniel Reyes", sex: "m", age: 44, height: 181, weight: 79, role: "Pilot", idx: 1},
-  {id: "c3", name: "Aiko Tanaka", sex: "f", age: 35, height: 163, weight: 56, role: "Mission specialist", idx: 2},
-  {id: "c4", name: "Sam Okafor", sex: "m", age: 41, height: 177, weight: 74, role: "Mission specialist", idx: 3},
+  {id: "c1", name: "Neil Armstrong", sex: "m", age: 38, height: 180, weight: 76, role: "Commander", idx: 0},
+  {id: "c2", name: "Buzz Aldrin", sex: "m", age: 39, height: 178, weight: 75, role: "Pilot", idx: 1},
+  {id: "c3", name: "Michael Collins", sex: "m", age: 38, height: 180, weight: 75, role: "Mission specialist", idx: 2},
+  {id: "c4", name: "Jim Lovell", sex: "m", age: 41, height: 183, weight: 77, role: "Mission specialist", idx: 3},
 ];
 const SHARED = ["mission", "launch", "travel", "reply"];
 const DEF = {name: "", sex: "f", age: 38, height: 172, weight: 68, mission: "iss", launch: todayIdx() - 50, travel: 0, reply: "followup", log: {}, scans: [], msgs: [], open: null, seeded: {}};
 const STORE_KEY = "astra-v1";
 let APP = null; try { APP = JSON.parse(localStorage.getItem(STORE_KEY) || "null"); } catch (e) { APP = null; }
-const freshApp = () => { const a = {active: "c1", view: "crew", crew: {}};
+const freshApp = () => { const a = {active: "c1", view: "crew", crew: {}, crewV: 2};
   CREW.forEach(c => { a.crew[c.id] = Object.assign(structuredClone(DEF), {name: c.name, sex: c.sex, age: c.age, height: c.height, weight: c.weight}); }); return a; };
 if (!APP || !APP.crew || !CREW.every(c => APP.crew[c.id])) APP = freshApp();
+if (APP.crewV !== 2) { CREW.forEach(c => Object.assign(APP.crew[c.id], {name: c.name, sex: c.sex, age: c.age, height: c.height, weight: c.weight})); APP.crewV = 2; }
 if (APP.view !== "crew" && APP.view !== "compare") { APP.view = "crew"; APP.active = "c1"; }
 let S = APP.crew[APP.active] || APP.crew.c1;
 const syncShared = () => CREW.forEach(c => SHARED.forEach(k2 => { APP.crew[c.id][k2] = S[k2]; }));
@@ -572,7 +573,7 @@ function plan() {
   const p = phase(), d = day(), l = L(), dn = l.done || {}, q = [];
   const add = (id, ic, what, dur, when, why, flow, done = !!dn[id], req = false) => q.push({id, ic, what, dur, when, why, flow, done: done || (flow[0] === "daily" && !!l.checkDone), req});
   if (p === "training") {
-    add("train", "sun", "Training check", "about 5 minutes", "After waking", `Sleep, mood, vitals and the reflex game. Every training day sharpens your normal (${pl(baseInfo().n, "day")} recorded).`, ["daily", "rt", "fin"]);
+    add("train", "sun", "Training check", "about 5 minutes", "After waking", `Sleep, mood, vitals and the reflex game. Every training day sharpens your baseline (${pl(baseInfo().n, "day")} recorded).`, ["daily", "rt", "fin"]);
     const miss = missingBase(); if (miss.length) add("bscan", "probe", `Baseline scan: ${AREAS[miss[0]].label}`, longTime(miss[0]), "During training", `Needed before launch, so your doctors can compare later. ${6 - miss.length} of 6 done.`, [`scan:${miss[0]}`], false, true);
     if (!standBase()) add("bstand", "stand", "Baseline stand-up test", "15 minutes, with your medical team", "Once during training", "Needed before launch: how your body handles standing before flight.", ["stand", "fin"], false, true);
   }
@@ -587,7 +588,7 @@ function plan() {
     if (x.k === "cog") add("cog", "bolt", "Cognitive test", "3 minutes", when, "Your reaction time, compared with your own pre-flight baseline.", ["rt", "fin"], false, true);
     else add("scan" + i, "probe", examName(x), longTime(x.a), when, x.a === "legs" ? "A clot check after the trip." : "Scheduled. I'll guide you, then send the images to your doctors.", [`scan:${x.a}`], false, true); });
   if (dueOn(d).includes("conf")) add("conf", "check", "Private medical conference", "about 15 minutes", "17:30", "A private call with your flight surgeon. Mark it done when you've talked.", ["conf"], confDone(d));
-  if (p === "after") add("rec", "sun", mars() ? "On Mars check" : "Recovery check", "90 seconds", "After waking", "Tracking how you get back to your normal.", ["daily", "fin"]);
+  if (p === "after") add("rec", "sun", mars() ? "On Mars check" : "Recovery check", "90 seconds", "After waking", "Tracking how you get back to your baseline.", ["daily", "fin"]);
   return q;
 }
 
@@ -607,7 +608,7 @@ function statuses() {
     else if (d.temp >= 38.1) vs.push(spotOf("heart", "watch", TS, `Temperature ${f(d.temp, 1)} °C · usual ${f(b.temp, 1)}`, "core"));
     if (d.glu < 54) vs.push(spotOf("abdomen", "urgent", GS, `Blood glucose ${d.glu} mg/dL · safe limit 54`, "pancreas"));
     else if (d.glu < 70 || d.glu > 180) vs.push(spotOf("abdomen", "watch", GS, `Blood glucose ${d.glu} mg/dL · normal 70–180`, "pancreas"));
-    if (vs.some(x => x[1] === "urgent")) out.push({l: "urgent", what: "a vital sign is outside safe limits", auto: "vitals", spots: vs}); else if (vs.length) out.push({l: "watch", what: "a vital sign is off your normal", spots: vs});
+    if (vs.some(x => x[1] === "urgent")) out.push({l: "urgent", what: "a vital sign is outside safe limits", auto: "vitals", spots: vs}); else if (vs.length) out.push({l: "watch", what: "a vital sign is off your baseline", spots: vs});
   }
   if (L().rt && p !== "training" && L().rt > b.rt * 1.15) out.push({l: "watch", what: "your reflexes are slower than usual", spots: [spotOf("head", "watch", "Brain", `Reaction time ${f(L().rt)} ms · usual ${f(b.rt)} ms`, "brain")]});
   const st = L().stand; if (st && p === "landed" && (st.hr >= 30 || st.sbpDrop >= 20)) out.push({l: "watch", what: "standing up is still hard", spots: [spotOf("legs", "watch", BASE_SITE.stand[0], `Standing: heart rate +${f(st.hr)} bpm${st.sbpDrop ? ` · blood pressure −${f(st.sbpDrop)}` : ""}`, "popliteal_l")]});
@@ -632,7 +633,7 @@ function render() {
   $("#statusPill").className = "pill " + (fresh ? "none" : worst); $("#statusPill").textContent = fresh ? "Welcome" : {ok: "No issues", watch: "Worth a look", urgent: "Needs attention"}[worst];
   $("#statusTxt").textContent = fresh ? "No baseline yet" : st.length ? issueText(st[0]) : `${dueN ? `${pl(dueN, "thing")} for you today` : "All done for today"}`;
   { const dd = L().daily, fmtD = x => new Date(x + "T00:00:00Z").toLocaleDateString("en-GB", {day: "numeric", month: "short", year: "numeric", timeZone: "UTC"});
-    $("#dataDate").innerHTML = !dd ? "" : dd.sim ? `<span class="simtag">Simulated</span>` : dd.entered ? `<span>Entered today</span>` : dd.date ? `<span class="realtag">Real data</span><span>PMData · recorded <b>${fmtD(dd.date)}</b></span>` : ""; }
+    $("#dataDate").innerHTML = !dd ? "" : dd.sim ? `<span class="simtag">Simulated</span>` : dd.entered ? `<span>Entered today</span>` : dd.date ? `<span class="realtag">PMData</span><span>recorded <b>${fmtD(dd.date)}</b></span>` : ""; }
   $("#dayTxt").textContent = p === "training" ? `${PHASE_LABEL.training()} · ${pl(-d, "day")} to launch` : p === "orbit" ? `${PHASE_LABEL.orbit()} · ${pl(LAND() - d, "day")} to ${mars() ? "Mars landing" : "going home"}` : PHASE_LABEL[p]();
   const steps = ["Training", "Launch", "Day 1", mars() ? "Cruise" : "In orbit", "Last day", mars() ? "Mars" : "Home"], at = {training: 0, launch: 1, arrive: 2, orbit: 3, prereturn: 4, landed: 5, after: 5}[p];
   const frac = p === "orbit" ? 2 + (d - 1) / (LAND() - 2) * 2 : at;
@@ -691,7 +692,7 @@ function renderHolo(full) {
   const on = Math.max(1, Math.round(pct / 100 * 14));
   $("#lvl").innerHTML = Array.from({length: 14}, (_, i) => `<i class="${i < on ? "on" + (pct > 80 ? " w" : "") : ""}"></i>`).join("") + `<span>${f(pct)}% dose limit</span>`;
   const bmi = S.weight / Math.pow(S.height / 100, 2);
-  $("#hstats").innerHTML = `<div><b>${S.age}</b>Age</div><div><b>${S.height}<small>cm</small></b>Height</div><div><b>${S.weight}<small>kg</small></b>Weight</div><div><b>${f(bmi, 1)}</b>BMI</div>`;
+  $("#hstats").innerHTML = `<div><b>${S.age}</b>Age</div><div><b>${S.height}<small>cm</small></b>Height</div><div><b>${S.weight}<small>kg</small></b>Weight</div><div><b>${f(bmi, 1)}</b>BMI</div><span class="simtag">Simulated profile</span>`;
   $("#liveTxt").textContent = !/\(simulated\)$/.test(v.src) ? v.src.replace(/^LIVE · /, "") : inFlight() ? "Vitals simulated · in flight they come from the Bio-Monitor shirt" : phase() === "training" ? "Vitals simulated · training wearable" : "Vitals simulated · wearable";
 }
 
@@ -782,15 +783,16 @@ function realFill(d = day()) { const l = L(d); if (l.daily) return l.daily; cons
 function ensureDaily() { realFill(); const b = base(); if (!L().daily) L().daily = {sleep: b.sleep, mood: 4, hr: b.hr, sbp: b.sbp, dbp: b.dbp, temp: b.temp, glu: b.glu}; return L().daily; }
 const missTarget = () => lastExam(4);
 const SIMS = [
-  {id: "sleep", l: "watch", t: "Short sleep"}, {id: "hr", l: "watch", t: "Heart rate off normal"}, {id: "rt", l: "watch", t: "Slow reflexes"},
+  {id: "sleep", l: "watch", t: "Short sleep"}, {id: "hr", l: "watch", t: "Heart rate off baseline"}, {id: "rt", l: "watch", t: "Slow reflexes"},
   {id: "scanf", l: "watch", t: "Scan needs a follow-up"}, {id: "miss", l: "watch", t: "Missed a required scan"},
   {id: "vital", l: "urgent", t: "Vital sign outside safe limits"}, {id: "scanu", l: "urgent", t: "Scan: doctors want a call now"}, {id: "bone", l: "watch", t: "Scan spots a bone change"}, {id: "hard", l: "watch", t: "Hard day (low mood, high stress)"}];
-function simOff(id) { if (id === "rt" && phase() === "training") return "Reflexes are only compared with your normal after launch."; if (id === "miss" && !missTarget()) return "Only in flight, at least 4 days after a scheduled eye exam or neck scan."; return ""; }
+function simOff(id) { if (id === "rt" && phase() === "training") return "Reflexes are only compared with your baseline after launch."; if (id === "miss" && !missTarget()) return "Only in flight, at least 4 days after a scheduled eye exam or neck scan."; return ""; }
 function simScan(area, reply, sd, fid) { const now = Date.now(), rec = withFinding({area, at: now, reply, repliedAt: now, mission: S.mission, day: sd, sim: true}, fid), ft = escH(findText(rec)), nm = AREAS[area].label.toLowerCase();
   S.scans.push(rec);
   S.msgs.push({me: false, sim: true, mission: S.mission, at: now, text: reply === "followup" ? `Thanks for the ${nm} scan. ${ft}. We'd like a follow-up scan next week.` : `Please call us at the next opportunity about your ${nm} scan. ${ft}.`}); }
 function simulate(id) { const now = Date.now(), b = base(); CALV++;
-  if (id === "clear") { const l = L(); delete l.daily; delete l.rt; S.scans = S.scans.filter(s => !(s.sim && s.mission === S.mission && s.day <= day())); S.msgs = S.msgs.filter(m => !(m.sim && m.mission === S.mission) && !(m.issue && m.iday === key())); if (S.missed) Object.keys(S.missed).forEach(k2 => { if (k2.startsWith(S.mission + ":")) delete S.missed[k2]; }); if (window.clearToday) window.clearToday(); ensureDaily(); return; }
+  if (id === "call") { startCall("Started from the demo"); return; }
+  if (id === "clear") { const l = L(); delete l.daily; delete l.rt; S.scans = S.scans.filter(s => !(s.sim && s.mission === S.mission && s.day <= day())); S.msgs = S.msgs.filter(m => !(m.sim && m.mission === S.mission) && !(m.issue && m.iday === key())); if (S.missed) Object.keys(S.missed).forEach(k2 => { if (k2.startsWith(S.mission + ":")) delete S.missed[k2]; }); if (window.clearToday) window.clearToday(); clearCall(); ensureDaily(); return; }
   if (simOff(id)) return;
   if (id === "hard") { const hd = ensureDaily(); hd.mood = 2; hd.checkin = {stress: 2, fatigue: 2, sleep: 3, readiness: 2, at: now, sim: true}; hd.sim = true; return; }
   const d = ensureDaily();
@@ -813,10 +815,46 @@ function autoSend(st) { const dk = key(), now = Date.now();
   st.filter(x => !x.private).forEach(x => { const k2 = akey(x); if (S.msgs.some(m => m.issue === k2 && m.iday === dk)) return; const t = issueText(x), at = x.at ? Math.min(now, x.at) - 2 : now;
     S.msgs.push({me: true, auto: true, issue: k2, iday: dk, mission: S.mission, at, text: escH(t)});
     S.msgs.push({me: false, astra: true, issue: k2, iday: dk, mission: S.mission, at: at + 1, text: escH(`Sent to your flight surgeon: ${t}. Their reply will appear here.${x.l === "urgent" ? " Marked urgent." : ""}`)}); }); }
+const CALL = {by: {}, iv: 0};
+const hhmm = () => new Date().toTimeString().slice(0, 5), upT = ms => { const x = Math.max(0, Math.floor(ms / 1000)); return `${Math.floor(x / 60)}:${String(x % 60).padStart(2, "0")}`; };
+function callMsg(text) { S.msgs.push({me: true, auto: true, sim: true, callMsg: true, mission: S.mission, at: Date.now(), text: `${text} <span class="simtag">Simulated</span>`}); }
+function startCall(sub) { const id = APP.active, c0 = CALL.by[id]; if (c0 && c0.state !== "ended") return false;
+  const far = mars() && !nearDoctors();
+  CALL.by[id] = {state: far ? "sent" : "ringing", at: Date.now(), liveAt: 0, endAt: 0, sub, mission: S.mission, reply: Math.round(M().delayMin * 2)};
+  callMsg(far ? `Voice message sent to Earth automatically · ${hhmm()}` : `Call to Earth started automatically · ${hhmm()}`);
+  save(); renderCall(); return true; }
+function endCall() { const c = CALL.by[APP.active]; if (!c) return;
+  if (c.state === "sent") { delete CALL.by[APP.active]; renderCall(); return; }
+  if (c.state === "ended") return;
+  const now = Date.now(); c.dur = c.state === "live" ? now - c.liveAt : 0; c.state = "ended"; c.endAt = now;
+  callMsg(`Call ended · ${upT(c.dur)}`); save(); render(); }
+function checkCall(st) { const id = APP.active, dk = key();
+  st.filter(x => x.l === "urgent" && !x.private).forEach(x => { const k2 = `${S.mission}|${dk}|${akey(x)}`; S.calls = S.calls || {}; if (S.calls[k2]) return; S.calls[k2] = true; startCall("Flight surgeon · started automatically"); }); }
+function clearCall() { const id = APP.active, dk = key(); delete CALL.by[id];
+  if (S.calls) Object.keys(S.calls).forEach(k2 => { if (k2.startsWith(`${S.mission}|${dk}|`)) delete S.calls[k2]; }); stopCallTick(); const b = $("#callBar"); if (b) b.remove(); }
+function stopCallTick() { if (CALL.iv) { clearInterval(CALL.iv); CALL.iv = 0; } }
+function callView() { const c = CALL.by[APP.active], now = Date.now();
+  if (!c || c.mission !== S.mission || APP.view === "compare") return null;
+  if (c.state === "ringing" && now - c.at >= 3000) { c.state = "live"; c.liveAt = c.at + 3000; }
+  if (c.state === "ended" && now - c.endAt >= 4000) { delete CALL.by[APP.active]; return null; }
+  return c; }
+function renderCall() { const c = callView(); let b = $("#callBar");
+  if (!c) { stopCallTick(); if (b) b.remove(); return; }
+  if (!b) { b = document.createElement("div"); b.id = "callBar"; b.setAttribute("role", "status");
+    b.innerHTML = '<span class="cb-ic" aria-hidden="true"></span><div class="cb-tx"><b></b><span></span></div><span class="cb-time" id="callTime">0:00</span><button class="btn sm cb-end" type="button">End call</button>';
+    b.querySelector(".cb-end").onclick = endCall; $("#alerts").insertAdjacentElement("afterend", b); }
+  const now = Date.now(), T = {ringing: ["Calling Earth", c.sub, "0:00", "End call"], live: ["Connected to the flight surgeon", c.sub, upT(now - c.liveAt), "End call"],
+    ended: [`Call ended · ${upT(c.dur || 0)}`, c.sub, upT(c.dur || 0), "End call"], sent: ["Voice message sent to Earth", `Reply expected in about ${c.reply} min`, "", "Dismiss"]}[c.state];
+  b.className = `callbar ${c.state}`; b.querySelector(".cb-tx b").textContent = T[0]; b.querySelector(".cb-tx span").textContent = T[1];
+  const tm = b.querySelector("#callTime"); tm.textContent = T[2]; tm.hidden = c.state === "sent";
+  const be = b.querySelector(".cb-end"); be.textContent = T[3]; be.hidden = c.state === "ended";
+  if ((c.state === "ringing" || c.state === "live" || c.state === "ended") && !document.hidden) { if (!CALL.iv) CALL.iv = setInterval(renderCall, 1000); } else stopCallTick(); }
+document.addEventListener("visibilitychange", () => { if (document.hidden) stopCallTick(); else renderCall(); });
+window.ASTRA_CALL = {start: sub => startCall(sub || "Flight surgeon · started automatically"), end: endCall, get state() { const c = CALL.by[APP.active]; return c ? c.state : null; }};
 function renderAlerts(st) { const id = APP.active, prev = SEEN[id] || new Set();
   ALERT = {list: st, fresh: new Set(st.map(akey).filter(k2 => !prev.has(k2)))}; SEEN[id] = new Set(st.map(akey));
   $("#alerts").innerHTML = st.length ? st.map(x => `<div class="alert ${x.l}${ALERT.fresh.has(akey(x)) ? " new" : ""}"><b class="sev">${x.l === "urgent" ? "Red · needs attention" : "Amber · worth a look"}</b><span class="what">${escH(issueText(x))}${x.find ? ' <span class="simtag">Simulated</span>' : ""}</span><span class="route">${route(x)}</span></div>`).join("") : "";
-  renderAreas(); }
+  checkCall(st); renderCall(); renderAreas(); }
 const SCAN_SPOT = {eyes: "eyes", neck: "neck", heart: "heart", lungs: "lungs", bladder: "abdomen", legs: "legs"};
 const SPOT_XY = {head: [100, 30], forehead: [100, 19], eyes: [93, 43], neck: [100, 76], heart: [114, 124], lungs: [84, 116], abdomen: [100, 182], legs: [82, 285]};
 const SPOT_FOCUS = {forehead: "head"};
@@ -880,10 +918,17 @@ function wireSpots() { const fig = $(".holo"); if (!fig || wireSpots.done) retur
   fig.addEventListener("mouseout", off); fig.addEventListener("focusout", off);
   document.addEventListener("click", e => { if (!e.target.closest(".spot, .b3-mk, .area-chip, #bodyReset") && !e.target.closest("#bodyTip")) hideTip(); });
   document.addEventListener("keydown", e => { if (e.key === "Escape") hideTip(); }); }
+function areaList(st) { const A = {}, F = [];
+  st.forEach(x => (x.spots || []).forEach(([k2, l, txt, pin, stn, fact]) => { const a = AREA_OF[k2] || k2; if (!AREA_LBL[a]) return;
+    const r = A[a] = A[a] || {key: a, label: AREA_LBL[a], level: l, pin: null, lines: []}; if (RK[l] > RK[r.level]) r.level = l;
+    if (pin && (!r.pin || l === "urgent")) r.pin = pin; if (!r.lines.includes(txt)) r.lines.push(txt);
+    const sn = stn || AREA_LBL[a], fc = stn ? fact : txt, ex = F.find(y => y.structure === sn && y.key === a);
+    if (!ex) F.push({key: a, level: l, structure: sn, fact: fc}); else if (RK[l] > RK[ex.level]) Object.assign(ex, {level: l, fact: fc}); }));
+  return {areas: AREA_KEYS.filter(a => A[a]).map(a => A[a]), findings: F.sort((p2, q2) => RK[q2.level] - RK[p2.level])}; }
 function refreshAstra() {
   window.ASTRA = {crew: CREW.map(c => withMember(c.id, () => { const st = statuses().filter(x => !x.private), w = worstOf(st); autoSend(st);
     return {id: c.id, name: c.name, sex: c.sex, age: c.age, height: c.height, weight: c.weight, role: c.role, source: (D.crew && D.crew[c.idx] && D.crew[c.idx].source) || "",
-      base: Object.assign({}, base()), status: w, statusText: st.length ? `${WORD[w]}: ${issueText(st[0])}${st.length > 1 ? ` (and ${st.length - 1} more)` : ""}` : "Nothing off their normal today", issues: st.map(x => ({l: x.l, what: issueText(x)})),
+      base: Object.assign({}, base()), status: w, statusText: st.length ? `${WORD[w]}: ${issueText(st[0])}${st.length > 1 ? ` (and ${st.length - 1} more)` : ""}` : "Nothing off their baseline today", issues: st.map(x => ({l: x.l, what: issueText(x)})), areas: areaList(st).areas, findings: areaList(st).findings,
       today: (dd => dd ? {sleep: dd.sleep, mood: dd.mood, hr: dd.hr, date: dd.date || null} : null)(L().daily)}; })),
     activeId: APP.active, dayChip: dayChip(), phase: phase(), mission: S.mission}; }
 let CALV = 0; const CAL = {};
@@ -927,13 +972,13 @@ function renderBars() { const A = window.ASTRA, cmp = APP.view === "compare";
   const who = c => `<span class="av">${ini(c.name)}</span><span class="who"><span class="nm">${c.name}</span><span class="rl">${c.role} · ${c.sex.toUpperCase()}</span></span>`, cur = A.crew.find(c => c.id === APP.active);
   $("#crewBtn").innerHTML = (cmp || !cur ? `<span class="av">4</span><span class="who"><span class="nm">Compare crew</span></span>` : who(cur) + `<span class="dot ${cur.status}" title="${SW[cur.status]}"></span><span class="sr">${SW[cur.status]}</span>`) + `<span class="chev" aria-hidden="true"></span>`;
   $("#crewMenu").innerHTML = A.crew.map(c => `<button class="crewopt" role="option" data-id="${c.id}" aria-selected="${!cmp && c.id === APP.active}">${who(c)}<span class="st ${c.status}"><span class="dot ${c.status}"></span>${SW[c.status]}</span></button>`).join("")
-    + `<button class="crewopt cmp" role="option" data-id="compare" aria-selected="${cmp}"><span class="av">4</span><span class="who"><span class="nm">Compare crew</span><span class="rl">All four side by side</span></span></button>`;
+    + `<button class="crewopt cmp" role="option" data-id="compare" aria-selected="${cmp}"><span class="av">4</span><span class="who"><span class="nm">Compare crew</span><span class="rl">All four side by side</span></span></button><div class="crewnote">Named after Apollo astronauts. All health data is simulated.</div>`;
   renderCalBtn(); if (!$("#calPop").hidden) renderCal();
-  $("#simMenu").innerHTML = SIMS.map(x => { const off = simOff(x.id); return `<button class="simbtn ${x.l}" data-sim="${x.id}"${off ? ` disabled title="${off}"` : ""}><span class="dot ${x.l}"></span>${x.t}</button>`; }).join("")
+  $("#simMenu").innerHTML = SIMS.map((x, i) => { const off = simOff(x.id); return `<button class="simbtn ${x.l}" data-sim="${x.id}"${off ? ` disabled title="${off}"` : ""}><span class="dot ${x.l}"></span>${x.t}</button>` + (i === SIMS.map(y => y.l).lastIndexOf("urgent") ? `<button class="simbtn urgent" data-sim="call"><span class="dot urgent"></span>Call Earth now</button>` : ""); }).join("")
     + `<button class="simbtn clear" data-sim="clear">Clear today's issues</button><span class="simtag">Simulated</span>`;
   $("#mission").value = S.mission; $("#dReply").value = S.reply; }
 function renderView() { const cmp = APP.view === "compare";
-  ["#crewGrid", "#crewMain", "#alerts"].forEach(s => { $(s).style.display = cmp ? "none" : ""; });
+  ["#crewGrid", "#crewMain", "#alerts"].forEach(s => { $(s).style.display = cmp ? "none" : ""; }); renderCall();
   $("#compareView").hidden = !cmp; if (cmp && window.renderCompare) window.renderCompare($("#compareView"), window.ASTRA); }
 const setDay = x => { S.travel = clampDay(x) + S.launch - todayIdx(); S.open = null; render(); };
 
@@ -977,7 +1022,7 @@ async function connect(id) {
     }
     if (id === "radlab") {
       { const m = (SM.radlab && SM.radlab.modules) || [], n3 = m.find(x => x.module === "Node 3") || m[0];
-        setRes(id, `NASA's RadLab server doesn't allow direct calls from a web page (no CORS header), so ASTRA does not call it from the browser and shows the sample our script fetched (Sample · NASA OSDR RadLab, 5 Dec 2019) from the same API: ${SM.radlab ? SM.radlab.query_window : ""}, ${SM.radlab ? SM.radlab.rows : 0} readings. ${n3 ? `${n3.module} (${n3.instrument}): ${f(n3.mean_uGy_h, 1)} µGy/h ≈ ${f(n3.mean_uGy_h * 24 / 1000, 2)} mGy a day, in line with the 0.5 mSv/day used here.` : ""} A real app would call it from a small server.`); }
+        setRes(id, `NASA's RadLab server doesn't allow direct calls from a web page (no CORS header), so ASTRA does not call it from the browser and shows the sample our script fetched (NASA OSDR RadLab · 5 Dec 2019) from the same API: ${SM.radlab ? SM.radlab.query_window : ""}, ${SM.radlab ? SM.radlab.rows : 0} readings. ${n3 ? `${n3.module} (${n3.instrument}): ${f(n3.mean_uGy_h, 1)} µGy/h ≈ ${f(n3.mean_uGy_h * 24 / 1000, 2)} mGy a day, in line with the 0.5 mSv/day used here.` : ""} A real app would call it from a small server.`); }
     }
   } catch (e) { setRes(id, `Not connected: ${e.message || e}.`); }
 }
@@ -990,7 +1035,7 @@ const PH_DEF = {training: [7.5, 62, 118, 76, 36.6, 90], launch: [6, 70, 124, 80,
 const STEP = {
   welcome1: () => ({ill: I.hand, title: "Hi, I'm ASTRA", sub: "I help you notice changes in your body, from your first training day to the day you're home. I compare you with you, not with anyone else."}),
   welcome2: () => ({ill: I.lock, title: "Your data is yours", sub: "Your check-ins stay with you. Scan images and anything that could affect your safety go to your flight surgeon, and you'll always see exactly what was sent."}),
-  welcome3: () => ({ill: I.list, title: "How it works", html: `<div class="check"><span>1</span>During training: a short check every day builds your normal, plus 6 baseline scans.</div><div class="check"><span>2</span>One last check before you board, one when you arrive.</div><div class="check"><span>3</span>In space: 90 seconds a day, monitoring runs on its own, and I guide every scan. Daily checks, weekly conference, exams on set flight days.</div><div class="check"><span>4</span>One check before you go home, and one when you land.</div>`}),
+  welcome3: () => ({ill: I.list, title: "How it works", html: `<div class="check"><span>1</span>During training: a short check every day builds your baseline, plus 6 baseline scans.</div><div class="check"><span>2</span>One last check before you board, one when you arrive.</div><div class="check"><span>3</span>In space: 90 seconds a day, monitoring runs on its own, and I guide every scan. Daily checks, weekly conference, exams on set flight days.</div><div class="check"><span>4</span>One check before you go home, and one when you land.</div>`}),
   d1: () => { const v = (realFill() || L().daily || {}).sleep ?? (PH_DEF[phase()] || PH_DEF.training)[0];
     return {title: "How long did you sleep?", html: `<div class="bigval"><span id="slv">${v}</span> h</div><input type="range" id="sl" min="3" max="10" step=".5" value="${v}">`, init() { $("#sl").oninput = e => { this.mv = true; $("#slv").textContent = e.target.value; }; }, save() { scratch.sleep = this.mv ? +$("#sl").value : v; }}; },
   d2: () => ((scratch.mood = scratch.mood || (realFill() || L().daily || {}).mood), {title: "How are you feeling?", sub: "Only you see this.", needs: !scratch.mood, html: `<div class="faces" id="fc">${["Very low", "Low", "Okay", "Good", "Great"].map((e, i) => `<button data-v="${i + 1}" class="${scratch.mood === i + 1 ? "on" : ""}" aria-label="${["Very low", "Low", "Okay", "Good", "Great"][i]}">${e}</button>`).join("")}</div>`,
@@ -1009,7 +1054,7 @@ const STEP = {
       const nx = () => { st = "wait"; pad.classList.remove("go2"); pad.textContent = "Wait for it…"; let d; do d = 1200 + Math.random() * 3600; while (Math.abs(d - pv) < 400); pv = d; tm = setTimeout(() => { st = "go"; pad.classList.add("go2"); pad.textContent = "Tap!"; t0 = performance.now(); }, d); };
       const hit = () => { if (st === "idle") { ts = []; nx(); } else if (st === "wait") { clearTimeout(tm); st = "early"; pad.textContent = "A bit early. Wait for blue"; tm = setTimeout(nx, 700); }
         else if (st === "go") { ts.push(performance.now() - t0); if (ts.length >= 10) { st = "done"; pad.classList.remove("go2"); const m = Math.round(ts.sort((a, b) => a - b)[5]); L().rt = m;
-          pad.textContent = "Done"; $("#rto").hidden = false; $("#rto").innerHTML = `Your speed: <b>${m} ms</b>${phase() === "training" ? " · added to your normal" : ` · your normal ${f(base().rt)} ms`}`; $("#goBtn").disabled = false; } else nx(); } };
+          pad.textContent = "Done"; $("#rto").hidden = false; $("#rto").innerHTML = `Your speed: <b>${m} ms</b>${phase() === "training" ? " · added to your baseline" : ` · your baseline ${f(base().rt)} ms`}`; $("#goBtn").disabled = false; } else nx(); } };
       pad.onclick = hit; pad.onkeydown = e => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); hit(); } }; }}),
   pick: () => { const due = dueScans().find(x => x.a), tr = day() <= 0, a = due ? due.a : tr ? missingBase()[0] : null, ts = trainingScans();
     return {title: "Which area?", sub: tr ? "All 6 are needed before launch. Tap a spot or a name." : "Tap a spot on the body or a name below.", needs: true,
@@ -1034,15 +1079,15 @@ const STEP = {
       const pts = hr.map((v, j) => v === null ? null : [j, v - b0]).filter(Boolean), xy = ([x, y]) => `${(x / (hr.length - 1) * 300).toFixed(1)},${(90 - (y + 10) / 45 * 90).toFixed(1)}`; let n = 0;
       $("#hrv").innerHTML = `<line x1="100" x2="100" y1="0" y2="90" stroke="#c7cdd9" stroke-dasharray="3 3"/><text x="104" y="11" font-size="10" fill="#6f7689">stand up</text><polyline id="pl" fill="none" style="stroke:var(--brand)" stroke-width="2"/>`;
       const tm = setInterval(() => { n += 12; if ($("#pl")) $("#pl").setAttribute("points", pts.slice(0, n).map(xy).join(" ")); if (n >= pts.length) { clearInterval(tm); const drop = tr ? 4 : 14; L().stand = {hr: rise, sbpDrop: drop};
-        $("#sto").innerHTML = `Heart rate <b>+${rise}</b> · blood pressure <b>−${drop}</b> when standing${tr ? " · saved as your normal" : ` · your normal +${f(base().stand)}`} <span class="tag">Earth data</span>`; $("#goBtn").disabled = false; } }, 30); }}),
+        $("#sto").innerHTML = `Heart rate <b>+${rise}</b> · blood pressure <b>−${drop}</b> when standing${tr ? " · saved as your baseline" : ` · your baseline +${f(base().stand)}`} <span class="tag">Earth data</span>`; $("#goBtn").disabled = false; } }, 30); }}),
   meds: () => { const land = LAND(), items = [{n: "Anti-nausea (for landing)", exp: land - 10}, {n: "Pain relief", exp: land + 200}, {n: "Salt tablets (for fluid loading)", exp: land + 400}];
     return {title: "Landing medicines", sub: "Checking each expiry date against your landing day.", html: items.map(i => `<div class="check"><span style="${i.exp < land ? "background:var(--watch-soft);color:var(--watch)" : ""}">${i.exp < land ? "!" : "✓"}</span><span style="all:unset">${i.n}: ${i.exp < land ? "<b>expires before landing, use the backup pack</b>" : "fine"}</span></div>`).join("") + `<div class="sub" style="margin-top:8px">Before deorbit you'll also drink 24–48 oz of salty water (by body weight) to help your blood pressure. <span class="simtag">Simulated</span></div>`,
       after() { L().meds = items.map(i => ({n: i.n, expired: i.exp < land})); }}; },
   connect: () => ({title: "Connect real equipment", sub: "This is where the crew's real monitoring equipment links to ASTRA. In this demo the vitals are simulated.", go: "Done",
     html: SOURCES.map(s => `<div class="src"><div class="h"><b>${s.name}</b>${s.btn ? `<button class="btn sm" data-c="${s.id}">${CONN[s.id] ? "Reconnect" : s.btn}</button>` : '<span class="simtag">Simulated</span>'}</div><div class="d">${s.what}</div><div class="r" id="r-${s.id}"></div></div>`).join("") + `<button class="btn ghost" id="manBtn" style="width:100%;margin-top:12px">Or type readings in by hand</button>`,
     init() { $$("[data-c]").forEach(b => b.onclick = () => connect(b.dataset.c)); $("#manBtn").onclick = () => { flow = ["d4"]; k = 0; show(); }; }}),
-  fin: () => { const st = statuses(); return {ill: I.done, title: st.length ? (st.length === 1 ? "Saved. One thing to keep an eye on" : `Saved. ${st.length} things to keep an eye on`) : "All saved. Nice!", sub: st.length ? cap(st.map(x => x.what).join("; ")) + "." : phase() === "training" ? `Added to your normal (${pl(baseInfo().n, "training day")} so far).` : "Everything is in line with your normal.", go: "Done"}; },
-  rules: () => ({title: "How I decide what to tell Earth", go: "Got it", html: `<table class="rules"><tr><th>What</th><th>When</th><th>Who is told</th></tr><tr><td>Any scan</td><td>Always</td><td>Images go to your doctors <b>automatically</b>; they decide what it means</td></tr><tr><td>Required scans</td><td>More than 3 days overdue</td><td>Your doctor, <b>automatically</b></td></tr><tr><td>Vital signs</td><td>Outside safe limits (e.g. heart rate ≤40 or ≥131, blood sugar &lt;54)</td><td>Flight surgeon, <b>automatically</b></td></tr><tr><td>Vital signs, sleep, reflexes</td><td>Off your normal</td><td>Your doctor, <b>automatically</b></td></tr><tr><td>Mood</td><td>Any</td><td><b>Only you</b>, never sent automatically</td></tr><tr><td>Medicines</td><td>Expire before landing</td><td>You, and you use the backup pack</td></tr></table><div class="sub" style="margin-top:8px">Your normal is the middle value of everything you recorded during training. Limits: NASA-STD-3001 where NASA sets a number; otherwise clinical scores (NEWS2, ADA).</div>`}),
+  fin: () => { const st = statuses(); return {ill: I.done, title: st.length ? (st.length === 1 ? "Saved. One thing to keep an eye on" : `Saved. ${st.length} things to keep an eye on`) : "All saved. Nice!", sub: st.length ? cap(st.map(x => x.what).join("; ")) + "." : phase() === "training" ? `Added to your baseline (${pl(baseInfo().n, "training day")} so far).` : "Everything is in line with your baseline.", go: "Done"}; },
+  rules: () => ({title: "How I decide what to tell Earth", go: "Got it", html: `<table class="rules"><tr><th>What</th><th>When</th><th>Who is told</th></tr><tr><td>Any scan</td><td>Always</td><td>Images go to your doctors <b>automatically</b>; they decide what it means</td></tr><tr><td>Required scans</td><td>More than 3 days overdue</td><td>Your doctor, <b>automatically</b></td></tr><tr><td>Vital signs</td><td>Outside safe limits (e.g. heart rate ≤40 or ≥131, blood sugar &lt;54)</td><td>Flight surgeon, <b>automatically</b></td></tr><tr><td>Vital signs, sleep, reflexes</td><td>Off your baseline</td><td>Your doctor, <b>automatically</b></td></tr><tr><td>Mood</td><td>Any</td><td><b>Only you</b>, never sent automatically</td></tr><tr><td>Medicines</td><td>Expire before landing</td><td>You, and you use the backup pack</td></tr></table><div class="sub" style="margin-top:8px">Your baseline is the middle value of everything you recorded during training. Limits: NASA-STD-3001 where NASA sets a number; otherwise clinical scores (NEWS2, ADA).</div>`}),
 };
 function runStep(id) { const [n, a, b] = id.split(":"); return ["si", "sp", "sr", "ss"].includes(n) ? STEP[n](a, b !== undefined ? +b : undefined) : STEP[id](); }
 function openFlow(list, item) { flow = expand(list); k = 0; scratch = {}; running = item || null; $("#scrim").classList.add("on"); $("#sheet").classList.add("on"); show(); }

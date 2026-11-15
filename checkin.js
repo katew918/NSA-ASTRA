@@ -167,7 +167,7 @@
   }
   function afterAnswer(answered, elapsed, dur) {
     if (answered >= MAX_QUESTIONS) return "end";
-    if (answered >= MIN_FINISH && answered % DIMS.length === 0 && elapsed >= dur) return "end";
+    if (answered >= MIN_FINISH && elapsed >= dur) return "end";
     return "next";
   }
   function timeLeftText(ms) {
@@ -314,13 +314,13 @@
     if (!st) return;
     var bar = $("#mhProg i"), cnt = $("#mhCount"), fin = $("#mhFinish"), dur = st.clock.dur() || 1;
     if (bar) bar.style.width = (st.done ? 100 : Math.min(100, Math.round(st.clock.elapsed() / dur * 100))) + "%";
-    if (cnt) cnt.textContent = timeLeftText(st.clock.left());
+    if (cnt) cnt.textContent = !st.done && st.clock.left() <= 0 && st.got.length < MIN_FINISH ? "Almost done" : timeLeftText(st.clock.left());
     if (fin) fin.hidden = st.done || st.got.length < MIN_FINISH;
   }
   function sheetOpen() { var s = $("#sheet"); return !s || s.classList.contains("on"); }
   function startTick() {
     var my = runId, me = st;
-    me.tick = setInterval(function () { if (my !== runId || me.done || !sheetOpen()) { clearInterval(me.tick); return; } prog(); }, 1000);
+    me.tick = setInterval(function () { if (my !== runId || me.done || !sheetOpen()) { clearInterval(me.tick); return; } prog(); if (!me.done && me.clock.left() <= 0 && me.got.length >= MIN_FINISH) { clearInterval(me.tick); finish(); } }, 1000);
   }
 
   function begin() {
@@ -364,6 +364,7 @@
   function sendSurgeon() {
     msgSurgeon("I'd like to talk with you privately today. Please reach out when you can.", "Thank you for reaching out. We're here and will call you at the next opportunity. Please stay with a crewmate until we talk.");
     A.closeFlow();
+    if (window.ASTRA_CALL) window.ASTRA_CALL.start("Flight surgeon · started automatically");
   }
   function onText(e) {
     e.preventDefault();
@@ -418,7 +419,7 @@
   }
 
   A.STEP.mind = function () {
-    return {title: "Mood check-in", go: "Done",
+    return {title: "ASTRA check-in", go: "Done",
       html: "<div class=\"mh\"><div class=\"mh-prog\" id=\"mhProg\"><i></i></div><span class=\"mh-count\" id=\"mhCount\"></span><div class=\"mh-log\" id=\"mhLog\"></div><div class=\"mh-chips\" id=\"mhChips\"></div><form class=\"mh-form\" id=\"mhForm\"><input id=\"mhInput\" maxlength=\"300\" placeholder=\"Or say it in your own words\" autocomplete=\"off\"><button class=\"btn sm\" type=\"submit\">Send</button></form>" +
         "<button class=\"hbtn\" id=\"mhFinish\" type=\"button\" hidden>Finish now</button>" +
         "<div class=\"mh-ai\"><button class=\"hbtn\" id=\"mhSpeak\" type=\"button\" aria-pressed=\"false\">Read aloud</button></div>" +
