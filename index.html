@@ -321,7 +321,7 @@ input[type=text]:focus,input[type=number]:focus,input[type=date]:focus,input[typ
         <div class="mindcard" id="mindCard"><div class="mc-q" id="mcLine"></div><div class="mc-row"><button class="btn sm" id="mhBtn" type="button">Start mood check-in</button><span class="mc-note">Private · 5 questions · about a minute</span></div></div>
         <div class="tl" id="tl"></div>
         <section class="nextcard">
-          <div class="next"><div class="ic" id="nextIc"></div><div class="tx"><div class="sub" id="nextWhen"></div><b id="nextWhat"></b><div class="sub" id="nextWhy"></div></div><button class="btn white" id="mainBtn">Start</button></div>
+          <div class="next"><div class="ic" id="nextIc"></div><div class="tx"><div class="sub" id="nextWhen"></div><b id="nextWhat"></b></div><button class="btn white" id="mainBtn">Start</button></div>
           <div class="later" id="later"></div>
         </section>
       </div>
@@ -364,18 +364,18 @@ input[type=text]:focus,input[type=number]:focus,input[type=date]:focus,input[typ
     </section>
     <div class="two">
       <section class="card rise">
-        <div class="chead"><div><h2 id="scanTitle">Scans</h2><p class="sub" id="scanTxt"></p></div><div id="scanRing"></div></div>
+        <div class="chead"><div><h2 id="scanTitle">Scans</h2><p class="sub" id="scanTxt" hidden></p></div><div id="scanRing"></div></div>
         <div id="scanBody"></div>
         <button class="btn" id="scanBtn" style="width:100%">Start a scan</button>
         <div style="text-align:center;margin-top:10px"><button class="linkbtn" id="scanOther">Scan a different area</button></div>
       </section>
       <section class="card rise d1">
-        <div class="chead"><div><h2>Messages</h2><p class="sub" id="earthSub"></p></div><span class="sig" id="sig"></span></div>
+        <div class="chead"><div><h2>Messages</h2></div><span class="sig" id="sig"></span></div>
         <div class="chat" id="chat" style="margin-top:12px"></div>
         <div id="shareWrap"></div>
       </section>
     </div>
-    <div class="links"><button class="linkbtn" id="tourBtn">Show the welcome tour again</button><button class="linkbtn" id="rulesBtn">How I decide what to tell Earth</button><label class="sub">Doctors' reply to new scans <select id="dReply"><option value="normal">Looks like your baseline</option><option value="followup">Wants a follow-up</option><option value="urgent">Needs a call now</option></select></label><button class="linkbtn" id="dReset">Reset demo</button></div>
+    <div class="links"><button class="linkbtn" id="tourBtn">How ASTRA works</button><label class="sub">Doctors' reply to new scans <select id="dReply"><option value="normal">Looks like your baseline</option><option value="followup">Wants a follow-up</option><option value="urgent">Needs a call now</option></select></label><button class="linkbtn" id="dReset">Reset demo</button></div>
   </main>
   <footer>ASTRA prototype · not medical advice · made for the crew tablet · NASA ISS Live · NASA OSDR · NASA DONKI · NASA-STD-3001 · PhysioNet CVES · PMData (real daily rows for 4 volunteers, relabelled) · crew profiles simulated</footer>
 </div>
@@ -523,21 +523,28 @@ function statuses() {
   realFill();
   const d = L().daily, b = base(), p = phase(), out = [];
   if (d) {
-    if (d.mood <= 2) out.push({l: "watch", what: "your mood is low today", private: true});
-    if (d.sleep < b.sleep - 1.5) out.push({l: "watch", what: "you slept a lot less than usual"});
-    const red = d.hr <= 40 || d.hr >= 131 || d.sbp <= 90 || d.sbp >= 220 || d.temp <= 35 || d.temp >= 39.1 || d.glu < 54;
-    const amb = d.hr >= 111 || d.hr <= 50 || d.sbp <= 100 || d.temp >= 38.1 || d.glu < 70 || d.glu > 180 || Math.abs(d.hr - b.hr) >= 20;
-    if (red) out.push({l: "urgent", what: "a vital sign is outside safe limits", auto: "vitals"}); else if (amb) out.push({l: "watch", what: "a vital sign is off your normal"});
+    if (d.mood <= 2) out.push({l: "watch", what: "your mood is low today", private: true, spots: [["head", "watch", `Mood ${d.mood} of 5 · usual ${f(b.mood)}`]]});
+    if (d.sleep < b.sleep - 1.5) out.push({l: "watch", what: "you slept a lot less than usual", spots: [["head", "watch", `Slept ${f(d.sleep, 1)} h · usual ${f(b.sleep, 1)} h`]]});
+    const vs = [];
+    if (d.hr <= 40 || d.hr >= 131) vs.push(["heart", "urgent", `Heart rate ${d.hr} bpm · safe range 41–130`]);
+    else if (d.hr >= 111 || d.hr <= 50 || Math.abs(d.hr - b.hr) >= 20) vs.push(["heart", "watch", `Heart rate ${d.hr} bpm · usual ${f(b.hr)}`]);
+    if (d.sbp <= 90 || d.sbp >= 220) vs.push(["heart", "urgent", `Blood pressure ${d.sbp}/${d.dbp} · safe range 91–219`]);
+    else if (d.sbp <= 100) vs.push(["heart", "watch", `Blood pressure ${d.sbp}/${d.dbp} · usual ${f(b.sbp)}/${f(b.dbp)}`]);
+    if (d.temp <= 35 || d.temp >= 39.1) vs.push(["forehead", "urgent", `Temperature ${f(d.temp, 1)} °C · safe range 35.1–39.0`]);
+    else if (d.temp >= 38.1) vs.push(["forehead", "watch", `Temperature ${f(d.temp, 1)} °C · usual ${f(b.temp, 1)}`]);
+    if (d.glu < 54) vs.push(["abdomen", "urgent", `Blood sugar ${d.glu} mg/dL · safe limit 54`]);
+    else if (d.glu < 70 || d.glu > 180) vs.push(["abdomen", "watch", `Blood sugar ${d.glu} mg/dL · normal 70–180`]);
+    if (vs.some(x => x[1] === "urgent")) out.push({l: "urgent", what: "a vital sign is outside safe limits", auto: "vitals", spots: vs}); else if (vs.length) out.push({l: "watch", what: "a vital sign is off your normal", spots: vs});
   }
-  if (L().rt && p !== "training" && L().rt > b.rt * 1.15) out.push({l: "watch", what: "your reflexes are slower than usual"});
-  const st = L().stand; if (st && p === "landed" && (st.hr >= 30 || st.sbpDrop >= 20)) out.push({l: "watch", what: "standing up is still hard"});
-  if (L().meds && L().meds.some(m => m.expired)) out.push({l: "watch", what: "one landing medicine expires before landing"});
-  Object.keys(AREAS).forEach(a => { const s = scanState(a); if (s.l === "watch" || s.l === "urgent") out.push({l: s.l, what: `${AREAS[a].label.toLowerCase()} scan: ${s.line.replace("Doctors: ", "").replace("Doctors ", "doctors ")}`, result: true}); });
+  if (L().rt && p !== "training" && L().rt > b.rt * 1.15) out.push({l: "watch", what: "your reflexes are slower than usual", spots: [["head", "watch", `Reaction time ${f(L().rt)} ms · usual ${f(b.rt)} ms`]]});
+  const st = L().stand; if (st && p === "landed" && (st.hr >= 30 || st.sbpDrop >= 20)) out.push({l: "watch", what: "standing up is still hard", spots: [["legs", "watch", `Standing: heart rate +${f(st.hr)} bpm${st.sbpDrop ? ` · blood pressure −${f(st.sbpDrop)}` : ""}`]]});
+  if (L().meds && L().meds.some(m => m.expired)) out.push({l: "watch", what: "one landing medicine expires before landing", spots: []});
+  Object.keys(AREAS).forEach(a => { const s = scanState(a); if (s.l === "watch" || s.l === "urgent") { const w = `${AREAS[a].label.toLowerCase()} scan: ${s.line.replace("Doctors: ", "").replace("Doctors ", "doctors ")}`; out.push({l: s.l, what: w, result: true, spots: [[SCAN_SPOT[a], s.l, cap(w)]]}); } });
 
-  const miss = missingBase().length, need = miss + (standBase() ? 0 : 1);
-  if (p === "training" && need && -day() <= 7) out.push({l: "watch", scan: true, what: `${pl(need, "baseline item")} still needed before launch (${pl(-day(), "day")} left)`});
-  if (p === "launch" && need) out.push({l: "watch", scan: true, what: `your baseline is incomplete (${need} missing): tell your flight surgeon before you board`});
-  dueScans().filter(x => day() - x.d > 3).forEach(x => out.push({l: "watch", scan: true, what: `your ${AREAS[x.a].label.toLowerCase()} scan is ${pl(day() - x.d, "day")} overdue`}));
+  const missL = missingBase(), miss = missL.length, need = miss + (standBase() ? 0 : 1), bsp = miss ? SCAN_SPOT[missL[0]] : "legs";
+  if (p === "training" && need && -day() <= 7) { const w = `${pl(need, "baseline item")} still needed before launch (${pl(-day(), "day")} left)`; out.push({l: "watch", scan: true, what: w, spots: [[bsp, "watch", `Baseline · ${need} missing · ${pl(-day(), "day")} to launch`]]}); }
+  if (p === "launch" && need) { const w = `your baseline is incomplete (${need} missing): tell your flight surgeon before you board`; out.push({l: "watch", scan: true, what: w, spots: [[bsp, "watch", `Baseline · ${need} missing · launch day`]]}); }
+  dueScans().filter(x => day() - x.d > 3).forEach(x => { const w = `your ${AREAS[x.a].label.toLowerCase()} scan is ${pl(day() - x.d, "day")} overdue`; out.push({l: "watch", scan: true, what: w, spots: [[SCAN_SPOT[x.a], "watch", `${AREAS[x.a].label} scan · ${pl(day() - x.d, "day")} overdue · due ${dayChip(x.d)}`]]}); });
   return out.sort((a, b2) => (b2.l === "urgent") - (a.l === "urgent"));
 }
 const shareItems = () => statuses().filter(x => x.l === "watch" && !x.private && !x.scan && !x.what.includes("scan"));
@@ -549,8 +556,8 @@ function render() {
   const st = statuses(), worst = st.some(x => x.l === "urgent") ? "urgent" : st.some(x => x.l === "watch") ? "watch" : "ok";
   const q = plan(), next = q.find(x => !x.done), dueN = q.filter(x => !x.done).length;
   const fresh = p === "training" && baseInfo().n === 0 && !st.length;
-  $("#statusPill").className = "pill " + (fresh ? "none" : worst); $("#statusPill").textContent = fresh ? "Welcome" : {ok: "You're doing well", watch: "Worth a look", urgent: "Needs attention"}[worst];
-  $("#statusTxt").textContent = fresh ? "Let's start learning your normal during training." : st.length ? cap(st[0].what) : `${dueN ? `${pl(dueN, "thing")} for you today` : "All done for today"}`;
+  $("#statusPill").className = "pill " + (fresh ? "none" : worst); $("#statusPill").textContent = fresh ? "Welcome" : {ok: "No issues", watch: "Worth a look", urgent: "Needs attention"}[worst];
+  $("#statusTxt").textContent = fresh ? "No baseline yet" : st.length ? issueText(st[0]) : `${dueN ? `${pl(dueN, "thing")} for you today` : "All done for today"}`;
   { const dd = L().daily, fmtD = x => new Date(x + "T00:00:00Z").toLocaleDateString("en-GB", {day: "numeric", month: "short", year: "numeric", timeZone: "UTC"});
     $("#dataDate").innerHTML = !dd ? "" : dd.sim ? `<span class="simtag">Simulated</span>` : dd.entered ? `<span>Entered today</span>` : dd.date ? `<span class="realtag">Real data</span><span>PMData · recorded <b>${fmtD(dd.date)}</b></span>` : ""; }
   $("#dayTxt").textContent = p === "training" ? `${PHASE_LABEL.training()} · ${pl(-d, "day")} to launch` : p === "orbit" ? `${PHASE_LABEL.orbit()} · ${pl(LAND() - d, "day")} to ${mars() ? "Mars landing" : "going home"}` : PHASE_LABEL[p]();
@@ -559,11 +566,11 @@ function render() {
   $("#tl").innerHTML = `<span class="bar" style="width:${Math.min(5, frac) / 5 * 83.34}%"></span>` + steps.map((s, i) => `<div class="${i < at ? "past" : i === at ? "now" : ""}"><i></i>${s}</div>`).join("");
   if (next) { setNext(next.ic, `${next.when} · ${next.dur}${next.req ? '<span class="req">Required</span>' : ""}`, next.what, next.why, true);
     const rest = q.filter(x => !x.done && x !== next); $("#later").innerHTML = rest.map(x => `<div>Later: <b>${x.what}</b> · ${x.when} · ${x.dur}</div>`).join(""); }
-  else if (p === "launch") { setNext("rocket", "Launch day", "Checked in. Enjoy the ride!", "Your suit and the vehicle look after you now. Next reading: when you arrive.", false); $("#later").innerHTML = ""; }
-  else { setNext("check", "Today", "All done. Nice work!", inFlight() ? "Monitoring keeps running in the background. See you tomorrow morning." : "Nothing else for you today.", false); $("#later").innerHTML = ""; }
+  else if (p === "launch") { setNext("rocket", "Launch day", "Checked in", "Your suit and the vehicle look after you now. Next reading: when you arrive.", false); $("#later").innerHTML = ""; }
+  else { setNext("check", "Today", "All done", inFlight() ? "Monitoring keeps running in the background. See you tomorrow morning." : "Nothing else for you today.", false); $("#later").innerHTML = ""; }
   renderScan(); renderChat(); renderTiles(); renderHolo(false); refreshAstra(); renderBars(); renderAlerts(st); save(); renderView(); if (window.renderMind) window.renderMind();
 }
-function setNext(ic, when, what, why, btn) { $("#nextIc").innerHTML = I[ic]; $("#nextWhen").innerHTML = when; $("#nextWhat").textContent = what; $("#nextWhy").textContent = why; $("#mainBtn").hidden = !btn; }
+function setNext(ic, when, what, why, btn) { $("#nextIc").innerHTML = I[ic]; $("#nextWhen").innerHTML = when; $("#nextWhat").textContent = what; $("#mainBtn").hidden = !btn; }
 
 const mir = d => d.replace(/(-?\d+(\.\d+)?),(-?\d+(\.\d+)?)/g, (_, x, _a, y) => `${200 - x},${y}`);
 function bodyParts() {
@@ -592,10 +599,10 @@ const lvlClass = (v, lo, hi, rlo, rhi) => (v <= rlo || v >= rhi) ? "urgent" : (v
 function renderHolo(full) {
   const v = vitalsNow(), b = base();
   if (full || !$("#holoFig svg") || renderHolo.sex !== S.sex) { renderHolo.sex = S.sex; const parts = bodyParts();
-    $("#holoFig").innerHTML = `<svg class="hsvg" viewBox="-10 0 220 440" aria-hidden="true">
-      <g class="hs" id="bodyAll">${parts}</g>
+    $("#holoFig").innerHTML = `<svg class="hsvg" viewBox="-10 0 220 440" role="group" aria-label="Body figure">
+      <g class="hs" id="bodyAll" aria-hidden="true">${parts}</g>
       <g id="areaG"></g>
-      <circle cx="122" cy="102" r="3" fill="#1E7F4F"><title>Dosimeter</title></circle></svg>`; renderAreas(); }
+      <circle cx="122" cy="102" r="3" fill="#1E7F4F" aria-hidden="true"><title>Dosimeter</title></circle></svg>`; renderAreas(); }
   $("#hbHR").className = "hbox " + lvlClass(v.hr, Math.max(51, b.hr - 20), Math.min(110, b.hr + 20), 40, 131); $("#hbHR").innerHTML = `Heart rate<b>${v.hr} <small>bpm</small></b>`;
   $("#hbBP").className = "hbox " + lvlClass(v.sbp, 101, 179, 90, 220); $("#hbBP").innerHTML = `Blood pressure<b>${v.sbp}/${v.dbp}</b>`;
   $("#hcL").innerHTML = `<div class="co ${lvlClass(v.temp, 35.5, 38, 35, 39.1)}">Temperature<b>${f(v.temp, 1)} <small>°C</small></b></div><div class="co">Breathing<b>${v.rr} <small>/min</small></b></div>`;
@@ -605,7 +612,7 @@ function renderHolo(full) {
   $("#lvl").innerHTML = Array.from({length: 14}, (_, i) => `<i class="${i < on ? "on" + (pct > 80 ? " w" : "") : ""}"></i>`).join("") + `<span>${f(pct)}% dose limit</span>`;
   const bmi = S.weight / Math.pow(S.height / 100, 2);
   $("#hstats").innerHTML = `<div><b>${S.age}</b>Age</div><div><b>${S.height}<small>cm</small></b>Height</div><div><b>${S.weight}<small>kg</small></b>Weight</div><div><b>${f(bmi, 1)}</b>BMI</div>`;
-  $("#liveTxt").textContent = v.src + (v.entered ? " · BP & temp from today's check" : " · BP & temp: your normal until you enter them");
+  $("#liveTxt").textContent = v.src.replace(/^LIVE · /, "").replace(" (simulated)", " · simulated");
 }
 
 let scanTarget = null;
@@ -617,30 +624,29 @@ function renderScan() {
   if (p === "training" || (p === "launch" && miss.length)) {
     const left = -d, all = !miss.length && standBase(), andStand = standBase() ? "" : " and the stand-up test";
     title = `Baseline scans <span class="req">Required before launch</span>`;
-    txt = "Your doctors compare every in-flight scan with these, so all 6 are needed before launch day.";
+    txt = `${ts.size} of 6 baseline scans done`;
     ring = ringSvg(ts.size, 6, miss.length ? "#3f5bff" : "#16a56d");
     body = `<div class="agrid">${Object.keys(AREAS).map(a => `<button data-a="${a}" class="${ts.has(a) ? "done" : a === miss[0] ? "nx" : ""}"><i>${ts.has(a) ? "✓" : ""}</i><span><b>${AREAS[a].label}</b><small>${ts.has(a) ? "Baseline saved" : mins(a)}</small></span></button>`).join("")}</div>`
-      + (all ? `<div class="note ok">✓ Baseline complete. You're ready for launch.</div>` : !miss.length ? `<div class="note watch">All 6 scans done. Still needed: your baseline stand-up test.</div>` : p === "launch" ? `<div class="note watch">Launch day: ${pl(miss.length, "baseline scan")}${andStand} missing. Tell your flight surgeon before you board.</div>` : left <= 7 ? `<div class="note watch">${pl(left, "day")} to launch: ${pl(miss.length, "scan")}${andStand} still to do.</div>` : "");
+      + (all ? `<div class="note ok">✓ Baseline complete</div>` : !miss.length ? `<div class="note watch">6 of 6 scans · stand-up test missing</div>` : p === "launch" ? `<div class="note watch">Launch day: ${pl(miss.length, "baseline scan")}${andStand} missing</div>` : left <= 7 ? `<div class="note watch">${pl(left, "day")} to launch · ${pl(miss.length, "scan")}${andStand} missing</div>` : "");
     scanTarget = miss[0] || null; btn = miss.length ? `${ts.size ? "Continue" : "Start"}: ${AREAS[miss[0]].label} (${mins(miss[0])})` : "Scan an area again";
   } else if (inFlight() || p === "landed") {
     const rows = p === "landed" ? [{a: "legs", d: LAND(), done: scanDone("legs", LAND())}] : schedule(), nd = rows.filter(r => r.done).length;
     title = `Scans <span class="req">Scheduled</span>`;
-    txt = due.length ? `${due.length === 1 ? "One scan is" : `${due.length} scans are`} waiting for you. You can also scan any area if something feels off.` : "You're up to date. You can scan any area any time if something feels off.";
+    txt = `${nd} of ${rows.length} scans done${due.length ? ` · ${due.length} due` : ""}`;
     ring = ringSvg(nd, rows.length, due.length ? "#3f5bff" : "#16a56d");
     body = `<div class="srows">${rows.map(r => { const over = !r.done && r.d < d, now = !r.done && r.d === d;
       return `<div class="srow ${now ? "duenow" : over ? "over" : ""}"><span class="dy">${dayChip(r.d)}</span><b>${AREAS[r.a].label}</b>${r.done ? pillFor(r.a) : now ? `<span class="pill due">Due today</span>` : over ? `<span class="pill watch">Overdue ${d - r.d} d</span>` : `<span class="when">in ${pl(r.d - d, "day")}</span>`}</div>`; }).join("")}</div>`;
     scanTarget = due.length ? due[0].a : null; if (due.length) btn = `Start: ${AREAS[due[0].a].label} scan (${mins(due[0].a)})`;
   } else {
-    txt = p === "launch" ? "All 6 baseline scans are saved. Nothing to scan today." : "Scan any area if something feels off. I'll show you where to place the probe.";
+    txt = p === "launch" ? "6 of 6 baseline scans done" : "";
     const seen = Object.keys(AREAS).filter(a => scanState(a).l !== "none");
     body = seen.length ? `<div class="srows">${seen.map(a => `<div class="srow"><b>${AREAS[a].label}</b>${pillFor(a)}</div>`).join("")}</div>` : `<div style="height:14px"></div>`;
   }
-  $("#scanTitle").innerHTML = title; $("#scanTxt").textContent = txt; $("#scanRing").innerHTML = ring; $("#scanBody").innerHTML = body; $("#scanBtn").textContent = btn;
+  $("#scanTitle").innerHTML = title; $("#scanTxt").textContent = txt; $("#scanTxt").hidden = !txt; $("#scanRing").innerHTML = ring; $("#scanBody").innerHTML = body; $("#scanBtn").textContent = btn;
   $("#scanBtn").className = "btn" + (scanTarget ? "" : " ghost"); $("#scanOther").parentElement.style.display = scanTarget ? "" : "none";
 }
 function renderChat() {
   const now = Date.now(), msgs = S.msgs.filter(m => m.mission === S.mission && (m.me || m.at <= now)), near = nearDoctors();
-  $("#earthSub").textContent = near ? "Your flight surgeon, on Earth with you." : mars() ? "Replies take a while from this far out." : "Your doctors on Earth, a moment away.";
   $("#sig").innerHTML = `<i style="height:6px"></i><i style="height:10px"></i><i style="height:14px"></i><span>${near ? "On Earth" : mars() ? "20 min each way" : "~1 s delay"}</span>`;
   $("#chat").innerHTML = msgs.length ? msgs.slice(-5).map(m => `<div class="bubble ${m.me ? "me" : "them"}"><div class="meta">${m.me ? (m.auto ? "Sent automatically" : "You shared") + (m.at > now ? ` · arrives in ${clock(m.at - now)}` : " · delivered") : 'Your flight surgeon <span class="simtag">Simulated</span>'}</div>${m.text}</div>`).join("")
     : `<div class="bubble them"><div class="meta">ASTRA</div>Nothing here yet. Your scan images and anything you choose to share will appear here, with your doctors' replies.</div>`;
@@ -695,23 +701,53 @@ function simulate(id) { const now = Date.now(), b = base(); CALV++;
     S.msgs.push({me: false, sim: true, mission: S.mission, at: now, text: reply === "followup" ? `Thanks for the ${AREAS[area].label.toLowerCase()} scan. We'd like a follow-up scan next week.` : `Please call us at the next opportunity about your ${AREAS[area].label.toLowerCase()} scan.`}); }
   if (id === "miss") { const x = missTarget(), i = SCHED[x.a].indexOf(x.d), end = slotEnd(x.a, i);
     S.scans = S.scans.filter(s => !(s.mission === S.mission && s.area === x.a && s.day >= x.d && s.day < end)); } }
+const issueText = x => x.spots && x.spots.length ? x.spots.map(y => y[2]).join(" · ") : cap(x.what);
 const SEEN = {}; let ALERT = {list: [], fresh: new Set()};
 const akey = x => x.l + "|" + x.what;
 const route = x => x.private ? "Stays with you" : x.result ? "Your doctors already know" : x.scan ? "On your schedule; your flight surgeon sees required scans" : (x.auto || x.l === "urgent") ? "Sent to the flight surgeon automatically" : "Shared with crew if you choose";
-const areaOf = x => /eye|reflex/.test(x.what) ? "head" : /neck/.test(x.what) ? "neck" : /heart|lung/.test(x.what) ? "chest" : /leg|standing|bladder/.test(x.what) ? "legs" : "whole";
-const AREA_SHAPE = {head: ['<ellipse cx="100" cy="44" rx="27" ry="31"/>', 100, 44], neck: ['<rect x="84" y="64" width="32" height="24" rx="6"/>', 100, 76],
-  chest: ['<ellipse cx="100" cy="128" rx="40" ry="36"/>', 100, 128], legs: ['<rect x="58" y="252" width="84" height="160" rx="20"/>', 100, 330], whole: ['', 100, 200]};
 function renderAlerts(st) { const id = APP.active, prev = SEEN[id] || new Set();
   ALERT = {list: st, fresh: new Set(st.map(akey).filter(k2 => !prev.has(k2)))}; SEEN[id] = new Set(st.map(akey));
-  $("#alerts").innerHTML = st.length ? st.map(x => `<div class="alert ${x.l}${ALERT.fresh.has(akey(x)) ? " new" : ""}"><b class="sev">${x.l === "urgent" ? "Red · needs attention" : "Amber · worth a look"}</b><span class="what">${escH(cap(x.what))}</span><span class="route">${route(x)}</span></div>`).join("") : "";
+  $("#alerts").innerHTML = st.length ? st.map(x => `<div class="alert ${x.l}${ALERT.fresh.has(akey(x)) ? " new" : ""}"><b class="sev">${x.l === "urgent" ? "Red · needs attention" : "Amber · worth a look"}</b><span class="what">${escH(issueText(x))}</span><span class="route">${route(x)}</span></div>`).join("") : "";
   renderAreas(); }
-function renderAreas() { const fig = $("#holoFig"), top = ALERT.list.find(x => x.l === "urgent") || ALERT.list.find(x => x.l === "watch");
-  if (fig) { fig.setAttribute("data-focus", top ? areaOf(top) : ""); fig.setAttribute("data-level", top ? top.l : ""); }
-  const g = $("#areaG"), all = $("#bodyAll"); if (!g || !all) return; const by = {}, fresh = {};
-  ALERT.list.forEach(x => { const a = areaOf(x); if (by[a] !== "urgent") by[a] = x.l; if (ALERT.fresh.has(akey(x))) fresh[a] = by[a]; });
-  all.setAttribute("class", "hs" + (by.whole ? ` area ${by.whole}` : ""));
-  g.innerHTML = Object.entries(by).filter(([a]) => a !== "whole").map(([a, l]) => AREA_SHAPE[a][0].replace(/^<(\w+)/, `<$1 class="area ${l}"`)).join("")
-    + Object.entries(fresh).map(([a, l]) => `<circle class="ping ${l}" cx="${AREA_SHAPE[a][1]}" cy="${AREA_SHAPE[a][2]}" r="16"/>`).join(""); }
+const SCAN_SPOT = {eyes: "eyes", neck: "neck", heart: "heart", lungs: "lungs", bladder: "abdomen", legs: "legs"};
+const SPOT_XY = {head: [100, 30], forehead: [100, 19], eyes: [93, 43], neck: [100, 76], heart: [114, 124], lungs: [84, 116], abdomen: [100, 182], legs: [82, 285]};
+const SPOT_FOCUS = {forehead: "head"};
+const SEV = {watch: "Amber · worth a look", urgent: "Red · needs attention"};
+let SPOTS = {}, TIP = {sig: "", hover: false, hideT: 0, autoT: 0};
+const spotSig = k2 => SPOTS[k2] ? `${APP.active}|${k2}|${SPOTS[k2].l}|${SPOTS[k2].texts.join("|")}` : "";
+function tipEl() { let t = $("#bodyTip"); if (t) return t; const h = $(".holo"); if (!h) return null;
+  t = document.createElement("div"); t.className = "tip"; t.id = "bodyTip"; t.setAttribute("role", "tooltip"); t.hidden = true;
+  t.innerHTML = '<b class="tip-sev"></b><span class="tip-what"></span><span class="tip-route"></span><i class="tip-arrow"></i>'; h.appendChild(t); return t; }
+function hideTip() { const t = $("#bodyTip"); clearTimeout(TIP.hideT); TIP.sig = ""; TIP.hover = false; if (t) t.hidden = true; }
+function showTip(k2) { const sp = SPOTS[k2], t = tipEl(), h = $(".holo"), g = $(`#areaG .spot[data-spot="${k2}"]`); if (!sp || !t || !h || !g || !g.getBoundingClientRect().width) return;
+  t.querySelector(".tip-sev").textContent = SEV[sp.l]; t.querySelector(".tip-what").textContent = sp.texts.join(" · "); t.querySelector(".tip-route").textContent = sp.routes.join(" · ");
+  t.className = "tip " + sp.l; t.hidden = false; TIP.sig = spotSig(k2); placeTip(t, h, g); }
+function placeTip(t, h, g) { const hr = h.getBoundingClientRect(), r = g.getBoundingClientRect(), cx = r.left + r.width / 2 - hr.left, tw = t.offsetWidth, th = t.offsetHeight, gap = 10;
+  const left = Math.max(4, Math.min(h.clientWidth - tw - 4, cx - tw / 2)), above = r.top - hr.top - th - gap, below = above < 0 || r.top - th - gap < 0;
+  t.classList.toggle("below", below); t.style.left = `${Math.round(left)}px`; t.style.top = `${Math.round(below ? r.bottom - hr.top + gap : above)}px`; t.style.setProperty("--ax", `${Math.round(cx - left)}px`); }
+function renderAreas() { const fig = $("#holoFig"), g = $("#areaG"), keep = TIP.sig;
+  SPOTS = {}; let freshKey = "";
+  ALERT.list.forEach(x => (x.spots || []).forEach(([k2, l, txt]) => { const sp = SPOTS[k2] = SPOTS[k2] || {l: "watch", texts: [], routes: [], fresh: false};
+    if (l === "urgent") sp.l = "urgent"; if (!sp.texts.includes(txt)) sp.texts.push(txt); const ro = route(x); if (!sp.routes.includes(ro)) sp.routes.push(ro);
+    if (ALERT.fresh.has(akey(x))) sp.fresh = true; }));
+  const keys = Object.keys(SPOTS), top = keys.find(k2 => SPOTS[k2].l === "urgent") || keys[0] || "";
+  if (fig) { fig.setAttribute("data-focus", top ? (SPOT_FOCUS[top] || top) : ""); fig.setAttribute("data-level", top ? SPOTS[top].l : ""); }
+  freshKey = keys.find(k2 => SPOTS[k2].fresh && SPOTS[k2].l === "urgent") || keys.find(k2 => SPOTS[k2].fresh) || "";
+  hideTip();
+  if (!g) return;
+  g.innerHTML = keys.map(k2 => { const sp = SPOTS[k2], [cx, cy] = SPOT_XY[k2];
+    return `<g class="spot ${sp.l}${sp.fresh ? " new" : ""}" data-spot="${k2}" tabindex="0" role="img" aria-label="${escH(`${sp.l === "urgent" ? "Red, needs attention" : "Amber, worth a look"}: ${sp.texts.join(" · ")}`)}"><circle class="spot-ring" cx="${cx}" cy="${cy}" r="13"/><circle class="spot-dot" cx="${cx}" cy="${cy}" r="5.5"/></g>`; }).join("");
+  const again = keys.find(k2 => spotSig(k2) === keep); if (again) showTip(again);
+  if (freshKey) { clearTimeout(TIP.autoT); const sig = spotSig(freshKey);
+    TIP.autoT = setTimeout(() => { const k2 = Object.keys(SPOTS).find(x => spotSig(x) === sig); if (!k2) return; showTip(k2);
+      clearTimeout(TIP.hideT); TIP.hideT = setTimeout(() => { if (!TIP.hover) hideTip(); }, 4000); }, 800); } }
+function wireSpots() { const fig = $("#holoFig"); if (!fig || wireSpots.done) return; wireSpots.done = true;
+  const on = e => { const s = e.target.closest && e.target.closest(".spot"); if (s) { TIP.hover = true; clearTimeout(TIP.hideT); showTip(s.dataset.spot); } };
+  const off = e => { const s = e.target.closest && e.target.closest(".spot"); if (!s || (e.relatedTarget && s.contains(e.relatedTarget))) return; hideTip(); };
+  fig.addEventListener("mouseover", on); fig.addEventListener("focusin", on); fig.addEventListener("click", on);
+  fig.addEventListener("mouseout", off); fig.addEventListener("focusout", off);
+  document.addEventListener("click", e => { if (!e.target.closest(".spot") && !e.target.closest("#bodyTip")) hideTip(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") hideTip(); }); }
 function refreshAstra() {
   window.ASTRA = {crew: CREW.map(c => withMember(c.id, () => { const st = statuses().filter(x => !x.private), w = worstOf(st);
     return {id: c.id, name: c.name, sex: c.sex, age: c.age, height: c.height, weight: c.weight, role: c.role, source: (D.crew && D.crew[c.idx] && D.crew[c.idx].source) || "",
@@ -907,7 +943,7 @@ $("#scanBody").onclick = e => { const t = e.target.closest("[data-a]"); if (t) o
 $("#connBtn").onclick = () => openFlow(["connect"]);
 $("#enterBtn").onclick = () => openFlow(["d4"]);
 const tour = () => openFlow(["welcome1", "welcome2", "welcome3"]);
-$("#helpBtn").onclick = () => { const g = $("#guideStrip"); g.hidden = !g.hidden; }; $("#tourBtn").onclick = tour; $("#rulesBtn").onclick = () => openFlow(["rules"]);
+$("#helpBtn").onclick = () => { const g = $("#guideStrip"); g.hidden = !g.hidden; }; $("#tourBtn").onclick = tour;
 $("#mission").onchange = e => { S.mission = e.target.value; S.open = null; render(); };
 $("#dReply").onchange = e => { S.reply = e.target.value; render(); };
 const closeMenus = () => { closeCal(false); [["#crewMenu", "#crewBtn"], ["#simMenu", "#simBtn"]].forEach(([m, b]) => { $(m).hidden = true; $(b).setAttribute("aria-expanded", "false"); }); };
@@ -928,6 +964,7 @@ $("#calPick").onclick = e => { e.stopPropagation(); const st = e.target.closest(
 $("#simMenu").onclick = e => { const b = e.target.closest("[data-sim]"); if (!b || b.disabled) return; closeMenus(); simulate(b.dataset.sim); render(); };
 $("#dReset").onclick = () => { APP = freshApp(); S = APP.crew.c1; Object.keys(SEEN).forEach(k2 => delete SEEN[k2]); render(); };
 setInterval(() => { if (!document.hidden && APP.view === "crew") renderHolo(false); const now = Date.now(); if ([...S.msgs.map(m => m.at), ...S.scans.map(s => s.repliedAt)].some(t => t > now - 1500) && !$("#sheet").classList.contains("on")) render(); }, 1000);
+wireSpots();
 window.ASTRA_API = {get APP() { return APP; }, get S() { return S; }, D, CONN, L, day, base, realFill, key, dayChip, setDay, me, save, render, phase, openFlow, closeFlow, STEP, ensureDaily, delayMs, nearDoctors, bump: () => { CALV++; }};
 render();
 window.addEventListener("load", () => { window.renderGuide && window.renderGuide(document.getElementById("guideStrip")); renderView(); });

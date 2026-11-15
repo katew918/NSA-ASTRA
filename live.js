@@ -1,7 +1,8 @@
 (function () {
   var timer = null, st = null;
   var WORDS = {ok: "In range", watch: "Amber · worth a look", urgent: "Red · needs attention"};
-  var EVTXT = {ok: "Back in range", watch: "Heart rate 20 bpm above resting", urgent: "Heart rate 30 bpm above resting"};
+  function evVal(v) { var r = Math.round(v - st.rest); return (r >= 0 ? "+" : "") + r + " bpm"; }
+  function flag(txt, l) { return l === "watch" || l === "urgent" ? '<span class="flag ' + l + '">' + txt + "</span>" : txt; }
   var RECS = [{id: "baseline", label: "Resting → standing (record 1)"}, {id: "today", label: "Resting → standing (record 2)"}];
 
   function D() { return window.DATA || {}; }
@@ -39,7 +40,7 @@
       st.shown.push(v); var cap = Math.round(60 / step()) + 1; if (st.shown.length > cap) st.shown.shift();
       st.peak = st.peak == null ? v : Math.max(st.peak, v);
       var l = levelOf(v);
-      if (l !== st.state) { if (l === st.pend) st.pendN++; else { st.pend = l; st.pendN = 1; } if (st.pendN >= 3) { st.state = l; st.pend = null; st.pendN = 0; st.log.unshift({l: l, t: st.elapsed, txt: EVTXT[l]}); st.log = st.log.slice(0, 12); } }
+      if (l !== st.state) { if (l === st.pend) st.pendN++; else { st.pend = l; st.pendN = 1; } if (st.pendN >= 3) { st.state = l; st.pend = null; st.pendN = 0; st.log.unshift({l: l, t: st.elapsed, v: evVal(v), txt: "above resting"}); st.log = st.log.slice(0, 12); } }
       else { st.pend = null; st.pendN = 0; }
     }
   }
@@ -60,7 +61,7 @@
     return s;
   }
 
-  function tile(label, value, note, l) { return '<div class="lv-tile' + (l && l !== "ok" ? " " + l : "") + '"><span>' + esc(label) + "</span><b>" + esc(value) + "</b><small>" + esc(note) + "</small></div>"; }
+  function tile(label, value, note, l) { return '<div class="lv-tile' + (l && l !== "ok" ? " " + l : "") + '"><span>' + esc(label) + "</span><b>" + flag(esc(value), l) + "</b><small>" + esc(note) + "</small></div>"; }
 
   function draw() {
     var last = st.shown.length ? st.shown[st.shown.length - 1] : null, rise = last != null && st.rest != null ? Math.round(last - st.rest) : null;
@@ -73,7 +74,7 @@
       + tile("Resting (first 30 s)", st.rest == null ? "–" : Math.round(st.rest) + " bpm", "median of this recording")
       + tile("Peak so far", st.peak == null ? "–" : Math.round(st.peak) + " bpm", "since this loop started")
       + tile("Cabin CO₂", co2 == null ? "–" : co2 + " mmHg", "NASA ISS Live snapshot · limit 3 mmHg", co2 != null && co2 >= 3 ? "watch" : "ok");
-    q("lvLog").innerHTML = st.log.map(function (e) { return '<div class="lv-ev ' + e.l + '"><time>' + mmss(e.t) + "</time><b>" + (e.l === "ok" ? "OK" : WORDS[e.l]) + "</b><span>" + esc(e.txt) + "</span></div>"; }).join("");
+    q("lvLog").innerHTML = st.log.map(function (e) { return '<div class="lv-ev ' + e.l + '"><time>' + mmss(e.t) + "</time><b>" + (e.l === "ok" ? "OK" : WORDS[e.l]) + "</b><span>" + (e.v != null ? flag(esc(e.v), e.l) + " " : "") + esc(e.txt) + "</span></div>"; }).join("");
   }
 
   function renderCtl() {
@@ -90,7 +91,7 @@
     var who = "Maya Ortiz";
     if (astra && astra.crew && astra.live) { for (var k = 0; k < astra.crew.length; k++) if (astra.crew[k].id === astra.live.id) who = astra.crew[k].name; }
     el.innerHTML = '<div class="lv-head"><div><div class="eyebrow">Live monitor</div><h1 class="lv-title">' + esc(who) + '</h1></div><span class="lv-badge"><span class="dot ok"></span>LIVE <b id="lvClock">00:00</b></span></div>'
-      + '<p class="sub"><span class="realtag">Real recording · PhysioNet CVES · replayed</span> A real person’s heart rate from a stand-up test, replayed second by second. ' + esc(who.split(" ")[0]) + "’s profile is simulated.</p>"
+      + '<p class="sub"><span class="realtag">Real recording · PhysioNet CVES · replayed</span> <span class="simtag">Simulated profile</span></p>'
       + '<div class="lv-grid"><div class="lv-card lv-main"><div class="lv-now"><b id="lvHr">–</b><small>bpm</small><span class="pill ok" id="lvState">In range</span></div>'
       + '<svg class="lv-chart" id="lvChart" viewBox="0 0 600 220" preserveAspectRatio="none" role="img" aria-label="Heart rate, last 60 seconds"></svg><div class="lv-ctrl" id="lvCtrl"></div></div>'
       + '<div class="lv-side" id="lvSide"></div></div>'

@@ -5,6 +5,7 @@
   function base() { return A().base(); } function day() { return A().day(); } function key(x) { return A().key(x); } function realFill(x) { return A().realFill(x); }
   function dayChip(x) { return A().dayChip(x); } function setDay(x) { return A().setDay(x); } function me() { return A().me(); } function save() { return A().save(); }
   var MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  function flag(txt, l) { return l === "watch" || l === "urgent" ? '<span class="flag ' + l + '">' + txt + "</span>" : txt; }
   function q(id) { return document.getElementById(id); }
   function esc(t) { return String(t == null ? "" : t).replace(/[&<>"]/g, function (c) { return {"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]; }); }
   function fmtDate(s) { if (!s) return "–"; var d = new Date(String(s).length <= 10 ? s + "T00:00:00Z" : s); if (isNaN(d)) return "–"; return d.getUTCDate() + " " + MON[d.getUTCMonth()] + " " + d.getUTCFullYear(); }
@@ -87,9 +88,9 @@
     var pt = {v: co2, lab: "now", l: co2 > 3 ? "watch" : "ok"};
     return {pts: [pt], sel: 0, svg: s, noRange: true,
       tag: live ? '<span class="realtag">Live · NASA ISS Live</span>' : '<span class="simtag">Snapshot</span>',
-      read: "<b>" + num(co2, 2) + " mmHg CO₂</b><span>Pressure " + num(p, 1) + " mmHg · " + num(t, 1) + " °C</span>",
-      src: live ? "NASA ISS Live · CO₂ " + age + (i.pts != null ? " · pressure " + ageTxt(F.issAgeH(i.pts)) : "") + (i.tts != null ? " · temperature " + ageTxt(F.issAgeH(i.tts)) : "") : "NASA ISS Live snapshot read " + esc(String(snap.read || "").slice(0, 10)) + " (feed down)",
-      rows: [["now", "–", num(co2, 2) + " mmHg", "below 3 mmHg", WORD[pt.l]]]};
+      read: "<b>" + flag(num(co2, 2) + " mmHg", pt.l) + " CO₂</b><span>Pressure " + num(p, 1) + " mmHg · " + num(t, 1) + " °C</span>",
+      src: live ? "NASA ISS Live · CO₂ " + age + (i.pts != null ? " · pressure " + ageTxt(F.issAgeH(i.pts)) : "") + (i.tts != null ? " · temperature " + ageTxt(F.issAgeH(i.tts)) : "") : "NASA ISS Live snapshot read " + esc(String(snap.read || "").slice(0, 10)),
+      rows: [["now", "–", num(co2, 2) + " mmHg", "below 3 mmHg", WORD[pt.l], pt.l]]};
   }
 
   function rad() {
@@ -97,8 +98,8 @@
     if (F.pfu && F.pfu.state === "live" && F.pfu.series.length) {
       var pts = F.pfu.series.map(function (x) { return {v: x.v, lab: hhmm(x.t), l: x.v >= 10 ? "watch" : "ok", date: x.t}; });
       return {pts: pts, sel: pts.length - 1, log: true, noRange: true, tag: '<span class="realtag">Live · NOAA SWPC GOES</span>', unit: " pfu",
-        src: "NOAA SWPC GOES · ≥10 MeV protons, last 24 h · fetched " + hhmm(F.pfu.at) + " · S1 storm at 10 pfu",
-        readOf: function (p) { return "<b>" + (p.v < 1 ? p.v.toFixed(2) : p.v.toFixed(1)) + " pfu</b><span>" + esc(new Date(p.date).toUTCString().slice(5, 22)) + " UTC · storm level 10 pfu</span>"; }};
+        src: "NOAA SWPC GOES · ≥10 MeV protons, last 24 h · fetched " + hhmm(F.pfu.at),
+        readOf: function (p) { return "<b>" + flag((p.v < 1 ? p.v.toFixed(2) : p.v.toFixed(1)) + " pfu", p.l) + "</b><span>" + esc(new Date(p.date).toUTCString().slice(5, 22)) + " UTC</span>"; }};
     }
     var m = (F.rad && F.rad.modules) || (((window.DATA || {}).samples || {}).radlab || {}).modules || [];
     var bp = m.map(function (x) { return {v: x.mean_uGy_h, lab: x.module, l: "ok", inst: x.instrument}; });
@@ -120,7 +121,7 @@
   }
 
   function readPm(o, p) { var m = o.m; if (!p) return ""; var val = m.txt ? m.txt(p.v) : num(p.v, m.n) + m.unit;
-    return "<b>" + esc(val) + "</b><span>" + (p.sim ? "Simulated" : p.entered ? "Entered" : fmtDate(p.date)) + " · " + esc(p.day) + " · usual " + esc(m.txt ? m.txt(p.usual) : num(p.usual, m.n) + m.unit) + "</span>"; }
+    return "<b>" + flag(esc(val), p.l) + "</b><span>" + (p.sim ? "Simulated" : p.entered ? "Entered" : fmtDate(p.date)) + " · " + esc(p.day) + " · usual " + esc(m.txt ? m.txt(p.usual) : num(p.usual, m.n) + m.unit) + "</span>"; }
 
   function draw() {
     var o = cur; if (!o) return;
@@ -133,10 +134,10 @@
   function table() {
     var o = cur, box = q("dcTableBox"); if (!o || box.hidden) return;
     var rows = o.rows || o.pts.map(function (p) {
-      if (o.m) return [p.sim ? "Simulated" : p.entered ? "Entered" : fmtDate(p.date), p.day, o.m.txt ? o.m.txt(p.v) : num(p.v, o.m.n) + o.m.unit, o.m.txt ? o.m.txt(p.usual) : num(p.usual, o.m.n) + o.m.unit, WORD[p.l]];
-      return [p.date ? fmtDate(p.date) : p.lab, "–", o.readOf ? o.readOf(p).replace(/<[^>]+>/g, " ").trim().split("  ")[0] : String(p.v), "–", WORD[p.l] || "–"];
+      if (o.m) return [p.sim ? "Simulated" : p.entered ? "Entered" : fmtDate(p.date), p.day, o.m.txt ? o.m.txt(p.v) : num(p.v, o.m.n) + o.m.unit, o.m.txt ? o.m.txt(p.usual) : num(p.usual, o.m.n) + o.m.unit, WORD[p.l], p.l];
+      return [p.date ? fmtDate(p.date) : p.lab, "–", o.readOf ? o.readOf(p).replace(/<[^>]+>/g, " ").trim().split("  ")[0] : String(p.v), "–", WORD[p.l] || "–", p.l];
     });
-    box.innerHTML = "<table><thead><tr><th>Date recorded</th><th>Mission day</th><th>Value</th><th>Usual</th><th>Status</th></tr></thead><tbody>" + rows.map(function (r) { return "<tr>" + r.map(function (c) { return "<td>" + esc(c) + "</td>"; }).join("") + "</tr>"; }).join("") + "</tbody></table>";
+    box.innerHTML = "<table><thead><tr><th>Date recorded</th><th>Mission day</th><th>Value</th><th>Usual</th><th>Status</th></tr></thead><tbody>" + rows.map(function (r) { return "<tr>" + r.slice(0, 5).map(function (c, i) { return "<td>" + (i === 2 ? flag(esc(c), r[5]) : esc(c)) + "</td>"; }).join("") + "</tr>"; }).join("") + "</tbody></table>";
   }
 
   window.renderData = function () {

@@ -27,10 +27,10 @@
   function setHidden(v) { try { sessionStorage.setItem(KEY, v ? "1" : "0"); } catch (e) { } }
 
   var STEPS = [
-    ["Training on Earth", "ASTRA learns each crew member's own normal: sleep, heart rate, mood, reflexes and six baseline scans."],
-    ["Every mission day", "A 90-second check plus wearables, and guided scans on a NASA-style schedule (eyes day 30/120, neck 50/150, heart 90)."],
-    ["Compare with their own normal", "Green: fine. Amber: worth a look. Red: needs attention."],
-    ["Who sees it", "Mood stays private. Amber is shared only if the crew member chooses. Red safety items go to the flight surgeon automatically."]
+    ["Training on Earth", "Baseline: sleep, heart rate, mood, reflexes, scans."],
+    ["Every mission day", "90-second check, wearables, scheduled scans."],
+    ["Compare with their own normal", "Green, Amber or Red."],
+    ["Who sees it", "Mood private. Red goes to flight surgeon."]
   ];
 
   window.renderGuide = function (el) {
@@ -43,7 +43,7 @@
       STEPS.forEach(function (s, i) {
         h += '<li><span class="g-n">' + (i + 1) + '</span><div><b>' + esc(s[0]) + "</b><p>" + esc(s[1]) + "</p></div></li>";
       });
-      h += '</ol><p class="g-try">Try it: pick a crew member, pick a mission day, then press a ‘Simulate an issue’ button.</p>';
+      h += "</ol>";
     }
     el.innerHTML = '<div class="g-card' + (hidden ? " is-hidden" : "") + '">' + h + "</div>";
     var b = el.querySelector(".g-toggle");
@@ -70,6 +70,17 @@
 
   function sexWord(s) { return s === "f" ? "Female" : s === "m" ? "Male" : "–"; }
 
+  function flag(txt, l) { return l === "watch" || l === "urgent" ? '<span class="flag ' + l + '">' + txt + "</span>" : txt; }
+  function sleepLvl(v, b) { return num(v) != null && num(b.sleep) != null && v < b.sleep - 1.5 ? "watch" : "ok"; }
+  function hrLvl(v, b) { if (num(v) == null) return "ok"; return v <= 40 || v >= 131 ? "urgent" : v >= 111 || v <= 50 || (num(b.hr) != null && Math.abs(v - b.hr) >= 20) ? "watch" : "ok"; }
+  function todayVals(c) {
+    var t = c.today, b = c.base || {}, parts = [];
+    if (!t) return "";
+    if (num(t.sleep) != null) parts.push("Sleep " + flag(fmt(t.sleep, 1) + " h", sleepLvl(t.sleep, b)));
+    if (num(t.hr) != null) parts.push("Resting HR " + flag(fmt(t.hr) + " bpm", hrLvl(t.hr, b)));
+    return parts.length ? '<p class="c-stt">' + parts.join(" · ") + "</p>" : "";
+  }
+
   function secToday(crew) {
     if (!crew.length) return "<p class=\"c-note\">No crew loaded.</p>";
     return '<div class="c-cards">' + crew.map(function (c) {
@@ -78,7 +89,7 @@
         ' <span class="c-sx">' + (c.sex === "f" ? "F" : c.sex === "m" ? "M" : "") + "</span></div>" +
         '<div class="c-rl">' + esc(c.role || "") + "</div>" +
         '<div class="c-st"><span class="c-dot"></span>' + STATUS[st] + "</div>" +
-        (c.statusText ? '<p class="c-stt">' + esc(c.statusText) + "</p>" : "") + "</div>";
+        todayVals(c) + "</div>";
     }).join("") + "</div>";
   }
 
@@ -109,7 +120,6 @@
       h += "<tr><th>" + r[0] + "</th>" + order.map(function (c) { return "<td>" + r[1](c.base || {}) + "</td>"; }).join("") + "</tr>";
     });
     h += "</tbody></table></div>";
-    h += '<p class="c-key">The same number can be normal for one person and a warning for another, so ASTRA compares each person with themselves.</p>';
     h += '<div class="c-sparks">';
     order.forEach(function (c) {
       var idx = pmIndex(c, crew.indexOf(c));
@@ -122,7 +132,7 @@
       h += '<div class="c-sp"><div class="c-sph"><b>' + esc(c.name || c.id) + '</b><span>median ' + fmt(median(vals), 1) + " h</span></div>" +
         sparkline(vals, 160, 40) + "</div>";
     });
-    h += '</div><p class="c-src">Sleep, resting heart rate and mood come from real PMData rows; blood pressure, reaction time and standing heart-rate rise are simulated. Training sleep, last 30 nights with data. Line = nights, dashed = median. ' + real("PMData (volunteers relabelled as crew)") + "</p>";
+    h += '</div><p class="c-src">Sleep (h), last 30 nights · dashed = median ' + real("PMData (volunteers relabelled as crew)") + "</p>";
     return h;
   }
 
@@ -134,14 +144,6 @@
     var h = '<div class="c-tw"><table class="c-table c-fm"><thead><tr><th>Crew average</th><th>Female (' + f.length + ')</th><th>Male (' + m.length + ")</th></tr></thead><tbody>";
     rows.forEach(function (r) { h += "<tr><th>" + r[0] + "</th><td>" + fmt(a(f, r[1]), r[2]) + "</td><td>" + fmt(a(m, r[1]), r[2]) + "</td></tr>"; });
     h += "</tbody></table></div>";
-    h += '<p class="c-note">Four people is far too few to conclude anything about sex from this crew. Profiles are simulated <span class="simtag">Simulated</span>.</p>';
-    h += '<h4>Published differences</h4><ul class="c-facts">' +
-      "<li>NASA's career radiation limit is 600 mSv for everyone since 2022, regardless of sex and age; older limits were lower for women. <cite>NASA-STD-3001 Vol 1</cite></li>" +
-      "<li>Feeling faint on standing after landing has been reported more often in women than in men. <cite>Waters et al., J Appl Physiol 2002</cite></li>" +
-      "<li>Eye changes in flight (SANS) have been reported more often in men. <cite>Mark et al., J Women's Health 2014</cite></li>" +
-      "<li>On Earth, clinical ranges differ by sex: haemoglobin about 12.0–15.5 g/dL (women) and 13.5–17.5 g/dL (men); resting heart rate tends to be a few beats higher in women. <cite>Clinical reference ranges</cite></li>" +
-      "</ul>";
-    h += '<p class="c-rule"><b>ASTRA’s rule:</b> own normal first; sex-specific ranges only set the outer reference band.</p>';
     return h;
   }
 
@@ -199,10 +201,10 @@
     var h = '<div class="c-seg" role="group" aria-label="Choose a blood value">' + keys.map(function (k) {
       return '<button type="button" data-an="' + esc(k) + '" aria-pressed="' + (k === i4Analyte) + '">' + esc(NAMES[k] || k) + "</button>";
     }).join("") + "</div>";
-    h += '<p class="c-note">' + esc(NAMES[i4Analyte] || i4Analyte) + " (" + esc(an.units || "") + "). Thin lines: the " +
-      Object.keys(an.by_crew || {}).length + ' crew members. Thick line: median. Shaded: clinical reference range. L = days before launch, R = days after return.</p>';
+    h += '<p class="c-note">' + esc(NAMES[i4Analyte] || i4Analyte) + " (" + esc(an.units || "") + ") · thin: " +
+      Object.keys(an.by_crew || {}).length + ' crew · thick: median · shaded: reference range · L = days before launch, R = days after return</p>';
     h += '<div class="c-chartwrap">' + i4Chart(an) + "</div>";
-    h += '<p class="c-src">' + real("NASA OSDR") + " " + esc(i4.source || "") + ". A real 3-day civilian flight: values move after return and settle back toward each person’s own level.</p>";
+    h += '<p class="c-src">' + real("NASA OSDR") + " " + esc(i4.source || "") + "</p>";
     return h;
   }
 
@@ -229,9 +231,9 @@
       var svg = '<svg viewBox="0 0 ' + w + " " + hh + '" class="e-svg" role="img" aria-label="Heart-rate rise on standing">' + band +
         '<line x1="0" x2="' + w + '" y1="' + Y(0).toFixed(1) + '" y2="' + Y(0).toFixed(1) + '" class="e-zero"/>' + stand +
         '<polyline points="' + line + '" class="e-line"/></svg>';
-      out.push(card("Stand-up test", "<p><b class=\"e-big\">+" + fmt(cv.sustained_rise_median, 1) + " bpm</b> median sustained heart-rate rise; 90th percentile +" +
-        fmt(cv.sustained_rise_p90, 1) + " bpm (n = " + esc(cv.n_records) + " records).</p>" + svg +
-        '<p class="c-note">Line: mean rise. Shaded: middle half of people.</p>', "PhysioNet CVES"));
+      out.push(card("Stand-up test", "<p><b class=\"e-big\">+" + fmt(cv.sustained_rise_median, 1) + " bpm</b> median sustained rise · 90th percentile +" +
+        fmt(cv.sustained_rise_p90, 1) + " bpm · n = " + esc(cv.n_records) + "</p>" + svg +
+        '<p class="c-note">Line: mean · shaded: 25th–75th percentile</p>', "PhysioNet CVES"));
     }
     var rl = d.samples && d.samples.radlab;
     if (rl && rl.modules && rl.modules.length) {
@@ -241,8 +243,7 @@
         return '<div class="e-bar"><span class="e-bl">' + esc(r.module) + " <i>" + esc(r.instrument) + '</i></span><span class="e-bt"><span style="width:' +
           (100 * r.mean_uGy_h / mx).toFixed(1) + '%"></span></span><span class="e-bv">' + fmt(r.mean_uGy_h, 1) + "</span></div>";
       }).join("");
-      out.push(card("Station radiation by module", '<p class="c-note">Mean absorbed dose rate, µGy/h, ' + esc(rl.query_window || "") +
-        ". This is the dose at the module, not a person’s dose.</p>" + bars, "NASA OSDR RadLab"));
+      out.push(card("Station radiation by module", '<p class="c-note">Mean absorbed dose rate, µGy/h · ' + esc(rl.query_window || "") + "</p>" + bars, "NASA OSDR RadLab"));
     }
     var iss = d.samples && d.samples.isslive_snapshot;
     if (iss) {
@@ -252,8 +253,8 @@
         return '<div class="e-bar"><span class="e-bl">' + x[0] + '</span><span class="e-bt"><span style="width:' + Math.min(100, 100 * x[1] / 4).toFixed(1) +
           '%"></span><b class="e-lim" style="left:' + (100 * lim / 4) + '%"></b></span><span class="e-bv">' + fmt(x[1], 2) + "</span></div>";
       }).join("");
-      out.push(card("Cabin CO₂ snapshot", '<p class="c-note">Partial pressure, mmHg. Mark = 3 mmHg NASA limit.</p>' + rows +
-        '<p class="c-note">Read ' + esc(iss.read || "") + (iss.note ? ". " + esc(iss.note) : "") + ".</p>", "ISS Live telemetry"));
+      out.push(card("Cabin CO₂ snapshot", '<p class="c-note">Partial pressure, mmHg · mark: 3 mmHg NASA limit</p>' + rows +
+        '<p class="c-note">Read ' + esc(iss.read || "") + "</p>", "ISS Live telemetry"));
     }
     var dk = d.samples && d.samples.donki;
     if (dk && dk.counts) {
@@ -263,7 +264,7 @@
       }).join("");
       out.push(card("Space weather", '<p class="c-note">Notifications, ' + esc(dk.window || "") + ".</p><ul class=\"e-list\">" + li + "</ul>", "NASA DONKI"));
     }
-    return out.length ? '<div class="e-grid">' + out.join("") + "</div>" : '<p class="c-note">No evidence data loaded.</p>';
+    return out.length ? '<div class="e-grid">' + out.join("") + "</div>" : '<p class="c-note">No data.</p>';
   }
 
   function card(title, body, src) {
@@ -274,12 +275,11 @@
     if (!el) return;
     var crew = (astra && Array.isArray(astra.crew)) ? astra.crew.filter(Boolean) : [];
     var h = "";
-    h += '<div class="c-sec"><h3>Today across the crew</h3>' + secToday(crew) +
-      '<p class="c-note">A Crew Dragon or Artemis crew is 4 people; the ISS usually holds 7 in total.</p></div>';
-    h += '<div class="c-sec"><h3>Each person’s own normal</h3>' + secBaseline(crew) + "</div>";
-    h += '<div class="c-sec"><h3>Female and male: what differs</h3>' + secSex(crew) + "</div>";
-    h += '<div class="c-sec" id="cmpI4"><h3>Real crew reference: Inspiration4</h3><div class="c-i4">' + secI4() + "</div></div>";
-    h += '<div class="c-sec"><h3>Evidence the checks are built on</h3>' + secEvidence() + "</div>";
+    h += '<div class="c-sec"><h3>Today</h3>' + secToday(crew) + "</div>";
+    h += '<div class="c-sec"><h3>Own normal</h3>' + secBaseline(crew) + "</div>";
+    h += '<div class="c-sec"><h3>Female / Male</h3>' + secSex(crew) + "</div>";
+    h += '<div class="c-sec" id="cmpI4"><h3>Inspiration4 crew</h3><div class="c-i4">' + secI4() + "</div></div>";
+    h += '<div class="c-sec"><h3>Reference data</h3>' + secEvidence() + "</div>";
     el.innerHTML = h;
     var i4 = el.querySelector(".c-i4");
     if (i4) i4.addEventListener("click", function (ev) {
