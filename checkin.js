@@ -349,6 +349,7 @@
   function crisis() {
     st.done = true; runId++; st.clock.pause(); chips(null); prog(); stopSpeech();
     var f = $("#mhForm"); if (f) f.hidden = true;
+    ["#mhProg", "#mhCount"].forEach(function (s) { var e = $(s); if (e) { e.hidden = true; e.style.display = "none"; } });
     var box = add("safe", SAFE_TEXT); if (!box) return;
     readAloud(SAFE_TEXT);
     var b = document.createElement("button"); b.className = "btn sm"; b.type = "button"; b.textContent = "Message my flight surgeon"; b.style.marginTop = "10px"; b.style.display = "block";

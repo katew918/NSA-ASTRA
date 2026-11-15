@@ -457,7 +457,8 @@ const nearDoctors = () => onGround() && !(mars() && ["landed", "after"].includes
 const PHASE_LABEL = {training: () => "Training on Earth", launch: () => "Launch day", arrive: () => mars() ? "First day in space" : "Arrived at the station",
   orbit: () => mars() ? "Cruising to Mars" : "Living on the station", prereturn: () => mars() ? "Day before Mars landing" : "Last day before going home",
   landed: () => mars() ? "First day on Mars" : "Back on Earth", after: () => mars() ? "Living on Mars" : "Recovering on Earth"};
-const dayChip = (d = day()) => d < 0 ? `L−${-d}` : d === 0 ? "L−0" : d < LAND() ? `Day ${d}` : `R+${d - LAND()}`;
+const dayChip = (d = day()) => d < 0 ? `L−${-d}` : d === 0 ? "L−0" : d < LAND() ? `Day ${d}` : `${mars() ? "M" : "R"}+${d - LAND()}`;
+const clampDay = x => Math.max(-30, Math.min(LAND() + 3, x));
 const key = (d = day()) => `${S.mission}:${d}`;
 const L = (d = day()) => (S.log[key(d)] = S.log[key(d)] || {});
 const delayMs = () => M().delayMin * 1000;
@@ -572,7 +573,7 @@ function plan() {
     if (!standBase()) add("bstand", "stand", "Baseline stand-up test", "15 minutes, with your medical team", "Once during training", "Needed before launch: how your body handles standing before flight.", ["stand", "fin"], false, true);
   }
   if (p === "launch") add("last", "sun", "Last check before you board", "about 5 minutes", "Before suit-up", "Your final Earth reading, so the first one in space has something fresh to compare with.", ["daily", "rt", "fin"], !!dn.last, true);
-  if (p === "arrive") add("arrive", "sun", "Arrival check", "about 5 minutes", mars() ? "Once you've settled in" : "After docking", "Your first reading in weightlessness. Then I check in every day.", ["daily", "rt", "fin"], !!dn.arrive, true);
+  if (p === "arrive") add("arrive", "sun", mars() ? "Departure check" : "Arrival check", "about 5 minutes", mars() ? "Once you've settled in" : "After docking", "Your first reading in weightlessness. Then I check in every day.", ["daily", "rt", "fin"], !!dn.arrive, true);
   if (p === "orbit") {
     add("daily", "sun", "Daily check", "90 seconds", "After waking", "How you slept and how you feel. Monitoring runs on its own the rest of the day.", ["daily", "fin"]);
   }
@@ -582,7 +583,7 @@ function plan() {
     if (x.k === "cog") add("cog", "bolt", "Cognitive test", "3 minutes", when, "Your reaction time, compared with your own pre-flight baseline.", ["rt", "fin"], false, true);
     else add("scan" + i, "probe", examName(x), longTime(x.a), when, x.a === "legs" ? "A clot check after the trip." : "Scheduled. I'll guide you, then send the images to your doctors.", [`scan:${x.a}`], false, true); });
   if (dueOn(d).includes("conf")) add("conf", "check", "Private medical conference", "about 15 minutes", "17:30", "A private call with your flight surgeon. Mark it done when you've talked.", ["conf"], confDone(d));
-  if (p === "after") add("rec", "sun", "Recovery check", "90 seconds", "After waking", "Tracking how you get back to your normal.", ["daily", "fin"]);
+  if (p === "after") add("rec", "sun", mars() ? "On Mars check" : "Recovery check", "90 seconds", "After waking", "Tracking how you get back to your normal.", ["daily", "fin"]);
   return q;
 }
 
@@ -617,6 +618,7 @@ function statuses() {
 }
 
 function render() {
+  { const d0 = day(), dc = clampDay(d0); if (dc !== d0) S.travel += dc - d0; }
   ensureSeeded();
   const p = phase(), d = day(), h = new Date().getHours(), greet = h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
   $("#hello").textContent = `${greet}${S.name ? "," : ""} `; const nm = document.createElement("span"); nm.style.whiteSpace = "nowrap"; nm.textContent = (S.name || "").split(" ")[0]; $("#hello").appendChild(nm);
@@ -879,7 +881,7 @@ function refreshAstra() {
       today: (dd => dd ? {sleep: dd.sleep, mood: dd.mood, hr: dd.hr, date: dd.date || null} : null)(L().daily)}; })),
     activeId: APP.active, dayChip: dayChip(), phase: phase(), mission: S.mission}; }
 let CALV = 0; const CAL = {};
-function calMarks() { const L1 = LAND(), m = {}; m[-30] = "Training"; m[0] = "Launch"; m[1] = "Arrival";
+function calMarks() { const L1 = LAND(), m = {}; m[-30] = "Training"; m[0] = "Launch"; m[1] = mars() ? "Departure" : "Arrival";
   m[L1 - 1] = "Last day"; m[L1] = mars() ? "Mars landing" : "Landing"; m[L1 + 3] = mars() ? "On Mars" : "Recovery"; return m; }
 function calLevels() { const k2 = `${APP.active}:${S.mission}:${S.scans.length}:${S.msgs.length}:${CALV}`;
   if (CAL[APP.active] && CAL[APP.active].k === k2) return CAL[APP.active].v;
@@ -890,11 +892,11 @@ const MONTHS = ["January", "February", "March", "April", "May", "June", "July", 
 const dateOf = x => new Date((S.launch + x) * DAY);
 const ymOf = t => t.getUTCFullYear() * 12 + t.getUTCMonth();
 const fmtDay = t => `${WDAYS[t.getUTCDay()]} ${t.getUTCDate()} ${MONTHS[t.getUTCMonth()].slice(0, 3)} ${t.getUTCFullYear()}`;
-const shortChip = x => x < 0 ? `L−${-x}` : x === 0 ? "L−0" : x < LAND() ? `D${x}` : `R+${x - LAND()}`;
+const shortChip = x => x < 0 ? `L−${-x}` : x === 0 ? "L−0" : x < LAND() ? `D${x}` : `${mars() ? "M" : "R"}+${x - LAND()}`;
 const calRange = () => [ymOf(dateOf(-30)), ymOf(dateOf(LAND() + 3))];
 let CALYM = 0;
 function renderCalBtn() { const d = day(), ml = calMarks()[d];
-  const it = dayItems(d).concat(dueOn(d).includes("conf") ? ["conf"] : []).map(k => MON[k].short); $("#calPick .cb-day").textContent = dayChip(d); $("#calPick .cb-sub").textContent = (ml ? ml + " · " : it.length ? it.join(", ") + " · " : "") + fmtDay(dateOf(d)); $("#calPick .cb-short").textContent = `${dateOf(d).getUTCDate()} ${MONTHS[dateOf(d).getUTCMonth()].slice(0, 3)}`; }
+  const it = dayItems(d).concat(dueOn(d).includes("conf") ? ["conf"] : []).map(k => MON[k].short); $("#calPick .cb-day").textContent = dayChip(d); $("#calPick .cb-sub").textContent = (ml ? ml + " · " : it.length ? it.join(", ") + " · " : "") + fmtDay(dateOf(d)); $$(".daystep").forEach(b => { b.disabled = +b.dataset.step < 0 ? d <= -30 : d >= LAND() + 3; }); $("#calPick .cb-short").textContent = `${dateOf(d).getUTCDate()} ${MONTHS[dateOf(d).getUTCMonth()].slice(0, 3)}`; }
 const dayItems = x => flightDay(x) ? EXAMS.filter(k => occ(k).includes(x)) : [];
 const calDesc = x => [calMarks()[x], ...dayItems(x).map(k => MON[k].short)].filter(Boolean);
 function renderCal() { const [lo, hi] = calRange(); CALYM = Math.max(lo, Math.min(hi, CALYM));
@@ -927,7 +929,7 @@ function renderBars() { const A = window.ASTRA, cmp = APP.view === "compare";
 function renderView() { const cmp = APP.view === "compare";
   ["#crewGrid", "#crewMain", "#alerts"].forEach(s => { $(s).style.display = cmp ? "none" : ""; });
   $("#compareView").hidden = !cmp; if (cmp && window.renderCompare) window.renderCompare($("#compareView"), window.ASTRA); }
-const setDay = x => { S.travel = Math.max(-60, Math.min(LAND() + 30, x)) + S.launch - todayIdx(); S.open = null; render(); };
+const setDay = x => { S.travel = clampDay(x) + S.launch - todayIdx(); S.open = null; render(); };
 
 const SOURCES = [
   {id: "hr", name: "Heart-rate chest strap", what: "Bluetooth Heart Rate standard. NASA tested Bluetooth chest straps for ISS exercise, and the station's Flight Ergometer (FERGO) takes heart rate over Bluetooth.", btn: "Connect"},
@@ -983,16 +985,18 @@ const STEP = {
   welcome1: () => ({ill: I.hand, title: "Hi, I'm ASTRA", sub: "I help you notice changes in your body, from your first training day to the day you're home. I compare you with you, not with anyone else."}),
   welcome2: () => ({ill: I.lock, title: "Your data is yours", sub: "Your check-ins stay with you. Scan images and anything that could affect your safety go to your flight surgeon, and you'll always see exactly what was sent."}),
   welcome3: () => ({ill: I.list, title: "How it works", html: `<div class="check"><span>1</span>During training: a short check every day builds your normal, plus 6 baseline scans.</div><div class="check"><span>2</span>One last check before you board, one when you arrive.</div><div class="check"><span>3</span>In space: 90 seconds a day, monitoring runs on its own, and I guide every scan. Daily checks, weekly conference, exams on set flight days.</div><div class="check"><span>4</span>One check before you go home, and one when you land.</div>`}),
-  d1: () => { const v = (PH_DEF[phase()] || PH_DEF.training)[0];
-    return {title: "How long did you sleep?", html: `<div class="bigval"><span id="slv">${v}</span> h</div><input type="range" id="sl" min="3" max="10" step=".5" value="${v}">`, init() { $("#sl").oninput = e => $("#slv").textContent = e.target.value; }, save() { scratch.sleep = +$("#sl").value; }}; },
-  d2: () => ({title: "How are you feeling?", sub: "Only you see this.", needs: !scratch.mood, html: `<div class="faces" id="fc">${["Very low", "Low", "Okay", "Good", "Great"].map((e, i) => `<button data-v="${i + 1}" class="${scratch.mood === i + 1 ? "on" : ""}" aria-label="${["Very low", "Low", "Okay", "Good", "Great"][i]}">${e}</button>`).join("")}</div>`,
+  d1: () => { const v = (realFill() || L().daily || {}).sleep ?? (PH_DEF[phase()] || PH_DEF.training)[0];
+    return {title: "How long did you sleep?", html: `<div class="bigval"><span id="slv">${v}</span> h</div><input type="range" id="sl" min="3" max="10" step=".5" value="${v}">`, init() { $("#sl").oninput = e => { this.mv = true; $("#slv").textContent = e.target.value; }; }, save() { scratch.sleep = this.mv ? +$("#sl").value : v; }}; },
+  d2: () => ((scratch.mood = scratch.mood || (realFill() || L().daily || {}).mood), {title: "How are you feeling?", sub: "Only you see this.", needs: !scratch.mood, html: `<div class="faces" id="fc">${["Very low", "Low", "Okay", "Good", "Great"].map((e, i) => `<button data-v="${i + 1}" class="${scratch.mood === i + 1 ? "on" : ""}" aria-label="${["Very low", "Low", "Okay", "Good", "Great"][i]}">${e}</button>`).join("")}</div>`,
     init() { $$("#fc button").forEach(b => b.onclick = () => { $$("#fc button").forEach(x => x.classList.toggle("on", x === b)); scratch.mood = +b.dataset.v; $("#goBtn").disabled = false; }); }}),
   d3: () => ({title: "Anything bothering you?", sub: "Tap any that apply, or just continue.", html: `<div class="chips" id="sy">${["Headache", "Stuffy nose", "Back pain", "Feeling sick", "Dizzy"].map(s => `<button class="chip">${s}</button>`).join("")}</div>`,
     init() { $$("#sy .chip").forEach(c => c.onclick = () => c.classList.toggle("on")); }, save() { scratch.symptoms = $$("#sy .chip.on").map(c => c.textContent); }}),
-  d4: () => { const dv = (PH_DEF[phase()] || PH_DEF.training).slice(1), v = vitalsNow();
+  d4: () => { const ex = realFill() || L().daily || {}, dv = (PH_DEF[phase()] || PH_DEF.training).slice(1).map((x, i) => ex[["hr", "sbp", "dbp", "temp", "glu"][i]] ?? x), v = vitalsNow();
     return {title: "Your readings", sub: CONN.hr ? "Heart rate is filled in from your strap. Add the rest if you measured them." : "Type in what you measured, or tap Connect on the body to stream it. Pre-filled for the demo.", skip: true,
       html: `<div class="grid2"><div><span class="lab">Heart rate</span><input type="number" id="hr" value="${CONN.hr ? v.hr : dv[0]}"></div><div><span class="lab">Temperature °C</span><input type="number" id="tp" step=".1" value="${dv[3]}"></div><div><span class="lab">Blood pressure (top)</span><input type="number" id="bp" value="${dv[1]}"></div><div><span class="lab">Blood pressure (bottom)</span><input type="number" id="bpd" value="${dv[2]}"></div><div><span class="lab">Blood sugar mg/dL</span><input type="number" id="gl" value="${dv[4]}"></div></div>`,
-      save() { Object.assign(scratch, {hr: +$("#hr").value, sbp: +$("#bp").value, dbp: +$("#bpd").value, temp: +$("#tp").value, glu: +$("#gl").value}); },
+      save() { const F = [["hr", "#hr", 25, 230], ["sbp", "#bp", 60, 260], ["dbp", "#bpd", 30, 160], ["temp", "#tp", 33, 42], ["glu", "#gl", 20, 500]], out = {}; let ok = true;
+        F.forEach(([n, id, lo, hi]) => { const e = $(id), raw = e.value.trim(), x = +raw, bad = raw !== "" && (!isFinite(x) || x < lo || x > hi); e.setAttribute("aria-invalid", String(bad)); if (bad) ok = false; else if (raw !== "") out[n] = x; });
+        if (!ok) return false; Object.assign(scratch, out); },
       after() { L().daily = Object.assign({}, L().daily || {}, scratch, {entered: true}); CALV++; }}; },
   rt: () => ({title: "Reflex game", sub: "Tap the box as soon as it turns blue. 10 taps.", needs: true, html: `<div class="pad" id="pad" tabindex="0">Tap to start</div><div class="box" id="rto" hidden></div>`,
     init() { const pad = $("#pad"); let st = "idle", t0 = 0, ts = [], tm, pv = 0; this.stop = () => { clearTimeout(tm); st = "done"; };
@@ -1042,7 +1046,7 @@ function show() { cur && cur.stop && cur.stop(); cur = runStep(flow[k]);
   $("#stepBody").innerHTML = `${cur.ill ? `<div class="illu">${cur.ill}</div>` : ""}<p class="st">${cur.title}</p>${cur.sub ? `<p class="ss">${cur.sub}</p>` : ""}${cur.html || ""}`;
   $("#goBtn").hidden = false; $("#goBtn").disabled = !!cur.needs; $("#goBtn").textContent = cur.go || (k === flow.length - 1 ? "Done" : "Next");
   $("#skipBtn").hidden = !cur.skip; $("#skipBtn").textContent = cur.skipLabel || "Skip this"; $("#sheet").scrollTop = 0; cur.init && cur.init(); }
-function advance(skipped) { if (!skipped) cur.save && cur.save(); const chain = !skipped && cur.chain ? cur.chain : null; cur.after && cur.after();
+function advance(skipped) { if (!skipped && cur.save && cur.save() === false) return; const chain = !skipped && cur.chain ? cur.chain : null; cur.after && cur.after();
   if (chain) flow.push(...expand(chain()));
   if (k < flow.length - 1) { k++; show(); return; }
   if (running) { const l = L(); l.done = l.done || {}; l.done[running] = true; }

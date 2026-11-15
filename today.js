@@ -125,6 +125,8 @@
     add("rest", "Rest period", "Rest", "16:00", 120);
     return out;
   }
+  function toMin(t) { var p = String(t).split(":"); return +p[0] * 60 + +p[1]; }
+  function fromMin(m) { var h = Math.floor(m / 60), r = m % 60; return (h < 10 ? "0" : "") + h + ":" + (r < 10 ? "0" : "") + r; }
   function byStart(a, b) { return a.start < b.start ? -1 : a.start > b.start ? 1 : 0; }
 
   function store(id) { var s = A.APP.crew[id]; if (!s.todo || typeof s.todo !== "object") s.todo = {}; return s.todo; }
@@ -136,6 +138,10 @@
     var late = rec(c.id, d - 1).ch.filter(function (x) { return x.type === "delay"; }).map(function (x) { return Object.assign(snap(x.task), {late: true}); });
     var inc = [];
     crew().forEach(function (o) { if (o.id === c.id) return; rec(o.id, d).ch.forEach(function (x) { if (x.type === "hand" && x.to === c.id) inc.push(Object.assign(snap(x.task), {incoming: true, from: o.id})); }); });
+    var busy = late.concat(own).map(function (r) { return [toMin(r.start), toMin(r.start) + r.dur]; });
+    inc.sort(byStart).forEach(function (r) { var s = toMin(r.start), hit = true;
+      while (hit) { hit = false; busy.forEach(function (b) { if (s < b[1] && s + r.dur > b[0]) { s = b[1]; hit = true; } }); }
+      if (s !== toMin(r.start)) { r.was = r.start; r.start = fromMin(s); } busy.push([s, s + r.dur]); });
     var mine = rec(c.id, d).ch, rows = late.concat(own.concat(inc).sort(byStart));
     rows.forEach(function (r) { var m = mine.find(function (x) { return x.uid === r.uid; }); if (m) r.moved = m; });
     return rows;
@@ -181,7 +187,7 @@
     var box = $("#todayCard"); if (!box) return;
     var rows = list(c, d), g = gates(c, d), h = load(c, d, rows), pct = h / DAY_LIMIT_H;
     var lv = pct > 1.15 ? " urgent" : pct >= 1 ? " watch" : "";
-    var sr = sinceRest(c, d);
+    var sr = sinceRest(c, d), nextH = load(c, d + 1);
     var html = "<div class=\"chead\"><div class=\"th\"><h2>Today</h2><span class=\"simtag\">Simulated schedule</span></div>" +
       "<div class=\"load" + lv + "\" id=\"loadBox\"><b>" + hrs(h) + "</b><span>of " + DAY_LIMIT_H + " h</span><div class=\"load-bar\"><i style=\"width:" + Math.min(100, Math.round(pct * 100)) + "%\"></i></div></div></div>";
     html += "<div class=\"tasks\" id=\"tasks\">" + rows.map(function (t) {
@@ -190,13 +196,13 @@
       var cls = ["task"]; if (done && !t.moved) cls.push("done"); if (t.moved) cls.push("moved"); if (t.late) cls.push("late"); if (t.locked) cls.push("locked"); if (t.incoming) cls.push("incoming");
       var state = "";
       if (t.moved) state = t.moved.type === "delay" ? "Tomorrow" : "Handed to " + first((crewById(t.moved.to) || {}).name);
-      else if (t.incoming) state = "From " + first((crewById(t.from) || {}).name);
+      else if (t.incoming) state = "From " + first((crewById(t.from) || {}).name) + (t.was ? ", moved from " + t.was : "");
       else if (t.late) state = "From yesterday";
       else if (t.locked) state = "Fixed";
       var acts = "";
       if (t.moved) acts = "<button class=\"tk-btn\" data-act=\"undo\" type=\"button\">Undo</button>";
       else if (g.can && !t.locked && !t.incoming && !done && t.cat !== "Rest") {
-        if (!t.late) acts += "<button class=\"tk-btn\" data-act=\"delay\" type=\"button\">Delay a day</button>";
+        if (!t.late && nextH + t.dur / 60 <= DAY_LIMIT_H) acts += "<button class=\"tk-btn\" data-act=\"delay\" type=\"button\">Delay a day</button>";
         acts += "<button class=\"tk-btn\" data-act=\"hand\" type=\"button\" aria-haspopup=\"menu\" aria-expanded=\"" + (UI.menu === t.uid) + "\">Hand over</button>";
       }
       var name = "<b class=\"tk-name\">" + esc(t.name) + "</b>";
@@ -266,7 +272,7 @@
     if (act === "check") { if (t.moved) return; var r = rec(c.id, d, true); if (r.done[uid]) delete r.done[uid]; else r.done[uid] = true; return changed(); }
     if (act === "undo") { var r2 = rec(c.id, d, true); r2.ch = r2.ch.filter(function (x) { return x.uid !== uid; }); UI.menu = null; return changed(); }
     var g = gates(c, d); if (!g.can || t.locked || t.incoming || t.moved || t.cat === "Rest") return;
-    if (act === "delay" && !t.late) { rec(c.id, d, true).ch.push({type: "delay", uid: uid, task: snap(t), at: Date.now()}); UI.menu = null; return changed(); }
+    if (act === "delay" && !t.late && load(c, d + 1) + t.dur / 60 <= DAY_LIMIT_H) { rec(c.id, d, true).ch.push({type: "delay", uid: uid, task: snap(t), at: Date.now()}); UI.menu = null; return changed(); }
     if (act === "hand") { UI.menu = UI.menu === uid ? null : uid; UI.todayHTML = ""; renderToday(); var first0 = $(".tk-menu .tk-opt:not([disabled])"); if (first0) first0.focus(); return; }
     if (act === "to" && !b.disabled) {
       var o = crewById(b.dataset.to); if (!o || o.id === c.id) return;
