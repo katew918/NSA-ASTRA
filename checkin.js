@@ -270,7 +270,7 @@
   var speakOn = getPref(PREF_SPEAK, false);
   var hasSpeech = typeof window.speechSynthesis !== "undefined" && typeof window.SpeechSynthesisUtterance !== "undefined";
   var st = null, runId = 0, durMs = DURATION_MS;
-  var REPLY_URL = "/api/reply", REPLY_WAIT_MS = 4500, served = false, misses = 0;
+  var REPLY_URL = "/api/reply", REPLY_WAIT_MS = 4500, served = false, misses = 2;
 
   function todayLog() { return A.L(); }
   function name() { return firstName(A.S && A.S.name); }
