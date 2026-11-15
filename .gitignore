@@ -2,6 +2,7 @@
 .env
 .env.*
 deepseek-key.txt
+gemini-key.txt
 *.key
 
 # Vercel local settings

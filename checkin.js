@@ -283,7 +283,7 @@
 
   function paint() {
     var note = $("#mhNote"), sp = $("#mhSpeak");
-    if (note) note.innerHTML = served ? "Private to you. Mini Astra's replies are written by DeepSeek from the question, the option you tapped and your first name. Anything you type yourself is never sent, and ASTRA's server stores nothing." : "Private to you. Your answers stay on this device. <span class=\"simtag\">Demo</span>";
+    if (note) note.innerHTML = served ? "Private to you. Mini Astra's replies are written by Google Gemini from the question, the option you tapped and your first name. Anything you type yourself is never sent, and ASTRA's server stores nothing." : "Private to you. Your answers stay on this device. <span class=\"simtag\">Demo</span>";
     if (sp) { sp.hidden = !hasSpeech; sp.setAttribute("aria-pressed", speakOn ? "true" : "false"); }
   }
 
