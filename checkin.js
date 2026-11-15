@@ -27,44 +27,145 @@
     Q("m4", "mood", "If today were weather, what would it be?", ["Clear skies", "Mostly sunny", "Mixed", "Cloudy", "Stormy"], true),
     Q("m5", "mood", "How much have small things bugged you today?", ["Not at all", "Barely", "Somewhat", "Quite a bit", "A lot"], true),
     Q("m6", "mood", "How warm do you feel toward the people around you today?", ["Cold", "Cool", "Neutral", "Warm", "Very warm"]),
+    Q("m7", "mood", "How funny have things seemed to you today?", ["Not at all", "Barely", "A little", "Quite", "Very"]),
+    Q("m8", "mood", "How often did you catch yourself humming today?", ["Never", "Once", "A few times", "Often", "All day"]),
+    Q("m9", "mood", "How much does your next meal appeal to you?", ["Not at all", "A little", "Somewhat", "Quite a bit", "A lot"]),
+    Q("m10", "mood", "How heavy does the rest of this week look from here?", ["Light", "Fairly light", "Medium", "Heavy", "Very heavy"], true),
+    Q("m11", "mood", "How much did you enjoy your last small break?", ["Not at all", "A little", "Somewhat", "Quite a bit", "A lot"]),
+    Q("m12", "mood", "How easy is it to think of something nice that happened?", ["Very hard", "Hard", "Takes a moment", "Easy", "Very easy"]),
+    Q("m13", "mood", "How likely are you to start a chat with a crewmate today?", ["Very likely", "Likely", "Maybe", "Unlikely", "Very unlikely"], true),
+    Q("m14", "mood", "How bright does the view outside look to you today?", ["Very dull", "Dull", "Plain", "Bright", "Very bright"]),
+    Q("m15", "mood", "How often have gloomy thoughts drifted in today?", ["Never", "Rarely", "Sometimes", "Often", "All the time"], true),
+    Q("m16", "mood", "How kind have you been to yourself today?", ["Very kind", "Kind", "Neutral", "Harsh", "Very harsh"], true),
+    Q("m17", "mood", "How easily could you laugh at a small slip right now?", ["Not at all", "Hardly", "Maybe", "Easily", "Very easily"]),
+    Q("m18", "mood", "How much do you feel like sharing a story today?", ["Not at all", "A little", "Somewhat", "Quite a bit", "A lot"]),
+    Q("m19", "mood", "How does the day ahead look when you picture it?", ["Bleak", "Dull", "Plain", "Pleasant", "Inviting"]),
+    Q("m20", "mood", "How much of today has felt like a drag?", ["None of it", "A little", "Some", "Most", "All of it"], true),
+    Q("m21", "mood", "How close to the surface is a smile right now?", ["Far away", "Distant", "Somewhere", "Close", "Right there"]),
+    Q("m22", "mood", "How satisfied do you feel with how today has gone?", ["Not at all", "A little", "Somewhat", "Quite", "Very"]),
+    Q("m23", "mood", "How often have you sighed today without meaning to?", ["Never", "Once or twice", "Sometimes", "Often", "Constantly"], true),
+    Q("m24", "mood", "How easy is it to feel thankful for something right now?", ["Very hard", "Hard", "Takes a moment", "Easy", "Very easy"]),
     Q("s1", "stress", "How crowded does your head feel right now?", ["Packed", "Busy", "Some room", "Roomy", "Clear"]),
     Q("s2", "stress", "How easy would it be to sit still for five minutes now?", ["Very hard", "Hard", "Okay", "Easy", "Very easy"]),
     Q("s3", "stress", "How do your shoulders feel at the moment?", ["Loose", "Mostly loose", "A bit tight", "Tight", "Like a knot"], true),
     Q("s4", "stress", "How many things are pulling at your attention right now?", ["Too many", "Lots", "A few", "One or two", "Hardly any"]),
     Q("s5", "stress", "If you got a short break now, how fast could you unwind?", ["Right away", "Quickly", "After a while", "Slowly", "Not at all"], true),
     Q("s6", "stress", "How does your breathing feel right now?", ["Rushed", "Quick", "Normal", "Easy", "Slow and easy"]),
+    Q("s7", "stress", "How tightly are you holding your jaw right now?", ["Clenched", "Tight", "Neutral", "Loose", "Fully loose"]),
+    Q("s8", "stress", "How patient would you be in a slow queue right now?", ["Not at all", "Barely", "Somewhat", "Quite", "Very"]),
+    Q("s9", "stress", "How often did you check the clock today?", ["Hardly ever", "Now and then", "Sometimes", "Often", "Constantly"], true),
+    Q("s10", "stress", "How would a surprise change to your plan land right now?", ["Badly", "Not well", "Okay", "Fine", "Easily"]),
+    Q("s11", "stress", "How fast did your heart settle after the last busy moment?", ["Right away", "Quickly", "After a while", "Slowly", "Still racing"], true),
+    Q("s12", "stress", "How loud does the background noise feel today?", ["Very loud", "Loud", "Normal", "Quiet", "Very quiet"]),
+    Q("s13", "stress", "How much do you feel like you are rushing?", ["Not at all", "A little", "Somewhat", "Quite a bit", "All the time"], true),
+    Q("s14", "stress", "How settled does your stomach feel right now?", ["Churning", "Unsettled", "Okay", "Settled", "Very calm"]),
+    Q("s15", "stress", "How short has your fuse been today?", ["Very long", "Long", "Normal", "Short", "Very short"], true),
+    Q("s16", "stress", "How much room is there in your day for a pause?", ["None", "Very little", "Some", "Plenty", "Lots"]),
+    Q("s17", "stress", "How hard are your hands gripping things today?", ["White-knuckled", "Firm", "Normal", "Loose", "Very loose"]),
+    Q("s18", "stress", "How much do you feel on the clock right now?", ["Not at all", "A little", "Somewhat", "Mostly", "Completely"], true),
+    Q("s19", "stress", "How much does your to-do list weigh on you right now?", ["Like a rock", "Heavy", "Noticeable", "Light", "Like a feather"]),
+    Q("s20", "stress", "How easy is it to enjoy a quiet moment right now?", ["Very hard", "Hard", "Okay", "Easy", "Very easy"]),
+    Q("s21", "stress", "How fast are your thoughts moving right now?", ["Racing", "Fast", "Normal", "Steady", "Slow and easy"]),
+    Q("s22", "stress", "How often have you replayed a conversation in your head today?", ["Never", "Once", "A few times", "Often", "Over and over"], true),
+    Q("s23", "stress", "How smooth has the last hour felt?", ["Very bumpy", "Bumpy", "Mixed", "Smooth", "Very smooth"]),
+    Q("s24", "stress", "How fidgety are your hands and feet right now?", ["Very still", "Still", "A little", "Fidgety", "Can't stop"], true),
     Q("f1", "fatigue", "How heavy did the first hour of today feel?", ["Like lead", "Heavy", "Normal", "Light", "Easy"]),
     Q("f2", "fatigue", "How does a long walk sound right now?", ["Easy", "Fine", "Okay", "Tiring", "Out of the question"], true),
     Q("f3", "fatigue", "How much fuel is left in your tank right now?", ["Empty", "Low", "Half", "Most of it", "Full"]),
     Q("f4", "fatigue", "How often have you wanted to sit down today?", ["Hardly ever", "Now and then", "Sometimes", "Often", "All the time"], true),
     Q("f5", "fatigue", "How quick do your arms and legs feel right now?", ["Sluggish", "Slow", "Normal", "Quick", "Springy"]),
     Q("f6", "fatigue", "If you had to carry a heavy box now, how would it feel?", ["Too much", "Hard", "Okay", "Fine", "Easy"]),
+    Q("f7", "fatigue", "How easily could you stand up right now?", ["Very easily", "Easily", "Okay", "With effort", "Big effort"], true),
+    Q("f8", "fatigue", "How light are your footsteps today?", ["Stomping", "Heavy", "Normal", "Light", "Bouncy"]),
+    Q("f9", "fatigue", "How much would you like a nap right now?", ["Not at all", "A little", "Somewhat", "Quite a bit", "Badly"], true),
+    Q("f10", "fatigue", "How long could you keep up a brisk pace now?", ["Barely a minute", "A few minutes", "A while", "A long time", "Ages"]),
+    Q("f11", "fatigue", "How much effort did getting dressed take today?", ["None", "Little", "Some", "A lot", "Huge"], true),
+    Q("f12", "fatigue", "How much spark do you have for a game right now?", ["None", "A little", "Some", "Plenty", "Loads"]),
+    Q("f13", "fatigue", "How lively does your voice sound to you today?", ["Flat", "Low", "Normal", "Lively", "Bright"]),
+    Q("f14", "fatigue", "How heavy does your head feel on your shoulders?", ["Feather light", "Light", "Normal", "Heavy", "Like a boulder"], true),
+    Q("f15", "fatigue", "How quickly is your battery draining today?", ["Very fast", "Fast", "Normal", "Slowly", "Barely"]),
+    Q("f16", "fatigue", "How much do you feel like moving around right now?", ["Not at all", "A little", "Somewhat", "Quite a bit", "A lot"]),
+    Q("f17", "fatigue", "How much do your muscles ache right now?", ["Not at all", "A little", "Some", "Quite a bit", "A lot"], true),
+    Q("f18", "fatigue", "How many tasks could you do before needing a break?", ["None", "One", "A couple", "Several", "Lots"]),
+    Q("f19", "fatigue", "How much of a push did this morning need?", ["A huge push", "A big push", "Some push", "A nudge", "No push"]),
+    Q("f20", "fatigue", "How lively do you feel compared with a good day?", ["Far less", "Less", "About the same", "A bit more", "Much more"]),
+    Q("f21", "fatigue", "How easy would it be to dance to a song right now?", ["Very easy", "Easy", "Maybe", "Hard", "No way"], true),
+    Q("f22", "fatigue", "How much did your body want to keep going this morning?", ["Not at all", "A little", "Somewhat", "Quite a bit", "A lot"]),
+    Q("f23", "fatigue", "How much get-up-and-go do you have right now?", ["None", "Little", "Some", "Plenty", "Loads"]),
+    Q("f24", "fatigue", "How soon would you like the day to wind down?", ["Right now", "Soon", "Later", "Much later", "Not for ages"]),
     Q("l1", "sleep", "How ready was your body to get up when the alarm went?", ["Not at all", "Barely", "Sort of", "Mostly", "Fully"]),
     Q("l2", "sleep", "How many times do you remember waking in the night?", ["None", "Once", "A few", "Many", "Lost count"], true),
     Q("l3", "sleep", "How long did it take you to drift off last night?", ["Ages", "A long time", "A while", "Quickly", "Straight away"]),
     Q("l4", "sleep", "How did your eyes feel when you first opened them?", ["Bright", "Clear", "Okay", "Heavy", "Glued shut"], true),
     Q("l5", "sleep", "How deep did last night feel?", ["Very light", "Light", "Average", "Deep", "Very deep"]),
     Q("l6", "sleep", "How much did you want to stay in bed this morning?", ["Not at all", "A little", "Some", "A lot", "Very much"], true),
+    Q("l7", "sleep", "How comfortable did your bed feel last night?", ["Awful", "Uncomfortable", "Okay", "Comfy", "Cosy"]),
+    Q("l8", "sleep", "How calm was the night for you?", ["Very rough", "Rough", "Mixed", "Calm", "Very calm"]),
+    Q("l9", "sleep", "How much did you toss and turn last night?", ["Not at all", "A little", "Some", "A lot", "All night"], true),
+    Q("l10", "sleep", "How groggy were you in the first ten minutes awake?", ["Not at all", "A little", "Somewhat", "Very", "Like a zombie"], true),
+    Q("l11", "sleep", "How did the night feel, start to finish?", ["Endless", "Long", "Okay", "Short and sweet", "Gone in a blink"]),
+    Q("l12", "sleep", "How easy was it to switch your mind off last night?", ["Very hard", "Hard", "Okay", "Easy", "Very easy"]),
+    Q("l13", "sleep", "How much earlier than planned did you wake today?", ["Hours early", "An hour early", "A bit early", "Barely", "Not at all"]),
+    Q("l14", "sleep", "How quiet did your night feel?", ["Very noisy", "Noisy", "Mixed", "Quiet", "Silent"]),
+    Q("l15", "sleep", "How much would you like to redo last night?", ["Not at all", "A little", "Somewhat", "Quite a bit", "Very much"], true),
+    Q("l16", "sleep", "How long did you lie awake in the middle of the night?", ["Not at all", "A few minutes", "A while", "Ages", "Most of it"], true),
+    Q("l17", "sleep", "How well did your body switch off after lights out?", ["Not at all", "Barely", "Partly", "Well", "Completely"]),
+    Q("l18", "sleep", "How smooth was getting out of bed today?", ["Very rough", "Rough", "Okay", "Smooth", "Very smooth"]),
+    Q("l19", "sleep", "How snug did your bunk feel last night?", ["Not at all", "A little", "Somewhat", "Snug", "Very snug"]),
+    Q("l20", "sleep", "How long did it take to feel like yourself this morning?", ["Hours", "Over an hour", "A while", "A few minutes", "Right away"]),
+    Q("l21", "sleep", "How fresh did your face look in the mirror today?", ["Very fresh", "Fresh", "Okay", "Worn", "Very worn"], true),
+    Q("l22", "sleep", "How peaceful were your dreams, if you had any?", ["Very troubled", "Troubled", "Mixed", "Peaceful", "Very peaceful"]),
+    Q("l23", "sleep", "How did your back feel when you got up?", ["Very stiff", "Stiff", "Okay", "Loose", "Very loose"]),
+    Q("l24", "sleep", "How much did the night recharge you?", ["Not at all", "A little", "Somewhat", "Mostly", "Fully"]),
     Q("r1", "readiness", "If a tricky task landed on you now, how would it go?", ["Badly", "Roughly", "Okay", "Well", "Very well"]),
     Q("r2", "readiness", "How sharp does your focus feel right now?", ["Foggy", "Blurry", "Okay", "Sharp", "Crystal clear"]),
     Q("r3", "readiness", "How keen are you to start your next task?", ["Not keen", "A bit reluctant", "Neutral", "Keen", "Very keen"]),
     Q("r4", "readiness", "How sure are you that you could learn something new today?", ["Very sure", "Sure", "Not sure", "Doubtful", "Not at all"], true),
     Q("r5", "readiness", "How quickly could you jump in if a crewmate needed a hand?", ["Not really", "Slowly", "Okay", "Quickly", "Right away"]),
-    Q("r6", "readiness", "How on top of today's plan do you feel?", ["Not at all", "A little", "Partly", "Mostly", "Fully"])
+    Q("r6", "readiness", "How on top of today's plan do you feel?", ["Not at all", "A little", "Partly", "Mostly", "Fully"]),
+    Q("r7", "readiness", "How easily could you follow a long set of steps now?", ["Very hard", "Hard", "Okay", "Easily", "Very easily"]),
+    Q("r8", "readiness", "How would you feel giving a short briefing right now?", ["Very confident", "Confident", "Unsure", "Nervous", "Not up to it"], true),
+    Q("r9", "readiness", "How quickly do new details stick right now?", ["They slide off", "Slowly", "Okay", "Quickly", "Instantly"]),
+    Q("r10", "readiness", "How likely are you to miss a small detail today?", ["Very unlikely", "Unlikely", "Maybe", "Likely", "Very likely"], true),
+    Q("r11", "readiness", "How well could you juggle two jobs at once right now?", ["Not at all", "Poorly", "Okay", "Well", "Very well"]),
+    Q("r12", "readiness", "How steady would your hands be on a delicate job?", ["Very steady", "Steady", "Okay", "Shaky", "Very shaky"], true),
+    Q("r13", "readiness", "How sure are you of what you need to do today?", ["Very sure", "Sure", "Somewhat", "Unsure", "Lost"], true),
+    Q("r14", "readiness", "How quickly could you spot a mistake in a checklist now?", ["Not at all", "Slowly", "Okay", "Quickly", "Instantly"]),
+    Q("r15", "readiness", "How easy would it be to read a long page right now?", ["Very hard", "Hard", "Okay", "Easy", "Very easy"]),
+    Q("r16", "readiness", "How quickly could you solve a simple puzzle right now?", ["Not at all", "Slowly", "Okay", "Quickly", "In a flash"]),
+    Q("r17", "readiness", "How much do you trust your judgement today?", ["Completely", "Mostly", "Somewhat", "A little", "Not at all"], true),
+    Q("r18", "readiness", "How prepared would you feel for a drill right now?", ["Not at all", "A little", "Somewhat", "Mostly", "Fully"]),
+    Q("r19", "readiness", "How well would you remember a number you just heard?", ["Not at all", "Poorly", "Okay", "Well", "Perfectly"]),
+    Q("r20", "readiness", "How likely are you to need things repeated today?", ["Very unlikely", "Unlikely", "Maybe", "Likely", "Very likely"], true),
+    Q("r21", "readiness", "How much are you up for a challenge today?", ["Not at all", "A little", "Somewhat", "Quite a bit", "Bring it on"]),
+    Q("r22", "readiness", "How crisp do your decisions feel today?", ["Very muddled", "Muddled", "Okay", "Crisp", "Very crisp"]),
+    Q("r23", "readiness", "How long could you concentrate without a break now?", ["A minute", "A few minutes", "Half an hour", "An hour", "Hours"]),
+    Q("r24", "readiness", "How useful could you be to the team right now?", ["Not at all", "A little", "Somewhat", "Very", "Extremely"])
   ];
   var QBY = {}; BANK.forEach(function (q) { QBY[q.id] = q; });
   function scoreOf(q, idx) { var i = Math.round(Number(idx)); if (!q || !isFinite(i) || i < 0 || i > 4) return null; return q.rev ? 5 - i : i + 1; }
   function rnd(a, rand) { return a[Math.floor((rand || Math.random)() * a.length) % a.length]; }
   function shuffle(a, rand) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor((rand || Math.random)() * (i + 1)) % (i + 1), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+  var ROUNDS = 5, HISTORY = 3, MIN_FINISH = 10, SAVE_STEP = DIMS.length;
   function pickQuestions(recent, rand) {
-    var used = {}; (recent || []).slice(0, 2).forEach(function (ids) { (ids || []).forEach(function (id) { used[id] = true; }); });
-    return shuffle(DIMS.map(function (k) {
-      var all = BANK.filter(function (q) { return q.k === k; }), fresh = all.filter(function (q) { return !used[q.id]; });
-      return rnd(fresh.length ? fresh : all, rand);
-    }), rand);
+    var used = {}; (recent || []).slice(0, HISTORY).forEach(function (ids) { (ids || []).forEach(function (id) { used[id] = true; }); });
+    var per = {};
+    DIMS.forEach(function (k) {
+      var all = BANK.filter(function (q) { return q.k === k; });
+      per[k] = shuffle(all.filter(function (q) { return !used[q.id]; }), rand).concat(shuffle(all.filter(function (q) { return used[q.id]; }), rand)).slice(0, ROUNDS);
+    });
+    var out = [];
+    for (var r = 0; r < ROUNDS; r++) shuffle(DIMS, rand).forEach(function (k) { out.push(per[k][r]); });
+    return out;
   }
-  var OPEN = ["Hi{n}. A few quick questions, just pick what fits.", "Hello{n}. Five quick ones today, pick whatever fits best.", "Hi{n}. Let's do a short check-in, tap the answer that fits."];
-  var NEXT = ["Thanks.", "Got it.", "Okay, next one.", "Thanks, here's another.", "Noted."];
+  function meanScores(got) {
+    var sum = {}, n = {}, out = {};
+    (got || []).forEach(function (a) { if (!a || !BY[a.k] || !(a.v >= 1 && a.v <= 5)) return; sum[a.k] = (sum[a.k] || 0) + a.v; n[a.k] = (n[a.k] || 0) + 1; });
+    DIMS.forEach(function (k) { if (n[k]) out[k] = clampScore(sum[k] / n[k]); });
+    return out;
+  }
+  var OPEN = ["Hi{n}. Some quick questions, just pick what fits.", "Hello{n}. Tap whatever fits best, no right answers.", "Hi{n}. Let's do a check-in, tap the answer that fits."];
+  var NEXT = ["Thanks.", "Got it.", "Okay.", "Noted.", "Next one."];
   var CLOSE = ["Thanks for checking in{n}.", "That's all for today{n}. Thank you.", "All done{n}. Thanks for taking a moment."];
   var RETRY = "Thanks. Please pick one of the options for this one.";
   function withName(s, name) { return s.replace("{n}", name ? ", " + name : ""); }
@@ -162,10 +263,11 @@
     if (t.ask === "summary") return withName(rnd(CLOSE, rand), name);
     if (t.retry) return RETRY;
     var q = QBY[t.ask]; if (!q) return "";
-    return (n ? rnd(NEXT, rand) : withName(rnd(OPEN, rand), name)) + " " + q.q;
+    if (!n) return withName(rnd(OPEN, rand), name) + " " + q.q;
+    return n % 3 === 0 ? rnd(NEXT, rand) + " " + q.q : q.q;
   }
 
-  var TEST = {ITEMS: ITEMS, BANK: BANK, DIMS: DIMS, OPEN: OPEN, NEXT: NEXT, CLOSE: CLOSE, RETRY: RETRY, scoreOf: scoreOf, pickQuestions: pickQuestions, SAFE_TEXT: SAFE_TEXT, isCrisis: isCrisis, clampScore: clampScore, stripMarkup: stripMarkup, buildMessages: buildMessages, buildRequest: buildRequest, parseResponse: parseResponse, validateText: validateText, cutText: cutText, scriptedLine: scriptedLine, SYS: SYS, SYS_SUM: SYS_SUM};
+  var TEST = {ITEMS: ITEMS, BANK: BANK, DIMS: DIMS, ROUNDS: ROUNDS, HISTORY: HISTORY, MIN_FINISH: MIN_FINISH, OPEN: OPEN, NEXT: NEXT, CLOSE: CLOSE, RETRY: RETRY, scoreOf: scoreOf, pickQuestions: pickQuestions, meanScores: meanScores, SAFE_TEXT: SAFE_TEXT, isCrisis: isCrisis, clampScore: clampScore, stripMarkup: stripMarkup, buildMessages: buildMessages, buildRequest: buildRequest, parseResponse: parseResponse, validateText: validateText, cutText: cutText, scriptedLine: scriptedLine, SYS: SYS, SYS_SUM: SYS_SUM};
   window.ASTRA_CHECKIN_TEST = TEST;
 
   var A = window.ASTRA_API;
@@ -242,7 +344,13 @@
   function cur() { return st.qs[st.i] || null; }
   function nextQ() { return st.qs[st.i + 1] || null; }
   function recentIds() { var r = A.S && A.S.mhRecent; return Array.isArray(r) ? r.filter(Array.isArray) : []; }
-  function remember(qs) { if (!A.S) return; A.S.mhRecent = [qs.map(function (q) { return q.id; })].concat(recentIds()).slice(0, 2); A.save(); }
+  function remember(qs) { if (!A.S) return; A.S.mhRecent = [qs.map(function (q) { return q.id; })].concat(recentIds()).slice(0, HISTORY); A.save(); }
+  function prog() {
+    var total = st.qs.length, n = st.got.length, bar = $("#mhProg i"), cnt = $("#mhCount"), fin = $("#mhFinish");
+    if (bar) bar.style.width = Math.round(n / total * 100) + "%";
+    if (cnt) cnt.textContent = Math.min(n + 1, total) + " of " + total;
+    if (fin) fin.hidden = st.done || n < MIN_FINISH;
+  }
 
   async function speak(t, n) {
     var my = runId, b = add("ai wait", "…");
@@ -261,10 +369,10 @@
   }
 
   async function begin() {
-    st = {i: 0, scores: {}, hist: [], done: false, busy: false, qs: pickQuestions(recentIds()), n: 0};
+    st = {i: 0, got: [], hist: [], done: false, busy: false, qs: pickQuestions(recentIds()), n: 0};
     runId++;
     remember(st.qs);
-    chips(null);
+    chips(null); prog();
     var v = await speak({ask: st.qs[0].id}, 0); if (v === null) return;
     chips(cur());
   }
@@ -273,15 +381,15 @@
     var q = cur(), v = scoreOf(q, idx); if (!q || !v) return;
     var label = q.o[idx];
     add("me", label); hist("me", label);
-    st.scores[q.k] = v;
+    st.got.push({k: q.k, v: v});
     var nq = nextQ();
     if (!nq) return finish();
-    chips(null);
-    var r = await speak({ask: nq.id}, ++st.n); if (r === null) return;
+    chips(null); prog();
+    var r = await speak({ask: nq.id}, st.got.length); if (r === null) return;
     st.i++; chips(cur());
   }
   function crisis() {
-    st.done = true; runId++; chips(null); busy(false); stopSpeech();
+    st.done = true; runId++; chips(null); busy(false); prog(); stopSpeech();
     var f = $("#mhForm"); if (f) f.hidden = true;
     var box = add("safe", SAFE_TEXT); if (!box) return;
     readAloud(SAFE_TEXT);
@@ -303,20 +411,22 @@
     if (isCrisis(text)) return crisis();
     hist("me", text);
     var q = cur(); if (!q) return;
-    var r = await speak({ask: q.id, retry: true}, ++st.n); if (r === null) return;
+    var r = await speak({ask: q.id, retry: true}, st.got.length || 1); if (r === null) return;
     chips(q);
   }
   async function finish() {
-    st.done = true; chips(null); busy(true);
-    saveScores();
+    if (st.done || st.busy) return;
+    st.done = true; chips(null); busy(true); prog();
+    var bar = $("#mhProg i"); if (bar) bar.style.width = "100%";
+    saveScores(st.got);
     var v = await speak({ask: "summary"}, 0); if (v === null) return;
     busy(true);
     var f = $("#mhForm"); if (f) f.hidden = true;
     var go = $("#goBtn"); if (go) { go.hidden = false; go.disabled = false; go.textContent = "Done"; }
     pin();
   }
-  function saveScores() {
-    var d = A.realFill() || A.ensureDaily(), s = st.scores;
+  function saveScores(got) {
+    var d = A.realFill() || A.ensureDaily(), s = meanScores(got);
     d.mood = s.mood;
     d.checkin = {stress: s.stress, fatigue: s.fatigue, sleep: s.sleep, readiness: s.readiness, at: Date.now()};
     A.bump(); A.save(); A.render();
@@ -325,13 +435,15 @@
 
   A.STEP.mind = function () {
     return {title: "Mood check-in", go: "Done",
-      html: "<div class=\"mh\"><div class=\"mh-log\" id=\"mhLog\"></div><div class=\"mh-chips\" id=\"mhChips\"></div><form class=\"mh-form\" id=\"mhForm\"><input id=\"mhInput\" maxlength=\"300\" placeholder=\"Or say it in your own words\" autocomplete=\"off\"><button class=\"btn sm\" type=\"submit\">Send</button></form>" +
+      html: "<div class=\"mh\"><div class=\"mh-prog\" id=\"mhProg\"><i></i></div><span class=\"mh-count\" id=\"mhCount\"></span><div class=\"mh-log\" id=\"mhLog\"></div><div class=\"mh-chips\" id=\"mhChips\"></div><form class=\"mh-form\" id=\"mhForm\"><input id=\"mhInput\" maxlength=\"300\" placeholder=\"Or say it in your own words\" autocomplete=\"off\"><button class=\"btn sm\" type=\"submit\">Send</button></form>" +
+        "<button class=\"hbtn\" id=\"mhFinish\" type=\"button\" hidden>Finish now</button>" +
         (AI_VOICE_ENABLED ? "<div class=\"mh-ai\" id=\"mhAi\"><button class=\"hbtn\" id=\"mhAiBtn\" type=\"button\" aria-pressed=\"true\">AI voice on</button><span class=\"mh-ai-st\" id=\"mhAiSt\"></span><button class=\"hbtn\" id=\"mhSpeak\" type=\"button\" aria-pressed=\"false\">Read aloud</button></div>"
           : "<div class=\"mh-ai\" id=\"mhAi\"><button class=\"hbtn\" id=\"mhSpeak\" type=\"button\" aria-pressed=\"false\">Read aloud</button></div>") +
         "<div class=\"mh-note\" id=\"mhNote\"></div></div>",
       init: function () {
         var go = $("#goBtn"); if (go) go.hidden = true;
         $("#mhForm").onsubmit = onText;
+        $("#mhFinish").onclick = function () { if (st && st.got.length >= MIN_FINISH) finish(); };
         $("#mhChips").onclick = function (e) { var b = e.target.closest(".mh-chip"); if (b) onChip(+b.dataset.v); };
         if ($("#mhAiBtn")) $("#mhAiBtn").onclick = function () { ai.on = !ai.on; ai.msg = ""; setPref(PREF_AI, ai.on); paintAi(); };
         $("#mhSpeak").onclick = function () { speakOn = !speakOn; setPref(PREF_SPEAK, speakOn); if (!speakOn) stopSpeech(); paintAi(); };
@@ -342,7 +454,7 @@
   };
 
   var sheet = $("#sheet");
-  if (sheet && typeof MutationObserver !== "undefined") new MutationObserver(function () { if (!sheet.classList.contains("on")) { stopSpeech(); runId++; } }).observe(sheet, {attributes: true, attributeFilter: ["class"]});
+  if (sheet && typeof MutationObserver !== "undefined") new MutationObserver(function () { if (!sheet.classList.contains("on")) { stopSpeech(); runId++; if (st && !st.done && st.got.length >= SAVE_STEP) { st.done = true; saveScores(st.got.slice(0, st.got.length - st.got.length % SAVE_STEP)); } } }).observe(sheet, {attributes: true, attributeFilter: ["class"]});
   document.addEventListener("click", function (e) { if (e.target.closest && e.target.closest("#mhBtn")) A.openFlow(["mind"]); });
   window.renderMind();
   window.ASTRA_CHECKIN = {ai: ai};
