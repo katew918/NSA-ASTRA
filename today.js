@@ -148,11 +148,7 @@
   }
   function load(c, d, rows) { rows = rows || list(c, d); return rows.reduce(function (s, r) { return s + (!r.moved && r.cat !== "Rest" ? r.dur / 60 : 0); }, 0); }
   function hardDay(c) {
-    return A.withMember(c.id, function () {
-      A.realFill(); var dd = A.L().daily, ck = dd && dd.checkin;
-      if (ck && ((dd.mood != null && dd.mood <= 2) || (ck.stress != null && ck.stress <= 2) || (ck.fatigue != null && ck.fatigue <= 2))) return true;
-      return shortSleep();
-    });
+    return A.withMember(c.id, function () { return (A.statuses ? A.statuses() : []).some(function (x) { return x.l === "watch" || x.l === "urgent"; }); });
   }
   function shortSleep() { return (A.statuses ? A.statuses() : []).some(function (x) { return /slept a lot less/.test(x.what); }); }
   function own(r) { return r.ch.filter(function (x) { return x.type !== "pause"; }); }
@@ -223,7 +219,7 @@
       if (t.moved) state = t.moved.type === "pause" ? "Paused" : t.moved.type === "delay" ? "Tomorrow" : "Handed to " + first((crewById(t.moved.to) || {}).name);
       else if (t.incoming) state = "From " + first((crewById(t.from) || {}).name) + (t.was ? ", moved from " + t.was : "");
       else if (t.late) state = "From yesterday";
-      else if (t.locked) state = "Fixed";
+      else if (t.locked && g.unlocked) state = "Fixed";
       var acts = "";
       if (t.moved) acts = "<button class=\"tk-btn\" data-act=\"undo\" type=\"button\">Undo</button>";
       else if (g.can && !t.locked && !t.incoming && !done && t.cat !== "Rest") {
@@ -234,8 +230,8 @@
       var menu = "";
       if (UI.menu === t.uid && acts.indexOf("data-act=\"hand\"") >= 0) {
         menu = "<div class=\"tk-menu\" role=\"menu\">" + crew().filter(function (o) { return o.id !== c.id; }).map(function (o) {
-          var oh = load(o, d), full = oh + t.dur / 60 > DAY_LIMIT_H || hardDay(o);
-          return "<button class=\"tk-opt\" role=\"menuitem\" data-to=\"" + o.id + "\" type=\"button\"" + (full ? " disabled" : "") + "><span class=\"av\">" + esc(ini(o.name)) + "</span><span class=\"who\"><span class=\"nm\">" + esc(o.name) + "</span><span class=\"rl\">" + hrs(oh) + " of " + DAY_LIMIT_H + " h today</span></span>" + (full ? "<span class=\"tk-full\">Full</span>" : "") + "</button>";
+          var oh = load(o, d), over = oh + t.dur / 60 > DAY_LIMIT_H, full = over || hardDay(o);
+          return "<button class=\"tk-opt\" role=\"menuitem\" data-to=\"" + o.id + "\" type=\"button\"" + (full ? " disabled" : "") + "><span class=\"av\">" + esc(ini(o.name)) + "</span><span class=\"who\"><span class=\"nm\">" + esc(o.name) + "</span><span class=\"rl\">" + hrs(oh) + " of " + DAY_LIMIT_H + " h today</span></span>" + (full ? "<span class=\"tk-full\">" + (over ? "Full" : "Unavailable") + "</span>" : "") + "</button>";
         }).join("") + "</div>";
       }
       return "<div class=\"" + cls.join(" ") + "\" data-id=\"" + esc(t.uid) + "\">" +
