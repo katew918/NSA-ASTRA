@@ -389,3 +389,11 @@ footer{color:var(--muted)}
 .flag{display:inline-block;padding:0 7px;border-radius:999px;font-weight:500}
 .flag.watch{background:var(--watch-soft);color:var(--watch);box-shadow:inset 0 0 0 1px #F1D48A}
 .flag.urgent{background:var(--urgent-soft);color:var(--urgent);box-shadow:inset 0 0 0 1px #F3B4BB}
+.simpick{position:fixed;right:22px;bottom:22px;z-index:35}
+.bar .simtoggle,.simtoggle{height:44px;padding:0 18px;border-radius:999px;border:0;background:var(--navy);color:#fff;font-size:13.5px;font-weight:500;box-shadow:0 10px 28px rgba(27,39,61,.28)}
+.bar .simtoggle:hover,.bar .simtoggle[aria-expanded="true"],.simtoggle:hover,.simtoggle[aria-expanded="true"]{background:#2A3A58;border:0;box-shadow:0 10px 28px rgba(27,39,61,.34)}
+.simtoggle .chev{transform:rotate(-135deg) translateY(-2px)}
+.simmenu{top:auto;bottom:calc(100% + 10px);right:0;left:auto}
+@media (max-width:640px){.simpick{right:14px;bottom:14px}.simmenu{left:auto;right:0}}
+.holo{overflow:visible}
+.tip{z-index:20}
