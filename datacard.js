@@ -1,5 +1,4 @@
 (function () {
-  var W = 800, H = 260, PL = 48, PR = 14, PT = 14, PB = 28;
   var cur = null;
   function A() { return window.ASTRA_API || {}; }
   function base() { return A().base(); } function day() { return A().day(); } function key(x) { return A().key(x); } function realFill(x) { return A().realFill(x); }
@@ -42,51 +41,13 @@
       src: "PMData volunteer " + esc(vol) + (dates.length ? " · " + fmtDate(dates[0]) + " – " + fmtDate(dates[dates.length - 1]) : "") + (k === "mood" ? " · Only you see this" : "")};
   }
 
-  function chartLine(o, opt) {
-    var pts = o.pts, vs = pts.map(function (p) { return p.v; });
-    var lo = Math.min.apply(null, vs.concat([opt.lo])), hi = Math.max.apply(null, vs.concat([opt.hi]));
-    (opt.extra || []).forEach(function (v) { lo = Math.min(lo, v); hi = Math.max(hi, v); });
-    if (opt.log) { lo = Math.log10(Math.max(1e-3, lo)); hi = Math.log10(Math.max(1e-2, hi)); }
-    var pad = (hi - lo) * 0.08 || 1; lo -= pad; hi += pad;
-    var tv = function (v) { return opt.log ? Math.log10(Math.max(1e-3, v)) : v; };
-    var Y = function (v) { return PT + (hi - tv(v)) / (hi - lo) * (H - PT - PB); };
-    var n = pts.length, X = function (i) { return n <= 1 ? (PL + W - PR) / 2 : PL + i / (n - 1) * (W - PL - PR); };
-    var s = "";
-    if (opt.band) { var y1 = Y(opt.band[1]), y2 = Y(opt.band[0]); s += '<rect class="dc-band" x="' + PL + '" y="' + y1.toFixed(1) + '" width="' + (W - PL - PR) + '" height="' + Math.max(0, y2 - y1).toFixed(1) + '"/>'; }
-    (opt.th || []).forEach(function (t) { var y = Y(t.v).toFixed(1); s += '<line class="dc-th ' + t.c + '" x1="' + PL + '" x2="' + (W - PR) + '" y1="' + y + '" y2="' + y + '"/>'; });
-    for (var k = 0; k < 4; k++) { var v = lo + (hi - lo) * (k + 0.5) / 4, real = opt.log ? Math.pow(10, v) : v;
-      s += '<text class="dc-ax" x="' + (PL - 6) + '" y="' + (Y(real) + 4).toFixed(1) + '" text-anchor="end">' + (opt.fmtY ? opt.fmtY(real) : num(real, Math.abs(hi - lo) < 10 ? 1 : null)) + "</text>"; }
-    if (n) { s += '<text class="dc-ax" x="' + X(0).toFixed(1) + '" y="' + (H - 8) + '">' + esc(pts[0].lab || pts[0].day) + "</text>";
-      s += '<text class="dc-ax" x="' + X(n - 1).toFixed(1) + '" y="' + (H - 8) + '" text-anchor="end">' + esc(pts[n - 1].lab || pts[n - 1].day) + "</text>"; }
-    if (n > 1) s += '<polyline class="dc-line" fill="none" points="' + pts.map(function (p, i) { return X(i).toFixed(1) + "," + Y(p.v).toFixed(1); }).join(" ") + '"/>';
-    var sel = o.sel;
-    if (sel >= 0 && sel < n) s += '<line class="dc-cursor" x1="' + X(sel).toFixed(1) + '" x2="' + X(sel).toFixed(1) + '" y1="' + PT + '" y2="' + (H - PB) + '"/>';
-    if (!opt.noPts) pts.forEach(function (p, i) { s += '<circle class="dc-pt' + (p.l && p.l !== "ok" ? " " + p.l : "") + (i === sel ? " on" : "") + '" cx="' + X(i).toFixed(1) + '" cy="' + Y(p.v).toFixed(1) + '" r="' + (i === sel ? 6 : 4) + '"/>'; });
-    else if (sel >= 0 && sel < n) s += '<circle class="dc-pt on" cx="' + X(sel).toFixed(1) + '" cy="' + Y(pts[sel].v).toFixed(1) + '" r="5"/>';
-    return s;
-  }
-
-  function chartBars(o, opt) {
-    var pts = o.pts, n = pts.length, hi = Math.max.apply(null, pts.map(function (p) { return p.v; }).concat([opt.hi || 1])) * 1.1;
-    var bw = (W - PL - PR) / Math.max(1, n), Y = function (v) { return PT + (hi - v) / hi * (H - PT - PB); }, s = "";
-    for (var k = 0; k < 4; k++) { var v = hi * k / 3; s += '<text class="dc-ax" x="' + (PL - 6) + '" y="' + (Y(v) + 4).toFixed(1) + '" text-anchor="end">' + num(v, hi < 10 ? 1 : null) + "</text>"; }
-    pts.forEach(function (p, i) { var y = Y(p.v); s += '<rect class="dc-bar' + (p.l && p.l !== "ok" ? " " + p.l : "") + (i === o.sel ? " on" : "") + '" x="' + (PL + i * bw + bw * 0.15).toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + (bw * 0.7).toFixed(1) + '" height="' + Math.max(0, H - PB - y).toFixed(1) + '"/>'; });
-    if (n) { s += '<text class="dc-ax" x="' + PL + '" y="' + (H - 8) + '">' + esc(pts[0].lab) + "</text>"; s += '<text class="dc-ax" x="' + (W - PR) + '" y="' + (H - 8) + '" text-anchor="end">' + esc(pts[n - 1].lab) + "</text>"; }
-    if (o.sel >= 0 && o.sel < n) { var cx = (PL + o.sel * bw + bw / 2).toFixed(1); s += '<line class="dc-cursor" x1="' + cx + '" x2="' + cx + '" y1="' + PT + '" y2="' + (H - PB) + '"/>'; }
-    return s;
-  }
-
   function air() {
     var F = window.FEEDS || {}, i = F.iss || {}, snap = ((window.DATA || {}).samples || {}).isslive_snapshot || {};
     var live = i.co2 != null, co2 = live ? i.co2 : snap.NODE3000003_ppCO2, p = live ? i.p : snap.USLAB000058_cabin_pressure, t = live ? i.t : snap.USLAB000059_cabin_temp;
     var age = live ? ageTxt(F.issAgeH(i.co2ts)) : "";
-    var hi = 4, X = function (v) { return PL + Math.min(v, hi) / hi * (W - PL - PR); }, y = 90, h = 60;
-    var s = '<rect class="dc-bar' + (co2 > 3 ? " watch" : "") + '" x="' + PL + '" y="' + y + '" width="' + (X(co2 || 0) - PL).toFixed(1) + '" height="' + h + '"/>';
-    s += '<line class="dc-th watch" x1="' + X(3).toFixed(1) + '" x2="' + X(3).toFixed(1) + '" y1="' + (y - 30) + '" y2="' + (y + h + 30) + '"/>';
-    [0, 1, 2, 3, 4].forEach(function (v) { s += '<text class="dc-ax" x="' + X(v).toFixed(1) + '" y="' + (H - 8) + '" text-anchor="middle">' + v + "</text>"; });
-    s += '<text class="dc-ax" x="' + (X(3) + 6).toFixed(1) + '" y="' + (y - 14) + '">NASA limit 3 mmHg</text>';
     var pt = {v: co2, lab: "now", l: co2 > 3 ? "watch" : "ok"};
-    return {pts: [pt], sel: 0, svg: s, noRange: true,
+    var items = live ? [{label: "Node 3", value: co2, cls: co2 > 3 ? "watch" : ""}] : [["Node 3", snap.NODE3000003_ppCO2], ["US Lab", snap.USLAB000055_ppCO2]].filter(function (x) { return typeof x[1] === "number"; }).map(function (x) { return {label: x[0], value: x[1], cls: x[1] > 3 ? "watch" : ""}; });
+    return {pts: [pt], sel: 0, noRange: true, hbars: {items: items, unit: "mmHg", name: "CO₂", max: 4, label: "Cabin CO₂ partial pressure", threshold: {v: 3, cls: "watch", label: "NASA limit 3 mmHg"}, fmt: function (v) { return num(v, 2); }},
       tag: live ? '<span class="realtag">Live · NASA ISS Live</span>' : '<span class="simtag">Snapshot</span>',
       read: "<b>" + flag(num(co2, 2) + " mmHg", pt.l) + " CO₂</b><span>Pressure " + num(p, 1) + " mmHg · " + num(t, 1) + " °C</span>",
       src: live ? "NASA ISS Live · CO₂ " + age + (i.pts != null ? " · pressure " + ageTxt(F.issAgeH(i.pts)) : "") + (i.tts != null ? " · temperature " + ageTxt(F.issAgeH(i.tts)) : "") : "NASA ISS Live snapshot read " + esc(String(snap.read || "").slice(0, 10)),
@@ -103,7 +64,7 @@
     }
     var m = (F.rad && F.rad.modules) || (((window.DATA || {}).samples || {}).radlab || {}).modules || [];
     var bp = m.map(function (x) { return {v: x.mean_uGy_h, lab: x.module, l: "ok", inst: x.instrument}; });
-    return {pts: bp, sel: 0, bars: true, noRange: true, tag: '<span class="simtag">Sample · NASA OSDR RadLab, 5 Dec 2019</span>',
+    return {pts: bp, sel: 0, noRange: true, hbars: {items: bp.map(function (p) { return {label: p.lab, sub: p.inst, value: p.v}; }), unit: "µGy/h", name: "Dose rate", label: "Mean dose rate by ISS module", fmt: function (v) { return num(v, 1); }}, tag: '<span class="simtag">Sample · NASA OSDR RadLab, 5 Dec 2019</span>',
       src: "NASA OSDR RadLab · mean dose rate per module, 5 Dec 2019 00:00–06:00 UTC",
       readOf: function (p) { return "<b>" + num(p.v, 1) + " µGy/h</b><span>" + esc(p.lab) + " · " + esc(p.inst || "") + "</span>"; }};
   }
@@ -123,12 +84,63 @@
   function readPm(o, p) { var m = o.m; if (!p) return ""; var val = m.txt ? m.txt(p.v) : num(p.v, m.n) + m.unit;
     return "<b>" + flag(esc(val), p.l) + "</b><span>" + (p.sim ? "Simulated" : p.entered ? "Entered" : fmtDate(p.date)) + " · " + esc(p.day) + " · usual " + esc(m.txt ? m.txt(p.usual) : num(p.usual, m.n) + m.unit) + "</span>"; }
 
+  function readOut(i) {
+    var o = cur; if (!o) return;
+    var p = o.pts[i >= 0 ? i : o.sel];
+    q("dcRead").innerHTML = o.read || (o.m ? readPm(o, p) : o.readOf && p ? o.readOf(p) : "");
+  }
+
+  function chartEl() {
+    var c = q("dcChart");
+    if (c && c.tagName.toLowerCase() !== "div") {
+      var d = document.createElement("div");
+      d.id = "dcChart"; d.className = "dc-chart";
+      c.parentNode.replaceChild(d, c); c = d;
+    }
+    return c;
+  }
+
+  function pickAt(i) {
+    var o = cur; if (!o || !o.pts[i]) return;
+    if (o.m) { setDay(o.pts[i].x); return; }
+    o.sel = i; draw();
+  }
+
   function draw() {
     var o = cur; if (!o) return;
-    var svg = o.svg || (o.bars ? chartBars(o, {}) : chartLine(o, o.opt || {log: o.log, lo: Math.min.apply(null, o.pts.map(function (p) { return p.v; })), hi: Math.max.apply(null, o.pts.map(function (p) { return p.v; })), extra: o.log ? [10] : [], th: o.log ? [{v: 10, c: "watch"}] : [], noPts: o.log, fmtY: o.log ? function (v) { return v < 1 ? v.toFixed(2) : num(v, v < 10 ? 1 : null); } : null}));
-    q("dcChart").innerHTML = svg;
-    var p = o.pts[o.sel];
-    q("dcRead").innerHTML = o.read || (o.m ? readPm(o, p) : o.readOf && p ? o.readOf(p) : "");
+    var el = chartEl(), C = window.ASTRAChart, pts = o.pts;
+    if (!el) return;
+    readOut(-1);
+    if (!C) { el.innerHTML = '<div class="ch-empty">Chart unavailable</div>'; return; }
+    var vals = pts.map(function (p) { return p.v; }), flags = pts.map(function (p) { return p.l; }), labs = pts.map(function (p) { return p.lab || p.day; });
+    var common = {values: vals, labels: labs, flags: flags, selected: o.sel, onHover: readOut, onPick: pickAt};
+    if (o.hbars) { var h = o.hbars; h.onHover = readOut; C.hbars(el, h); return; }
+    if (o.m) {
+      var m = o.m, b = o.b, names = {sleep: "Sleep", hr: "Resting heart rate", mood: "Mood"};
+      common.name = names[st().k] || "Value";
+      common.label = common.name;
+      common.unit = m.unit.trim();
+      common.band = m.band(b); common.bandLabel = "usual";
+      common.yMin = st().k === "mood" ? 1 : 0; if (st().k === "mood") common.yMax = 5;
+      common.thresholds = m.th(b).map(function (t) { return {v: t.v, cls: t.c, label: t.c === "urgent" ? "red" : "amber"}; });
+      common.fmt = m.txt ? function (v) { return m.txt(v); } : function (v) { return num(v, m.n); };
+      if (m.txt) common.unit = "";
+      common.tipX = function (i) { var p = pts[i]; return (p.sim ? "Simulated" : p.entered ? "Entered" : fmtDate(p.date)) + " · " + p.day; };
+      common.tipNote = function (i) { var p = pts[i]; return "usual " + (m.txt ? m.txt(p.usual) : num(p.usual, m.n) + m.unit) + " · " + WORD[p.l]; };
+      C.line(el, common);
+      return;
+    }
+    if (o.log) {
+      common.name = "Protons ≥10 MeV"; common.label = "Proton flux, last 24 h"; common.unit = "pfu"; common.yLog = true;
+      common.thresholds = [{v: 10, cls: "watch", label: "10 pfu"}];
+      common.fmt = function (v) { return v < 1 ? v.toFixed(2) : v.toFixed(1); };
+      common.tipX = function (i) { return new Date(pts[i].date).toUTCString().slice(5, 22) + " UTC"; };
+      C.line(el, common);
+      return;
+    }
+    common.name = "Events"; common.label = "Space weather notifications per day"; common.integer = true;
+    common.tipX = function (i) { return fmtDate(pts[i].date); };
+    C.bars(el, common);
   }
 
   function table() {
@@ -143,7 +155,7 @@
   window.renderData = function () {
     if (!q("dataCard") || !window.ASTRA_API || !A().APP) return;
     var s = st(), k = s.k, r = s.r;
-    if (MET[k]) { cur = pmdata(k, r); var b = cur.b, m = cur.m; cur.opt = {band: m.band(b), th: m.th(b), lo: m.lo, hi: m.hi}; }
+    if (MET[k]) cur = pmdata(k, r);
     else cur = k === "air" ? air() : k === "rad" ? rad() : weather();
     document.querySelectorAll("#dataCard .dc-tab").forEach(function (t) { t.setAttribute("aria-selected", String(t.dataset.k === k)); });
     document.querySelectorAll("#dataCard .dc-rg").forEach(function (t) { t.setAttribute("aria-pressed", String(t.dataset.r === r)); });
@@ -152,15 +164,6 @@
     draw(); table();
   };
 
-  function pick(e, commit) {
-    var o = cur; if (!o || !o.pts.length || o.svg) return;
-    var r = q("dcChart").getBoundingClientRect(), fx = (e.clientX - r.left) / r.width * W, n = o.pts.length, i;
-    if (o.bars) i = Math.floor((fx - PL) / ((W - PL - PR) / n)); else i = n <= 1 ? 0 : Math.round((fx - PL) / (W - PL - PR) * (n - 1));
-    i = Math.max(0, Math.min(n - 1, i));
-    if (commit && o.m) { setDay(o.pts[i].x); return; }
-    if (i !== o.sel) { o.sel = i; draw(); }
-  }
-
   function wire() {
     var card = q("dataCard"); if (!card) return;
     card.addEventListener("click", function (e) {
@@ -168,8 +171,7 @@
       var g = e.target.closest(".dc-rg"); if (g) { st().r = g.dataset.r; save(); window.renderData(); return; }
       if (e.target.closest("#dcTable")) { var b = q("dcTableBox"); b.hidden = !b.hidden; q("dcTable").textContent = b.hidden ? "Show the numbers" : "Hide the numbers"; table(); return; }
     });
-    q("dcChart").addEventListener("pointermove", function (e) { pick(e, false); });
-    q("dcChart").addEventListener("click", function (e) { pick(e, true); });
+    chartEl();
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", function () { wire(); window.renderData(); }); else { wire(); window.renderData(); }
 })();

@@ -446,3 +446,8 @@ footer{color:var(--muted)}
 .ch-tip-row b{font-weight:500;white-space:nowrap}
 .ch-empty{display:grid;place-items:center;height:160px;border-radius:14px;background:var(--soft);color:var(--muted);font-size:13px}
 .dc-chart{height:auto;cursor:default}
+.ch-key-main i{height:4px;background:var(--navy)}
+.ch-key-main{color:var(--ink);font-weight:500}
+.ch-tip-note{color:#B9C7DA;font-size:11px}
+.ch-hit{fill:transparent}
+.ch-hover{fill:var(--navy);stroke:#fff;stroke-width:2}

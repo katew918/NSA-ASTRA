@@ -28,7 +28,7 @@
 
   var STEPS = [
     ["Training on Earth", "Baseline: sleep, heart rate, mood, reflexes, scans."],
-    ["Every mission day", "90-second check, wearables, scheduled scans."],
+    ["Every mission day", "90-second check, wearables. One guided scan each day, five areas in rotation."],
     ["Compare with their own normal", "Green, Amber or Red."],
     ["Who sees it", "Mood private. Red goes to flight surgeon."]
   ];
@@ -50,19 +50,33 @@
     if (b) b.addEventListener("click", function () { setHidden(!hidden); window.renderGuide(el); });
   };
 
-  function sparkline(vals, w, h) {
+  var SLOTS = [];
+  function slot(kind, opts, cls) {
+    SLOTS.push({kind: kind, opts: opts});
+    return '<div class="c-ch ' + (cls || "") + '" data-ch="' + (SLOTS.length - 1) + '"></div>';
+  }
+  function mountAll(root) {
+    var C = window.ASTRAChart, list = SLOTS;
+    SLOTS = [];
+    root.querySelectorAll("[data-ch]").forEach(function (el) {
+      var sp = list[+el.getAttribute("data-ch")];
+      el.removeAttribute("data-ch");
+      if (!sp) return;
+      if (!C) { el.innerHTML = '<p class="c-note">Chart unavailable.</p>'; return; }
+      C[sp.kind](el, sp.opts);
+    });
+  }
+  function quant(a, q) {
+    a = a.slice().sort(function (x, y) { return x - y; });
+    if (!a.length) return null;
+    var p = (a.length - 1) * q, i = Math.floor(p);
+    return i + 1 < a.length ? a[i] + (a[i + 1] - a[i]) * (p - i) : a[i];
+  }
+
+  function sparkline(vals, name) {
     var v = vals.filter(function (x) { return num(x) != null; });
     if (v.length < 2) return '<p class="c-note">Not enough data.</p>';
-    var lo = Math.min.apply(null, v), hi = Math.max.apply(null, v);
-    if (hi === lo) { hi += 1; lo -= 1; }
-    var pad = 3;
-    function X(i) { return pad + i * (w - 2 * pad) / (v.length - 1); }
-    function Y(x) { return pad + (hi - x) * (h - 2 * pad) / (hi - lo); }
-    var pts = v.map(function (x, i) { return X(i).toFixed(1) + "," + Y(x).toFixed(1); }).join(" ");
-    var m = median(v);
-    return '<svg viewBox="0 0 ' + w + " " + h + '" class="c-spark" role="img" aria-label="Sleep hours, median ' + fmt(m, 1) + ' h">' +
-      '<line x1="0" x2="' + w + '" y1="' + Y(m).toFixed(1) + '" y2="' + Y(m).toFixed(1) + '" class="s-med"/>' +
-      '<polyline points="' + pts + '" class="s-line"/></svg>';
+    return slot("line", {spark: true, values: v, band: [quant(v, 0.25), quant(v, 0.75)], unit: "h", label: "Sleep hours, " + name, fmt: function (x) { return fmt(x, 1); }}, "c-spark");
   }
 
   var STATUS = { ok: "Green · fine", watch: "Amber · worth a look", urgent: "Red · needs attention" };
@@ -130,9 +144,9 @@
         vals = vals.slice(-30);
       }
       h += '<div class="c-sp"><div class="c-sph"><b>' + esc(c.name || c.id) + '</b><span>median ' + fmt(median(vals), 1) + " h</span></div>" +
-        sparkline(vals, 160, 40) + "</div>";
+        sparkline(vals, c.name || c.id) + "</div>";
     });
-    h += '</div><p class="c-src">Sleep (h), last 30 nights · dashed = median ' + real("PMData (volunteers relabelled as crew)") + "</p>";
+    h += '</div><p class="c-src">Sleep (h), last 30 nights · shaded = middle half of nights ' + real("PMData (volunteers relabelled as crew)") + "</p>";
     return h;
   }
 
@@ -148,46 +162,20 @@
   }
 
   function i4Chart(an) {
-    var w = 560, hgt = 220, L = 46, R = 70, T = 12, B = 30;
     var tp = (D().samples && D().samples.inspiration4 && D().samples.inspiration4.timepoints) || [];
-    var by = an.by_crew || {};
-    var ids = Object.keys(by);
-    var all = [];
-    ids.forEach(function (k) { (by[k] || []).forEach(function (v) { if (num(v) != null) all.push(v); }); });
-    var rng = Array.isArray(an.range) ? an.range : null;
-    if (rng) all.push(rng[0], rng[1]);
-    if (!all.length || tp.length < 2) return '<p class="c-note">No data.</p>';
-    var lo = Math.min.apply(null, all), hi = Math.max.apply(null, all), padv = (hi - lo) * 0.08 || 1;
-    lo -= padv; hi += padv;
-    function X(i) { return L + i * (w - L - R) / (tp.length - 1); }
-    function Y(v) { return T + (hi - v) * (hgt - T - B) / (hi - lo); }
-    var s = '<svg viewBox="0 0 ' + w + " " + hgt + '" class="c-chart" role="img" aria-label="Inspiration4 crew values over time">';
-    if (rng) {
-      s += '<rect x="' + L + '" y="' + Y(rng[1]).toFixed(1) + '" width="' + (w - L - R) + '" height="' + (Y(rng[0]) - Y(rng[1])).toFixed(1) + '" class="i-band"/>';
-      s += '<text x="' + (w - R + 4) + '" y="' + (Y(rng[1]) + 4).toFixed(1) + '" class="i-lbl">ref ' + rng[1] + "</text>";
-      s += '<text x="' + (w - R + 4) + '" y="' + (Y(rng[0]) + 4).toFixed(1) + '" class="i-lbl">ref ' + rng[0] + "</text>";
-    }
-    var ticks = [lo + padv, (lo + hi) / 2, hi - padv];
-    ticks.forEach(function (t) {
-      s += '<text x="' + (L - 6) + '" y="' + (Y(t) + 4).toFixed(1) + '" class="i-ax" text-anchor="end">' + (Math.abs(t) >= 100 ? Math.round(t) : t.toFixed(1)) + "</text>";
-    });
+    var by = an.by_crew || {}, ids = Object.keys(by);
+    if (!ids.length || tp.length < 2) return '<p class="c-note">No data.</p>';
+    var series = ids.map(function (k) { return {name: k, values: tp.map(function (_, i) { return num((by[k] || [])[i]); })}; });
+    var med = tp.map(function (_, i) { return median(ids.map(function (k) { return (by[k] || [])[i]; })); });
+    series.push({name: "Median", values: med, emphasis: true});
+    var rng = Array.isArray(an.range) && num(an.range[0]) != null && num(an.range[1]) != null ? an.range : null;
     var ri = -1;
     tp.forEach(function (t, i) { if (ri < 0 && /^R/.test(t)) ri = i; });
-    if (ri > 0) {
-      var xd = (X(ri - 1) + X(ri)) / 2;
-      s += '<line x1="' + xd + '" x2="' + xd + '" y1="' + T + '" y2="' + (hgt - B) + '" class="i-div"/>';
-      s += '<text x="' + (xd + 4) + '" y="' + (T + 10) + '" class="i-lbl">3 days in orbit</text>';
-    }
-    tp.forEach(function (t, i) { s += '<text x="' + X(i).toFixed(1) + '" y="' + (hgt - 10) + '" class="i-ax" text-anchor="middle">' + esc(t) + "</text>"; });
-    ids.forEach(function (k) {
-      var pts = (by[k] || []).map(function (v, i) { return num(v) == null ? null : X(i).toFixed(1) + "," + Y(v).toFixed(1); }).filter(Boolean).join(" ");
-      s += '<polyline points="' + pts + '" class="i-crew"><title>' + esc(k) + "</title></polyline>";
-    });
-    var med = tp.map(function (_, i) { return median(ids.map(function (k) { return (by[k] || [])[i]; })); });
-    var mp = med.map(function (v, i) { return v == null ? null : X(i).toFixed(1) + "," + Y(v).toFixed(1); }).filter(Boolean).join(" ");
-    s += '<polyline points="' + mp + '" class="i-med"/>';
-    med.forEach(function (v, i) { if (v != null) s += '<circle cx="' + X(i).toFixed(1) + '" cy="' + Y(v).toFixed(1) + '" r="3" class="i-dot"/>'; });
-    return s + "</svg>";
+    var d = Math.max.apply(null, [0].concat(series.map(function (s) { return Math.max.apply(null, s.values.map(function (v) { return v == null ? 0 : Math.abs(v); })); })));
+    var dp = d >= 100 ? 0 : d >= 10 ? 1 : 2;
+    return slot("line", {series: series, labels: tp, unit: an.units || "", label: "Inspiration4 crew values over time",
+      band: rng, bandLabel: rng ? "reference" : "", marks: ri > 0 ? [{x: ri - 0.5, label: "3 days in orbit"}] : [],
+      fmt: function (v) { return fmt(v, dp); }}, "c-chart");
   }
 
   function secI4(root) {
@@ -213,24 +201,12 @@
     var cv = d.curve;
     if (cv && cv.mean_rise_curve) {
       var t = cv.t || [], m = cv.mean_rise_curve, p25 = cv.p25_rise_curve || [], p75 = cv.p75_rise_curve || [];
-      var w = 240, hh = 90, all = m.concat(p25, p75).filter(function (x) { return num(x) != null; });
-      var lo = Math.min.apply(null, all.concat([0])), hi = Math.max.apply(null, all);
-      if (hi === lo) hi = lo + 1;
-      var n = m.length;
-      var X = function (i) { return 4 + i * (w - 8) / Math.max(1, n - 1); };
-      var Y = function (v) { return 4 + (hi - v) * (hh - 18) / (hi - lo); };
-      var band = "";
-      if (p25.length === n && p75.length === n) {
-        var top = [], bot = [];
-        for (var i = 0; i < n; i++) { if (num(p75[i]) != null) top.push(X(i).toFixed(1) + "," + Y(p75[i]).toFixed(1)); }
-        for (var j = n - 1; j >= 0; j--) { if (num(p25[j]) != null) bot.push(X(j).toFixed(1) + "," + Y(p25[j]).toFixed(1)); }
-        band = '<polygon points="' + top.concat(bot).join(" ") + '" class="e-band"/>';
-      }
-      var line = m.map(function (v, i) { return num(v) == null ? null : X(i).toFixed(1) + "," + Y(v).toFixed(1); }).filter(Boolean).join(" ");
-      var zi = t.indexOf(0), stand = zi >= 0 ? '<line x1="' + X(zi).toFixed(1) + '" x2="' + X(zi).toFixed(1) + '" y1="2" y2="' + (hh - 14) + '" class="e-div"/><text x="' + (X(zi) + 3).toFixed(1) + '" y="' + (hh - 3) + '" class="i-lbl">stand up</text>' : "";
-      var svg = '<svg viewBox="0 0 ' + w + " " + hh + '" class="e-svg" role="img" aria-label="Heart-rate rise on standing">' + band +
-        '<line x1="0" x2="' + w + '" y1="' + Y(0).toFixed(1) + '" y2="' + Y(0).toFixed(1) + '" class="e-zero"/>' + stand +
-        '<polyline points="' + line + '" class="e-line"/></svg>';
+      var zi = t.indexOf(0);
+      var svg = slot("line", {values: m.map(num), name: "Mean rise", label: "Heart-rate rise on standing", unit: "bpm",
+        labels: t.map(function (x) { return (x > 0 ? "+" : "") + x + " s"; }), yInclude: [0],
+        bandSeries: p25.length === m.length && p75.length === m.length ? {lo: p25, hi: p75} : null,
+        marks: zi >= 0 ? [{x: zi, label: "stand up"}] : [], fmt: function (v) { return fmt(v, 1); },
+        tipNote: function (i) { return num(p25[i]) != null && num(p75[i]) != null ? "middle half " + fmt(p25[i], 1) + " to " + fmt(p75[i], 1) + " bpm" : ""; }}, "e-chart");
       out.push(card("Stand-up test", "<p><b class=\"e-big\">+" + fmt(cv.sustained_rise_median, 1) + " bpm</b> median sustained rise · 90th percentile +" +
         fmt(cv.sustained_rise_p90, 1) + " bpm · n = " + esc(cv.n_records) + "</p>" + svg +
         '<p class="c-note">Line: mean · shaded: 25th–75th percentile</p>', "PhysioNet CVES"));
@@ -238,31 +214,25 @@
     var rl = d.samples && d.samples.radlab;
     if (rl && rl.modules && rl.modules.length) {
       var mods = rl.modules.slice().sort(function (a, b) { return b.mean_uGy_h - a.mean_uGy_h; });
-      var mx = mods[0].mean_uGy_h || 1;
-      var bars = mods.map(function (r) {
-        return '<div class="e-bar"><span class="e-bl">' + esc(r.module) + " <i>" + esc(r.instrument) + '</i></span><span class="e-bt"><span style="width:' +
-          (100 * r.mean_uGy_h / mx).toFixed(1) + '%"></span></span><span class="e-bv">' + fmt(r.mean_uGy_h, 1) + "</span></div>";
-      }).join("");
+      var bars = slot("hbars", {items: mods.map(function (r) { return {label: r.module, sub: r.instrument, value: r.mean_uGy_h}; }),
+        unit: "µGy/h", name: "Dose rate", label: "Station radiation by module", fmt: function (v) { return fmt(v, 1); }}, "e-chart");
       out.push(card("Station radiation by module", '<p class="c-note">Mean absorbed dose rate, µGy/h · ' + esc(rl.query_window || "") + "</p>" + bars, "NASA OSDR RadLab"));
     }
     var iss = d.samples && d.samples.isslive_snapshot;
     if (iss) {
       var co = [["Node 3", iss.NODE3000003_ppCO2], ["US Lab", iss.USLAB000055_ppCO2]].filter(function (x) { return num(x[1]) != null; });
-      var lim = 3;
-      var rows = co.map(function (x) {
-        return '<div class="e-bar"><span class="e-bl">' + x[0] + '</span><span class="e-bt"><span style="width:' + Math.min(100, 100 * x[1] / 4).toFixed(1) +
-          '%"></span><b class="e-lim" style="left:' + (100 * lim / 4) + '%"></b></span><span class="e-bv">' + fmt(x[1], 2) + "</span></div>";
-      }).join("");
+      var rows = slot("hbars", {items: co.map(function (x) { return {label: x[0], value: x[1], cls: x[1] > 3 ? "watch" : ""}; }),
+        unit: "mmHg", name: "CO₂", max: 4, label: "Cabin CO₂ snapshot", threshold: {v: 3, cls: "watch", label: "limit 3 mmHg"},
+        fmt: function (v) { return fmt(v, 2); }}, "e-chart");
       out.push(card("Cabin CO₂ snapshot", '<p class="c-note">Partial pressure, mmHg · mark: 3 mmHg NASA limit</p>' + rows +
         '<p class="c-note">Read ' + esc(iss.read || "") + "</p>", "ISS Live telemetry"));
     }
     var dk = d.samples && d.samples.donki;
     if (dk && dk.counts) {
       var NM = { RBE: "Radiation belt enhancements", CME: "Coronal mass ejections", GST: "Geomagnetic storms", Report: "Weekly reports", FLR: "Solar flares", SEP: "Solar energetic particles" };
-      var li = Object.keys(dk.counts).map(function (k) {
-        return '<li><span>' + esc(NM[k] || k) + '</span><b>' + esc(dk.counts[k]) + "</b></li>";
-      }).join("");
-      out.push(card("Space weather", '<p class="c-note">Notifications, ' + esc(dk.window || "") + ".</p><ul class=\"e-list\">" + li + "</ul>", "NASA DONKI"));
+      var li = slot("hbars", {items: Object.keys(dk.counts).map(function (k) { return {label: NM[k] || k, value: num(+dk.counts[k])}; }),
+        name: "Notifications", label: "Space weather notifications by type", fmt: function (v) { return fmt(v); }}, "e-chart");
+      out.push(card("Space weather", '<p class="c-note">Notifications, ' + esc(dk.window || "") + ".</p>" + li, "NASA DONKI"));
     }
     return out.length ? '<div class="e-grid">' + out.join("") + "</div>" : '<p class="c-note">No data.</p>';
   }
@@ -281,12 +251,14 @@
     h += '<div class="c-sec" id="cmpI4"><h3>Inspiration4 crew</h3><div class="c-i4">' + secI4() + "</div></div>";
     h += '<div class="c-sec"><h3>Reference data</h3>' + secEvidence() + "</div>";
     el.innerHTML = h;
+    mountAll(el);
     var i4 = el.querySelector(".c-i4");
     if (i4) i4.addEventListener("click", function (ev) {
       var b = ev.target && ev.target.closest ? ev.target.closest("button[data-an]") : null;
       if (!b) return;
       i4Analyte = b.getAttribute("data-an");
       i4.innerHTML = secI4();
+      mountAll(i4);
     });
   };
 })();
