@@ -181,10 +181,9 @@
   function name() { return firstName(A.S && A.S.name); }
 
   window.renderMind = function () {
-    var line = $("#mcLine"), btn = $("#mhBtn"); if (!line || !btn) return;
+    var btn = $("#mhBtn"); if (!btn) return;
     var d = todayLog().daily, done = d && d.checkin && clampScore(d.mood);
-    if (done) { line.textContent = "Checked in today. Mood: " + BY.mood.scale[done - 1] + "."; btn.textContent = "Check in again"; }
-    else { var n = name(); line.textContent = greetWord(new Date().getHours()) + (n ? ", " + n : "") + ". How is your head today?"; btn.textContent = "Start mood check-in"; }
+    btn.textContent = done ? "Check in again" : "Check in";
   };
 
   function noteHTML() {
@@ -314,6 +313,7 @@
     d.mood = s.mood;
     d.checkin = {stress: s.stress, fatigue: s.fatigue, sleep: s.sleep, readiness: s.readiness, at: Date.now()};
     A.bump(); A.save(); A.render();
+    if (window.renderToday) window.renderToday();
   }
 
   A.STEP.mind = function () {
@@ -336,7 +336,7 @@
 
   var sheet = $("#sheet");
   if (sheet && typeof MutationObserver !== "undefined") new MutationObserver(function () { if (!sheet.classList.contains("on")) { stopSpeech(); runId++; } }).observe(sheet, {attributes: true, attributeFilter: ["class"]});
-  var mb = $("#mhBtn"); if (mb) mb.onclick = function () { A.openFlow(["mind"]); };
+  document.addEventListener("click", function (e) { if (e.target.closest && e.target.closest("#mhBtn")) A.openFlow(["mind"]); });
   window.renderMind();
   window.ASTRA_CHECKIN = {ai: ai};
 })();

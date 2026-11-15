@@ -318,7 +318,6 @@ input[type=text]:focus,input[type=number]:focus,input[type=date]:focus,input[typ
         <h1 class="hello" id="hello"></h1>
         <div class="mood"><span class="pill" id="statusPill"></span><span id="statusTxt"></span></div>
         <div class="datachip" id="dataDate"></div>
-        <div class="mindcard" id="mindCard"><div class="mc-q" id="mcLine"></div><div class="mc-row"><button class="btn sm" id="mhBtn" type="button">Start mood check-in</button><span class="mc-note">Private · 5 questions · about a minute</span></div></div>
         <div class="tl" id="tl"></div>
         <section class="nextcard">
           <div class="next"><div class="ic" id="nextIc"></div><div class="tx"><div class="sub" id="nextWhen"></div><b id="nextWhat"></b></div><button class="btn white" id="mainBtn">Start</button></div>
@@ -343,6 +342,10 @@ input[type=text]:focus,input[type=number]:focus,input[type=date]:focus,input[typ
 <div class="wrap">
   <section id="compareView" hidden></section>
   <main id="crewMain">
+    <div class="two dayrow" id="dayRow">
+      <section class="card todaycard" id="todayCard"></section>
+      <section class="card mindbox" id="mindBox"></section>
+    </div>
     <section class="card datacard" id="dataCard">
       <div class="dc-head"><h2>Data</h2><span id="dcTag"></span></div>
       <div class="dc-tabs" role="tablist">
@@ -575,7 +578,7 @@ function render() {
     const rest = q.filter(x => !x.done && x !== next); $("#later").innerHTML = rest.map(x => `<div>Later: <b>${x.what}</b> · ${x.when} · ${x.dur}</div>`).join(""); }
   else if (p === "launch") { setNext("rocket", "Launch day", "Checked in", "Your suit and the vehicle look after you now. Next reading: when you arrive.", false); $("#later").innerHTML = ""; }
   else { setNext("check", "Today", "All done", inFlight() ? "Monitoring keeps running in the background. See you tomorrow morning." : "Nothing else for you today.", false); $("#later").innerHTML = ""; }
-  renderScan(); renderChat(); renderTiles(); renderHolo(false); refreshAstra(); renderBars(); renderAlerts(st); save(); renderView(); if (window.renderMind) window.renderMind();
+  renderScan(); renderChat(); renderTiles(); renderHolo(false); refreshAstra(); renderBars(); renderAlerts(st); save(); renderView(); if (window.renderToday) window.renderToday(); if (window.renderMind) window.renderMind();
 }
 function setNext(ic, when, what, why, btn) { $("#nextIc").innerHTML = I[ic]; $("#nextWhen").innerHTML = when; $("#nextWhat").textContent = what; $("#mainBtn").hidden = !btn; }
 
@@ -692,11 +695,12 @@ function missTarget() { if (!inFlight()) return null; for (let x = day() - 4; x 
 const SIMS = [
   {id: "sleep", l: "watch", t: "Short sleep"}, {id: "hr", l: "watch", t: "Heart rate off normal"}, {id: "rt", l: "watch", t: "Slow reflexes"},
   {id: "scanf", l: "watch", t: "Scan needs a follow-up"}, {id: "miss", l: "watch", t: "Missed a required scan"},
-  {id: "vital", l: "urgent", t: "Vital sign outside safe limits"}, {id: "scanu", l: "urgent", t: "Scan: doctors want a call now"}];
+  {id: "vital", l: "urgent", t: "Vital sign outside safe limits"}, {id: "scanu", l: "urgent", t: "Scan: doctors want a call now"}, {id: "hard", l: "watch", t: "Hard day (low mood, high stress)"}];
 function simOff(id) { if (id === "rt" && phase() === "training") return "Reflexes are only compared with your normal after launch."; if (id === "miss" && !missTarget()) return "Only in flight, at least 4 days after a scheduled scan."; return ""; }
 function simulate(id) { const now = Date.now(), b = base(); CALV++;
-  if (id === "clear") { const l = L(); delete l.daily; delete l.rt; S.scans = S.scans.filter(s => !(s.sim && s.mission === S.mission && s.day <= day())); S.msgs = S.msgs.filter(m => !(m.sim && m.mission === S.mission)); if (S.missed) Object.keys(S.missed).forEach(k2 => { if (k2.startsWith(S.mission + ":")) delete S.missed[k2]; }); ensureDaily(); return; }
+  if (id === "clear") { const l = L(); delete l.daily; delete l.rt; S.scans = S.scans.filter(s => !(s.sim && s.mission === S.mission && s.day <= day())); S.msgs = S.msgs.filter(m => !(m.sim && m.mission === S.mission)); if (S.missed) Object.keys(S.missed).forEach(k2 => { if (k2.startsWith(S.mission + ":")) delete S.missed[k2]; }); if (window.clearToday) window.clearToday(); ensureDaily(); return; }
   if (simOff(id)) return;
+  if (id === "hard") { const hd = ensureDaily(); hd.mood = 2; hd.checkin = {stress: 2, fatigue: 2, sleep: 3, readiness: 2, at: now, sim: true}; hd.sim = true; return; }
   const d = ensureDaily();
   if (["sleep", "hr", "vital"].includes(id)) d.sim = true;
   if (id === "sleep") d.sleep = Math.max(3, Math.round((b.sleep - 2.5) * 2) / 2);
@@ -970,7 +974,7 @@ $("#simMenu").onclick = e => { const b = e.target.closest("[data-sim]"); if (!b 
 $("#dReset").onclick = () => { APP = freshApp(); S = APP.crew.c1; Object.keys(SEEN).forEach(k2 => delete SEEN[k2]); render(); };
 setInterval(() => { if (!document.hidden && APP.view === "crew") renderHolo(false); const now = Date.now(); if ([...S.msgs.map(m => m.at), ...S.scans.map(s => s.repliedAt)].some(t => t > now - 1500) && !$("#sheet").classList.contains("on")) render(); }, 1000);
 wireSpots();
-window.ASTRA_API = {get APP() { return APP; }, get S() { return S; }, D, CONN, L, day, base, realFill, key, dayChip, setDay, me, save, render, phase, openFlow, closeFlow, STEP, ensureDaily, delayMs, nearDoctors, bump: () => { CALV++; }};
+window.ASTRA_API = {get APP() { return APP; }, get S() { return S; }, D, CONN, L, day, base, realFill, key, dayChip, setDay, me, save, render, phase, openFlow, closeFlow, STEP, ensureDaily, delayMs, nearDoctors, bump: () => { CALV++; }, CREW, AREAS, withMember, statuses, scanFor, plan, missingBase};
 render();
 window.addEventListener("load", () => { window.renderGuide && window.renderGuide(document.getElementById("guideStrip")); renderView(); });
 })();
@@ -980,5 +984,6 @@ window.addEventListener("load", () => { window.renderGuide && window.renderGuide
 <script src="feeds.js"></script>
 <script src="datacard.js"></script>
 <script src="checkin.js"></script>
+<script src="today.js"></script>
 </body>
 </html>
