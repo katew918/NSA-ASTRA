@@ -1175,3 +1175,4 @@ rect.ch-cursor{fill:var(--navy);stroke:none;opacity:.06}
 .task.added{position:relative}
 .task.added::before{content:"";position:absolute;left:-10px;top:10px;bottom:10px;width:3px;border-radius:3px;background:var(--brand)}
 .task.done .tk-new,.task.moved .tk-new{background:var(--soft);color:var(--muted)}
+.b3-mk{width:26px;height:26px;margin:-13px 0 0 -13px}

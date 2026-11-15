@@ -5,10 +5,10 @@ const LABEL = {head: "Head", eyes: "Eyes", neck: "Neck", heart: "Heart", lungs: 
 const WORDS = {ok: "OK", watch: "Amber, worth a look", urgent: "Red, needs attention"};
 const RANK = {ok: 0, watch: 1, urgent: 2};
 const F = "front", B = "back";
-const ANCHORS = {head: [F, 200, 92], eyes: [F, 200, 121], neck: [F, 213, 173], heart: [F, 221, 266], abdomen: [F, 200, 372], lungs: [B, 228, 258], legs: [B, 169, 682]};
+const ANCHORS = {head: [F, 200, 85], eyes: [F, 200, 121], neck: [F, 213, 173], heart: [F, 221, 266], abdomen: [F, 200, 372], lungs: [B, 228, 258], legs: [B, 169, 682]};
 const PINS = {
   eye_r: [F, 187, 121], eye_l: [F, 213, 121], neck_l: [F, 212, 174], heart: [F, 219, 272], bladder: [F, 200, 436], shin_l: [F, 231, 705],
-  brain: [F, 200, 88], pancreas: [F, 211, 330], core: [F, 200, 268],
+  brain: [F, 200, 85], pancreas: [F, 211, 330], core: [F, 200, 268],
   lung_r_low: [B, 228, 302], kidney_l: [B, 178, 350], heel_l: [B, 173, 812], calf_l: [B, 169, 690], popliteal_l: [B, 168, 628]
 };
 const FLIP_MS = 260;
