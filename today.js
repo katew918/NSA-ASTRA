@@ -155,10 +155,11 @@
     });
   }
   function shortSleep() { return (A.statuses ? A.statuses() : []).some(function (x) { return /slept a lot less/.test(x.what); }); }
-  function lightDays(c, d) { var n = 0; for (var x = d - 6; x <= d; x++) if (rec(c.id, x).ch.length) n++; return n; }
+  function own(r) { return r.ch.filter(function (x) { return x.type !== "pause"; }); }
+  function lightDays(c, d) { var n = 0; for (var x = d - 6; x <= d; x++) if (own(rec(c.id, x)).length) n++; return n; }
   function sinceRest(c, d) { var n = 0; for (var x = d; x > d - 400 && !isRest(c, x); x--) n++; return n; }
   function gates(c, d) {
-    var ch = rec(c.id, d).ch.length, light = lightDays(c, d), unlocked = hardDay(c);
+    var ch = own(rec(c.id, d)).length, light = lightDays(c, d), unlocked = hardDay(c);
     var chFull = ch >= CHANGES_PER_DAY, lightFull = !ch && light >= LIGHT_DAYS_PER_7;
     return {unlocked: unlocked, ch: ch, light: light, chFull: chFull, lightFull: lightFull || (light >= LIGHT_DAYS_PER_7 && chFull), can: unlocked && !chFull && !lightFull, left: Math.max(0, CHANGES_PER_DAY - ch)};
   }
@@ -219,7 +220,7 @@
       var done = ls ? ls.done : !!rec(c.id, d).done[t.uid];
       var cls = ["task"]; if (done && !t.moved) cls.push("done"); if (t.moved) cls.push("moved"); if (t.late) cls.push("late"); if (t.locked) cls.push("locked"); if (t.incoming) cls.push("incoming");
       var state = "";
-      if (t.moved) state = t.moved.type === "delay" ? "Tomorrow" : "Handed to " + first((crewById(t.moved.to) || {}).name);
+      if (t.moved) state = t.moved.type === "pause" ? "Paused" : t.moved.type === "delay" ? "Tomorrow" : "Handed to " + first((crewById(t.moved.to) || {}).name);
       else if (t.incoming) state = "From " + first((crewById(t.from) || {}).name) + (t.was ? ", moved from " + t.was : "");
       else if (t.late) state = "From yesterday";
       else if (t.locked) state = "Fixed";
@@ -306,6 +307,11 @@
   }
 
   window.clearToday = function () { var c = me(), d = A.day(), t = store(c.id), k = A.key(d); if (t[k]) t[k].ch = []; UI.menu = null; UI.todayHTML = ""; UI.mindHTML = ""; };
+  window.ASTRA_TODAY_PAUSE = function (id, d) {
+    var c = crewById(id); if (!c) return 0; var r = rec(id, d, true), n = 0, now = Date.now();
+    list(c, d).forEach(function (t) { if (t.locked || t.late || t.incoming || t.moved || t.cat === "Rest") return; r.ch.push({type: "pause", uid: t.uid, task: snap(t), at: now}); n++; });
+    UI.menu = null; UI.todayHTML = ""; A.save(); return n;
+  };
   window.renderToday = renderToday;
 
   var tc = $("#todayCard");
