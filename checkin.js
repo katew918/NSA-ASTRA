@@ -174,11 +174,6 @@
     var s = Math.max(0, Math.ceil(ms / 1000));
     return Math.floor(s / 60) + ":" + (s % 60 < 10 ? "0" : "") + (s % 60) + " left";
   }
-  function supportUnlocked(d, shortSleep) {
-    var ck = d && d.checkin;
-    if (ck && ((d.mood != null && d.mood <= 2) || (ck.stress != null && ck.stress <= 2) || (ck.fatigue != null && ck.fatigue <= 2))) return true;
-    return !!shortSleep;
-  }
   function meanScores(got) {
     var sum = {}, n = {}, out = {};
     (got || []).forEach(function (a) { if (!a || !BY[a.k] || !(a.v >= 1 && a.v <= 5)) return; sum[a.k] = (sum[a.k] || 0) + a.v; n[a.k] = (n[a.k] || 0) + 1; });
@@ -257,7 +252,7 @@
   function firstName(n) { return String(n || "").split(" ")[0].replace(/[^A-Za-zÀ-ɏ'-]/g, "").slice(0, 30); }
   function short(t, n) { t = String(t || ""); return t.length > n ? t.slice(0, n) : t; }
 
-  var TEST = {ITEMS: ITEMS, BANK: BANK, DIMS: DIMS, HISTORY: HISTORY, MIN_FINISH: MIN_FINISH, MAX_QUESTIONS: MAX_QUESTIONS, DURATION_MS: DURATION_MS, OPEN: OPEN, CLOSE: CLOSE, RETRY: RETRY, REPLIES: REPLIES, GENERIC: GENERIC, bandOf: bandOf, pickReply: pickReply, openLine: openLine, closeLine: closeLine, timeOfDay: timeOfDay, scoreOf: scoreOf, pickRound: pickRound, makeClock: makeClock, afterAnswer: afterAnswer, timeLeftText: timeLeftText, supportUnlocked: supportUnlocked, meanScores: meanScores, SAFE_TEXT: SAFE_TEXT, isCrisis: isCrisis, clampScore: clampScore};
+  var TEST = {ITEMS: ITEMS, BANK: BANK, DIMS: DIMS, HISTORY: HISTORY, MIN_FINISH: MIN_FINISH, MAX_QUESTIONS: MAX_QUESTIONS, DURATION_MS: DURATION_MS, OPEN: OPEN, CLOSE: CLOSE, RETRY: RETRY, REPLIES: REPLIES, GENERIC: GENERIC, bandOf: bandOf, pickReply: pickReply, openLine: openLine, closeLine: closeLine, timeOfDay: timeOfDay, scoreOf: scoreOf, pickRound: pickRound, makeClock: makeClock, afterAnswer: afterAnswer, timeLeftText: timeLeftText, meanScores: meanScores, SAFE_TEXT: SAFE_TEXT, isCrisis: isCrisis, clampScore: clampScore};
   window.ASTRA_CHECKIN_TEST = TEST;
 
   var A = window.ASTRA_API;
@@ -413,12 +408,11 @@
     say(typeof reply === "string" ? reply : "", closeLine(name()));
     showNext();
   }
-  function shortSleepNow() { try { return (A.statuses ? A.statuses() : []).some(function (x) { return /slept a lot less/.test(x.what); }); } catch (e) { return false; } }
-  function supportNow() { try { A.realFill(); } catch (e) {} return supportUnlocked(A.L().daily, shortSleepNow()); }
+  function supportNow() { try { A.realFill(); return (A.statuses ? A.statuses() : []).some(function (x) { return x.l === "watch" || x.l === "urgent"; }); } catch (e) { return false; } }
   function nextHTML(on) {
     return "<div class=\"mh-next\" id=\"mhNext\"><b class=\"mh-next-h\">Saved. Only you see this.</b><div class=\"mh-steps\">" +
       "<div class=\"mh-step\"><span class=\"mh-step-n\">1</span><div><b>Your Mind card is updated</b><span>Today's check-in is on your screen only.</span></div></div>" +
-      "<div class=\"mh-step" + (on ? " on" : "") + "\"><span class=\"mh-step-n\">2</span><div><b>Support options</b><span>" + (on ? "Available today: delay a task or hand one over." : "Not needed today.") + "</span></div>" + (on ? "<button class=\"btn sm\" type=\"button\" data-next=\"support\">Open Today</button>" : "") + "</div>" +
+      "<div class=\"mh-step" + (on ? " on" : "") + "\"><span class=\"mh-step-n\">2</span><div><b>Support options</b><span>" + (on ? "Available today: delay a task or hand one over." : "Your schedule is fixed today.") + "</span></div>" + (on ? "<button class=\"btn sm\" type=\"button\" data-next=\"support\">Open Today</button>" : "") + "</div>" +
       "<div class=\"mh-step\"><span class=\"mh-step-n\">3</span><div><b>Talk to your flight surgeon</b><span>Private medical conference, or a message now.</span></div><button class=\"hbtn\" type=\"button\" data-next=\"surgeon\">Message</button></div>" +
       "<div class=\"mh-step\"><span class=\"mh-step-n\">4</span><div><b>Next check-in</b><span>Tomorrow.</span></div></div>" +
       "</div><button class=\"btn\" type=\"button\" data-next=\"done\">Done</button></div>";

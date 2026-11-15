@@ -20,9 +20,10 @@ ASTRA does not stop at basic vital signs. It also follows the harder conditions 
 | `astra.css` | The visual design layer |
 | `datacard.js` | The Data box: tabs, graphs, time range and the table of numbers |
 | `feeds.js` | Live fetches: NASA ISS Live, NASA DONKI, NOAA SWPC GOES, station position |
-| `checkin.js` | The mood check-in: five fixed questions in a scripted personal voice, with an optional read-aloud using the browser's built-in speech |
-| `body3d.js` | The rotatable 3D body figure with a marker for every area (three.js, loaded on demand) |
-| `today.js` | The Today to-do list with wellbeing permissions (delay or hand over, within team-set limits) and the Mind card |
+| `checkin.js` | The ASTRA check-in: a companion conversation of about five minutes, drawn at random from a bank of 120 questions, with scripted replies matched to each answer and a next-steps screen |
+| `api/reply.js` | An optional serverless endpoint for model-written check-in replies. Switched off: the check-in uses the scripted replies |
+| `body3d.js` | The body figure: a front and back outline drawn in SVG, with a marker and an anatomical label for every finding |
+| `today.js` | The Today to-do list and the Mind card. The schedule is fixed until the person has an amber or red health flag; then a task can be delayed or handed over within team-set limits, never to a crewmate who is unwell |
 | `chart.js` | The shared chart module |
 | `compare.js`, `compare.css` | The "How ASTRA works" strip and the "Compare crew" tab |
 | `data.js` | Demo and reference data loaded by the page |
@@ -68,7 +69,7 @@ Fetched live when the page loads:
 | NOAA SWPC GOES | Proton flux for the last 24 hours | https://services.swpc.noaa.gov/json/goes/primary/integral-protons-1-day.json |
 | wheretheiss.at | The station's position now | https://api.wheretheiss.at/v1/satellites/25544 |
 
-The 3D body figure is the X Bot character by Mixamo (Adobe), loaded from the three.js examples.
+The body figure is drawn for this project in SVG. The demo film uses landing footage from NASA and Roscosmos.
 
 None of the thresholds have been validated in astronauts.
 
