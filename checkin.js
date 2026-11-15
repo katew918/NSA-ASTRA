@@ -278,7 +278,7 @@
 
   function paint() {
     var note = $("#mhNote"), sp = $("#mhSpeak");
-    if (note) note.innerHTML = served ? "Private to you. Mini Astra's replies are written by " + servedBy + " from the question, the option you tapped, your earlier taps in this check-in, your first name and role, the mission day and the time of day. Anything you type yourself and your health readings are never sent, and ASTRA's server stores nothing." : "Private to you. Your answers stay on this device. <span class=\"simtag\">Demo</span>";
+    if (note) note.innerHTML = served ? "<span class=\"simtag\">Replies by " + servedBy + "</span>" : "Private to you. Your answers stay on this device. <span class=\"simtag\">Demo</span>";
     if (sp) { sp.hidden = !hasSpeech; sp.setAttribute("aria-pressed", speakOn ? "true" : "false"); }
   }
 
