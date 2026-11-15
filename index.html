@@ -294,7 +294,7 @@ input[type=text]:focus,input[type=number]:focus,input[type=date]:focus,input[typ
       <div class="topr">
         <div class="calpick" id="calPick">
           <button class="daystep" data-step="-1" type="button" aria-label="Previous day">‹</button>
-          <button id="calBtn" class="calbtn" type="button" aria-haspopup="dialog" aria-expanded="false"><span class="cb-day"></span><span class="cb-sub"></span><span class="chev" aria-hidden="true"></span></button>
+          <button id="calBtn" class="calbtn" type="button" aria-haspopup="dialog" aria-expanded="false"><span class="cb-day"></span><span class="cb-sub"></span><span class="cb-short"></span><span class="chev" aria-hidden="true"></span></button>
           <button class="daystep" data-step="1" type="button" aria-label="Next day">›</button>
           <div id="calPop" class="calpop" role="dialog" aria-label="Mission calendar" hidden>
             <div class="cal-head"><button class="cal-nav" data-m="-1" type="button" aria-label="Previous month">‹</button><b id="calTitle"></b><button class="cal-nav" data-m="1" type="button" aria-label="Next month">›</button></div>
@@ -399,7 +399,7 @@ const cap = t => t ? t[0].toUpperCase() + t.slice(1) : t;
 const pl = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
 const DAY = 864e5;
 
-const big = inner => `<svg viewBox="0 0 64 64" width="120" height="120" fill="none" stroke="#3f5bff" stroke-width="2.5"><circle cx="32" cy="32" r="28" fill="#e9edff" stroke="none"/>${inner}</svg>`;
+const big = inner => `<svg viewBox="0 0 64 64" width="120" height="120" fill="none" style="stroke:var(--brand)" stroke-width="2.5"><circle cx="32" cy="32" r="28" style="fill:var(--brand-soft);stroke:none"/>${inner}</svg>`;
 const I = {
   sun: '<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2"><circle cx="16" cy="16" r="6"/><path d="M16 3v4M16 25v4M3 16h4M25 16h4M6.8 6.8l2.8 2.8M22.4 22.4l2.8 2.8M6.8 25.2l2.8-2.8M22.4 9.6l2.8-2.8"/></svg>',
   probe: '<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4h10v10l-2 4h-6l-2-4z"/><path d="M13 18c0 3-1 6 3 10M19 18c0 3 1 6-3 10"/></svg>',
@@ -413,7 +413,7 @@ const I = {
   lock: big('<rect x="21" y="29" width="22" height="17" rx="4"/><path d="M25 29v-5a7 7 0 0 1 14 0v5"/>'),
   list: big('<path d="M20 24h4M20 32h4M20 40h4M28 24h16M28 32h16M28 40h16"/>'),
   sent: big('<circle cx="32" cy="32" r="13"/><path d="M19 32h26M32 19c5 4 5 22 0 26M32 19c-5 4-5 22 0 26"/>'),
-  done: '<svg viewBox="0 0 64 64" width="110" height="110" fill="none" stroke="#16a56d" stroke-width="3"><circle cx="32" cy="32" r="28" fill="#e2f6ed" stroke="none"/><path d="M21 33l7 7 15-16"/></svg>',
+  done: '<svg viewBox="0 0 64 64" width="110" height="110" fill="none" style="stroke:var(--ok)" stroke-width="3"><circle cx="32" cy="32" r="28" style="fill:var(--ok-soft);stroke:none"/><path d="M21 33l7 7 15-16"/></svg>',
 };
 
 const MISSIONS = {iss: {name: "ISS", delayMin: 1 / 60, doseRate: 0.5, landing: 180}, mars: {name: "Mars mission", delayMin: 20, doseRate: 1.8, landing: 210}};
@@ -626,7 +626,7 @@ function renderHolo(full) {
 }
 
 let scanTarget = null;
-function ringSvg(n, t, col) { const c = 2 * Math.PI * 24, p = t ? n / t : 0; return `<svg class="ringp" viewBox="0 0 60 60"><circle cx="30" cy="30" r="24" fill="none" stroke="#e4e8f2" stroke-width="6"/><circle cx="30" cy="30" r="24" fill="none" stroke="${col}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${(c * (1 - p)).toFixed(1)}" transform="rotate(-90 30 30)"/><text x="30" y="35" text-anchor="middle" font-size="15" font-weight="700" fill="#131a33">${n}/${t}</text></svg>`; }
+function ringSvg(n, t, col) { const c = 2 * Math.PI * 24, p = t ? n / t : 0; return `<svg class="ringp" viewBox="0 0 60 60"><circle cx="30" cy="30" r="24" fill="none" style="stroke:var(--line)" stroke-width="6"/><circle cx="30" cy="30" r="24" fill="none" style="stroke:var(${col})" stroke-width="6" stroke-linecap="round" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${(c * (1 - p)).toFixed(1)}" transform="rotate(-90 30 30)"/><text x="30" y="35" text-anchor="middle" font-size="15" font-weight="500" style="fill:var(--ink)">${n}/${t}</text></svg>`; }
 function slotPill(x) { const r = slotRec(x); if (!r || r.reply === "normal" && !(r.repliedAt > Date.now())) return `<span class="pill ok">Done · OK</span>`;
   if (r.repliedAt > Date.now()) return `<span class="pill none">Done · Sent</span>`;
   return `<span class="pill ${r.reply === "urgent" ? "urgent" : "watch"}">Done · ${r.reply === "urgent" ? "Call" : "Follow-up"}</span>`; }
@@ -638,19 +638,19 @@ function renderScan() {
     const left = -d, all = !miss.length && standBase(), andStand = standBase() ? "" : " and the stand-up test";
     title = `Baseline scans <span class="req">Required before launch</span>`;
     txt = `${ts.size} of 6 baseline scans done`;
-    ring = ringSvg(ts.size, 6, miss.length ? "#3f5bff" : "#16a56d");
+    ring = ringSvg(ts.size, 6, "--sky");
     body = `<div class="agrid">${Object.keys(AREAS).map(a => `<button data-a="${a}" class="${ts.has(a) ? "done" : a === miss[0] ? "nx" : ""}"><i>${ts.has(a) ? "✓" : ""}</i><span><b>${AREAS[a].label}</b><small>${ts.has(a) ? "Baseline saved" : mins(a)}</small></span></button>`).join("")}</div>`
       + (all ? `<div class="note ok">✓ Baseline complete</div>` : !miss.length ? `<div class="note watch">6 of 6 scans · stand-up test missing</div>` : p === "launch" ? `<div class="note watch">Launch day: ${pl(miss.length, "baseline scan")}${andStand} missing</div>` : left <= 7 ? `<div class="note watch">${pl(left, "day")} to launch · ${pl(miss.length, "scan")}${andStand} missing</div>` : "");
     scanTarget = miss[0] || null; btn = miss.length ? `${ts.size ? "Continue" : "Start"}: ${AREAS[miss[0]].label} (${mins(miss[0])})` : "Scan an area again";
   } else if (inFlight() || p === "landed") {
     const win = []; for (let x = d - 6; x <= d; x++) if (scanFor(x)) win.push(slotDone(x));
-    const rows = p === "landed" ? [{a: "legs", d: LAND(), done: scanDone("legs", LAND())}] : Array.from({length: 7}, (_, i) => d - 3 + i).filter(x => scanFor(x)).map(slot);
+    const late = p === "landed" ? [] : due.filter(x => x.d < d), rows = p === "landed" ? [{a: "legs", d: LAND(), done: scanDone("legs", LAND())}] : late.concat(Array.from({length: 7}, (_, i) => d - 3 + i).filter(x => scanFor(x) && !late.some(o => o.d === x)).map(slot)).slice(0, 8);
     const nd = p === "landed" ? rows.filter(r => r.done).length : win.filter(Boolean).length, tot = p === "landed" ? rows.length : win.length;
     title = `Scans <span class="req">Daily</span>`;
     txt = `${nd} of ${tot} scans done${p === "landed" ? "" : " · last 7 days"}${due.length ? ` · ${due.length} due` : ""}`;
-    ring = ringSvg(nd, tot, due.length ? "#3f5bff" : "#16a56d");
+    ring = ringSvg(nd, tot, late.length ? "--amber" : "--sky");
     body = `<div class="srows">${rows.map(r => { const over = !r.done && r.d < d, now = !r.done && r.d === d;
-      return `<div class="srow ${now ? "duenow" : over ? "over" : ""}"><span class="dy">${dayChip(r.d)}</span><b>${AREAS[r.a].label}</b>${r.done ? (p === "landed" ? pillFor(r.a) : slotPill(r.d)) : now ? `<span class="pill due">Due today</span>` : over ? `<span class="pill watch">Overdue ${d - r.d} d</span>` : `<span class="when">${r.d - d === 1 ? "tomorrow" : `in ${pl(r.d - d, "day")}`}</span>`}</div>`; }).join("")}</div>`;
+      return `<div class="srow ${now ? "duenow" : over ? "over" : ""}"><span class="dy">${dayChip(r.d)}</span><b>${AREAS[r.a].label}</b>${r.done ? (p === "landed" ? pillFor(r.a) : slotPill(r.d)) : now ? `<span class="pill due">Due today</span>` : over ? `<span class="pill watch">Overdue by ${pl(d - r.d, "day")}</span>` : `<span class="when">${r.d - d === 1 ? "tomorrow" : `in ${pl(r.d - d, "day")}`}</span>`}</div>`; }).join("")}</div>`;
     scanTarget = due.length ? due[0].a : null; if (due.length) btn = `Start: ${AREAS[due[0].a].label} scan (${mins(due[0].a)})`;
   } else {
     txt = p === "launch" ? "6 of 6 baseline scans done" : "";
@@ -670,7 +670,7 @@ function renderChat() {
   const shb = $("#shareBtn"); if (shb) shb.onclick = () => openFlow(["share"]);
 }
 function spark(vals, lo, hi, band) { const v = vals.filter(x => x !== null && x !== undefined); if (v.length < 2) return ""; const W = 260, H = 50, y = x => H - 4 - (x - lo) / (hi - lo) * (H - 8), xx = i => i / (vals.length - 1) * W;
-  return `<svg class="viz" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="height:${H}px;margin:6px 0">${band ? `<rect x="0" y="${y(band[1])}" width="${W}" height="${y(band[0]) - y(band[1])}" fill="#e9edff"/>` : ""}<polyline fill="none" stroke="#3f5bff" stroke-width="2" points="${vals.map((x, i) => x === null || x === undefined ? null : `${xx(i)},${y(x)}`).filter(Boolean).join(" ")}"/></svg>`; }
+  return `<svg class="viz" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="height:${H}px;margin:6px 0">${band ? `<rect x="0" y="${y(band[1])}" width="${W}" height="${y(band[0]) - y(band[1])}" style="fill:var(--brand-soft)"/>` : ""}<polyline fill="none" style="stroke:var(--brand)" stroke-width="2" points="${vals.map((x, i) => x === null || x === undefined ? null : `${xx(i)},${y(x)}`).filter(Boolean).join(" ")}"/></svg>`; }
 function renderTiles() { if (window.renderData) window.renderData(); }
 const escH = t => String(t ?? "").replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
 const me = () => CREW.find(c => c.id === APP.active) || CREW[0];
@@ -734,8 +734,8 @@ function hideTip() { const t = $("#bodyTip"); clearTimeout(TIP.hideT); TIP.sig =
 function showTip(k2) { const sp = SPOTS[k2], t = tipEl(), h = $(".holo"), g = $(`#areaG .spot[data-spot="${k2}"]`); if (!sp || !t || !h || !g || !g.getBoundingClientRect().width) return;
   t.querySelector(".tip-sev").textContent = SEV[sp.l]; t.querySelector(".tip-what").textContent = sp.texts.join(" · "); t.querySelector(".tip-route").textContent = sp.routes.join(" · ");
   t.className = "tip " + sp.l; t.hidden = false; TIP.sig = spotSig(k2); placeTip(t, h, g); }
-function placeTip(t, h, g) { const hr = h.getBoundingClientRect(), r = g.getBoundingClientRect(), cx = r.left + r.width / 2 - hr.left, tw = t.offsetWidth, th = t.offsetHeight, gap = 10;
-  const left = Math.max(4, Math.min(h.clientWidth - tw - 4, cx - tw / 2)), above = r.top - hr.top - th - gap, below = above < 0 || r.top - th - gap < 0;
+function placeTip(t, h, g) { const hr = h.getBoundingClientRect(), r = g.getBoundingClientRect(), cx = r.left + r.width / 2 - hr.left, tw = t.offsetWidth, th = t.offsetHeight, gap = 7, rw = h.querySelector(".hrow"), wr = rw && rw.getBoundingClientRect();
+  const left = Math.max(4, Math.min(h.clientWidth - tw - 4, cx - tw / 2)), above = r.top - hr.top - th - gap, hit = wr && r.top - th - gap < wr.bottom && r.top - gap > wr.top && hr.left + left < wr.right && hr.left + left + tw > wr.left, below = above < 0 || r.top - th - gap < 0 || !!hit;
   t.classList.toggle("below", below); t.style.left = `${Math.round(left)}px`; t.style.top = `${Math.round(below ? r.bottom - hr.top + gap : above)}px`; t.style.setProperty("--ax", `${Math.round(cx - left)}px`); }
 function renderAreas() { const fig = $("#holoFig"), g = $("#areaG"), keep = TIP.sig;
   SPOTS = {}; let freshKey = "";
@@ -782,7 +782,7 @@ const shortChip = x => x < 0 ? `L−${-x}` : x === 0 ? "L−0" : x < LAND() ? `D
 const calRange = () => [ymOf(dateOf(-30)), ymOf(dateOf(LAND() + 3))];
 let CALYM = 0;
 function renderCalBtn() { const d = day(), ml = calMarks()[d];
-  const sa = scanFor(d); $("#calPick .cb-day").textContent = dayChip(d); $("#calPick .cb-sub").textContent = (ml ? ml + " · " : sa ? AREAS[sa].label + " scan · " : "") + fmtDay(dateOf(d)); }
+  const sa = scanFor(d); $("#calPick .cb-day").textContent = dayChip(d); $("#calPick .cb-sub").textContent = (ml ? ml + " · " : sa ? AREAS[sa].label + " scan · " : "") + fmtDay(dateOf(d)); $("#calPick .cb-short").textContent = `${dateOf(d).getUTCDate()} ${MONTHS[dateOf(d).getUTCMonth()].slice(0, 3)}`; }
 const calDesc = x => { const ml = calMarks()[x], sa = scanFor(x); return [ml, sa ? AREAS[sa].label + " scan" : ""].filter(Boolean); };
 function renderCal() { const [lo, hi] = calRange(); CALYM = Math.max(lo, Math.min(hi, CALYM));
   const y = Math.floor(CALYM / 12), mo = CALYM % 12, L1 = LAND(), d = day(), m = calMarks(), lv = calLevels();
@@ -863,7 +863,7 @@ async function connect(id) {
 let flow = [], k = 0, cur, scratch = {}, running = null;
 const scanSteps = area => [`si:${area}`, ...AREAS[area].steps.map((_, i) => `sp:${area}:${i}`), `sr:${area}`, `ss:${area}`];
 const expand = list => list.flatMap(s => s === "daily" ? ["d1", "d2", "d3", "d4"] : s.startsWith("scan:") ? scanSteps(s.split(":")[1]) : [s]);
-const pointer = (area, ring) => { const a = AREAS[area]; return outline(`<circle cx="${a.pt[0]}" cy="${a.pt[1]}" r="10" fill="#3f5bff"/>${ring ? `<circle class="halo" cx="${a.pt[0]}" cy="${a.pt[1]}" r="10"/>` : ""}`); };
+const pointer = (area, ring) => { const a = AREAS[area]; return outline(`<circle cx="${a.pt[0]}" cy="${a.pt[1]}" r="10" style="fill:var(--brand)"/>${ring ? `<circle class="halo" cx="${a.pt[0]}" cy="${a.pt[1]}" r="10"/>` : ""}`); };
 const PH_DEF = {training: [7.5, 62, 118, 76, 36.6, 90], launch: [6, 70, 124, 80, 36.7, 92], arrive: [5, 68, 120, 78, 36.8, 92], orbit: [5.5, 64, 116, 74, 36.7, 88], prereturn: [6, 66, 114, 72, 36.7, 90], landed: [6.5, 82, 108, 70, 36.9, 94], after: [7, 70, 114, 74, 36.7, 90]};
 const STEP = {
   welcome1: () => ({ill: I.hand, title: "Hi, I'm ASTRA", sub: "I help you notice changes in your body, from your first training day to the day you're home. I compare you with you, not with anyone else."}),
@@ -907,7 +907,7 @@ const STEP = {
   stand: () => ({title: "Stand-up test", sub: "With someone helping you. Lie still for 2 minutes, then stand. Heart rate and blood pressure are recorded. Shown sped up.", needs: true, html: `<svg class="viz" id="hrv" viewBox="0 0 300 90" style="height:90px"></svg><div class="box" id="sto">Measuring…</div>`,
     init() { const tr = phase() === "training", hr = tr ? D.examples.baseline.hr : D.examples.today.hr, t = D.curve.t, sel = (a, b) => t.map((x, j) => (x >= a && x < b) ? hr[j] : null).filter(v => v !== null && v !== undefined), mean = a => a.reduce((x, y) => x + y, 0) / a.length, b0 = mean(sel(-60, 0)), rise = Math.round(mean(sel(60, 241)) - b0);
       const pts = hr.map((v, j) => v === null ? null : [j, v - b0]).filter(Boolean), xy = ([x, y]) => `${(x / (hr.length - 1) * 300).toFixed(1)},${(90 - (y + 10) / 45 * 90).toFixed(1)}`; let n = 0;
-      $("#hrv").innerHTML = `<line x1="100" x2="100" y1="0" y2="90" stroke="#c7cdd9" stroke-dasharray="3 3"/><text x="104" y="11" font-size="10" fill="#6f7689">stand up</text><polyline id="pl" fill="none" stroke="#3f5bff" stroke-width="2"/>`;
+      $("#hrv").innerHTML = `<line x1="100" x2="100" y1="0" y2="90" stroke="#c7cdd9" stroke-dasharray="3 3"/><text x="104" y="11" font-size="10" fill="#6f7689">stand up</text><polyline id="pl" fill="none" style="stroke:var(--brand)" stroke-width="2"/>`;
       const tm = setInterval(() => { n += 12; if ($("#pl")) $("#pl").setAttribute("points", pts.slice(0, n).map(xy).join(" ")); if (n >= pts.length) { clearInterval(tm); const drop = tr ? 4 : 14; L().stand = {hr: rise, sbpDrop: drop};
         $("#sto").innerHTML = `Heart rate <b>+${rise}</b> · blood pressure <b>−${drop}</b> when standing${tr ? " · saved as your normal" : ` · your normal +${f(base().stand)}`} <span class="tag">Earth data</span>`; $("#goBtn").disabled = false; } }, 30); }}),
   meds: () => { const land = LAND(), items = [{n: "Anti-nausea (for landing)", exp: land - 10}, {n: "Pain relief", exp: land + 200}, {n: "Salt tablets (for fluid loading)", exp: land + 400}];

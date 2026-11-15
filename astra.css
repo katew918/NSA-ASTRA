@@ -857,3 +857,5 @@ body{font-variant-numeric:normal}
 .holo .hsrc .hbtn{flex:1 1 0;justify-content:center}
 .alertbox .alert .what,.alertbox .alert .route{flex:1 1 100%}
 }
+.cb-short{display:none;color:#B9C7DA;font-weight:400}
+@media (max-width:980px){.cb-short{display:inline}}

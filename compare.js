@@ -128,7 +128,7 @@
     var nf = order.filter(function (c) { return c.sex === "f"; }).length, nm = order.length - nf;
     var h = '<div class="c-tw"><table class="c-table"><thead><tr><th></th>' +
       (nf ? '<th colspan="' + nf + '" class="grp">Female</th>' : "") +
-      (nm ? '<th colspan="' + nm + '" class="grp">Male</th>' : "") + "</tr><tr><th>Own normal</th>" +
+      (nm ? '<th colspan="' + nm + '" class="grp">Male</th>' : "") + "</tr><tr><th><span class=\"sr\">Measure</span></th>" +
       order.map(function (c) { return "<th>" + esc(c.name || c.id) + "</th>"; }).join("") + "</tr></thead><tbody>";
     ROWS.forEach(function (r) {
       h += "<tr><th>" + r[0] + "</th>" + order.map(function (c) { return "<td>" + r[1](c.base || {}) + "</td>"; }).join("") + "</tr>";
