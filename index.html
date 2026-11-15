@@ -1,0 +1,859 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#050b24">
+<title>Baseline</title>
+<style>
+:root{
+  --bg:#f3f5fb; --card:#fff; --ink:#131a33; --muted:#69718a; --line:#e4e8f2; --soft:#f1f4fa;
+  --brand:#3f5bff; --brand2:#7a5cff; --brand-soft:#e9edff;
+  --ok:#16a56d; --ok-soft:#e2f6ed; --watch:#b97800; --watch-soft:#fff3d9; --urgent:#d8455a; --urgent-soft:#fde8ec;
+  --glow:#7cc0ff; --htxt:#dbe7ff; --hdim:#93a9dc; --green:#5ff0a0; --hline:rgba(140,180,255,.22);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+button,input,select{font:inherit;color:inherit}
+button{-webkit-tap-highlight-color:transparent}
+:focus-visible{outline:2px solid var(--glow);outline-offset:2px}
+.wrap{max-width:1080px;margin:0 auto;padding:0 22px}
+
+/* ================= hero: deep space ================= */
+.hero{position:relative;color:var(--htxt);overflow:hidden;padding:18px 0 118px;
+  background:radial-gradient(900px 560px at 80% 38%,rgba(40,90,220,.55) 0%,transparent 62%),radial-gradient(700px 480px at 4% -6%,rgba(110,70,220,.42) 0%,transparent 60%),linear-gradient(180deg,#040920 0%,#081238 55%,#0c1a52 100%)}
+.stars{position:absolute;inset:0;opacity:.6;pointer-events:none;animation:twinkle 5s ease-in-out infinite alternate;
+  background-image:radial-gradient(1px 1px at 24px 32px,#fff,transparent),radial-gradient(1px 1px at 132px 84px,rgba(255,255,255,.8),transparent),radial-gradient(1.6px 1.6px at 210px 158px,#cfe0ff,transparent),radial-gradient(1px 1px at 302px 44px,rgba(255,255,255,.7),transparent),radial-gradient(1px 1px at 268px 226px,#fff,transparent),radial-gradient(1.4px 1.4px at 64px 204px,rgba(255,255,255,.6),transparent),radial-gradient(1px 1px at 172px 262px,rgba(255,255,255,.75),transparent);
+  background-size:340px 290px}
+.stars.s2{background-size:520px 410px;background-position:90px 60px;opacity:.38;animation-duration:8s;animation-delay:-3s}
+@keyframes twinkle{from{opacity:.3}to{opacity:.7}}
+.orbit{position:absolute;width:1500px;height:720px;right:-560px;top:-210px;border-radius:50%;border:1px solid rgba(140,180,255,.14);transform:rotate(-14deg);pointer-events:none}
+.orbit::after{content:"";position:absolute;inset:70px 120px;border-radius:50%;border:1px dashed rgba(140,180,255,.10)}
+.limb{position:absolute;left:-12%;right:-12%;bottom:-150px;height:210px;border-radius:50%;background:var(--bg);box-shadow:0 -1px 0 1px rgba(200,225,255,.75),0 -8px 46px 8px rgba(96,160,255,.55),0 -30px 120px 20px rgba(60,110,255,.28);pointer-events:none}
+.hero .wrap{position:relative;z-index:1}
+.top{display:flex;justify-content:space-between;align-items:center}
+.brand{display:flex;align-items:center;gap:9px;font-weight:750;letter-spacing:-.01em;color:#fff;font-size:16px}
+.brand i{width:22px;height:22px;border-radius:50%;border:2.5px solid #fff;display:inline-block;position:relative;box-shadow:0 0 14px rgba(124,192,255,.7)}
+.brand i::after{content:"";position:absolute;inset:4px;border-radius:50%;background:var(--glow)}
+.topr{display:flex;align-items:center;gap:10px}
+.daychip{font-size:13px;font-weight:700;color:#fff;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:5px 12px;backdrop-filter:blur(8px)}
+.daychip.cloud{cursor:pointer;font-family:inherit}.daychip.cloud:hover{background:rgba(255,255,255,.2)}
+.icon-btn{width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);cursor:pointer;font-weight:700;color:#fff;transition:background .15s}
+.icon-btn:hover{background:rgba(255,255,255,.18)}
+.hgrid{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);gap:34px;align-items:center;margin-top:26px}
+.eyebrow{font-size:12.5px;font-weight:650;letter-spacing:.09em;text-transform:uppercase;color:var(--glow)}
+.hello{font-size:40px;line-height:1.1;font-weight:800;letter-spacing:-.03em;margin:8px 0 12px;background:linear-gradient(92deg,#fff 30%,#b8ccff 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hello span{-webkit-text-fill-color:initial;color:#fff}
+.mood{display:flex;align-items:center;gap:10px;color:var(--hdim);font-size:15.5px;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:3px 11px;border-radius:999px;font-size:12.5px;font-weight:650;white-space:nowrap}
+.pill::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.pill.ok{background:var(--ok-soft);color:var(--ok)} .pill.watch{background:var(--watch-soft);color:var(--watch)} .pill.urgent{background:var(--urgent-soft);color:var(--urgent)} .pill.none{background:var(--soft);color:var(--muted)} .pill.due{background:var(--brand-soft);color:var(--brand)}
+.hero .pill{font-size:13px;padding:4px 12px;border:1px solid transparent}
+.hero .pill.ok{background:rgba(95,240,160,.13);color:#7df0b4;border-color:rgba(95,240,160,.3)}
+.hero .pill.watch{background:rgba(255,209,102,.13);color:#ffd166;border-color:rgba(255,209,102,.3)}
+.hero .pill.urgent{background:rgba(255,120,140,.15);color:#ff9aa9;border-color:rgba(255,120,140,.35)}
+.hero .pill.none{background:rgba(255,255,255,.1);color:#dbe7ff;border-color:rgba(255,255,255,.2)}
+/* timeline */
+.tl{display:grid;grid-template-columns:repeat(6,1fr);margin:26px 0 22px;position:relative}
+.tl::before{content:"";position:absolute;left:8.33%;right:8.33%;top:7px;height:2px;background:rgba(255,255,255,.14);border-radius:2px}
+.tl .bar{position:absolute;left:8.33%;top:7px;height:2px;background:linear-gradient(90deg,#7a5cff,#7cc0ff);box-shadow:0 0 10px rgba(124,192,255,.8);border-radius:2px;transition:width .5s cubic-bezier(.2,.8,.2,1)}
+.tl div{text-align:center;font-size:11.5px;color:var(--hdim);position:relative;white-space:nowrap}
+.tl div i{display:block;width:16px;height:16px;border-radius:50%;margin:0 auto 7px;background:#0a1645;border:2px solid rgba(255,255,255,.25);position:relative}
+.tl div.past i{background:var(--glow);border-color:var(--glow)}
+.tl div.now i{background:#fff;border-color:#fff;box-shadow:0 0 0 4px rgba(124,192,255,.3),0 0 18px #7cc0ff}
+.tl div.now i::after{content:"";position:absolute;inset:-7px;border-radius:50%;border:1.5px solid var(--glow);animation:pulse 2s ease-out infinite}
+@keyframes pulse{from{transform:scale(.7);opacity:.9}to{transform:scale(1.7);opacity:0}}
+.tl div.now{color:#fff;font-weight:700}
+/* up next: glass */
+.nextcard{background:linear-gradient(135deg,rgba(255,255,255,.12),rgba(255,255,255,.05));border:1px solid rgba(255,255,255,.16);border-radius:24px;padding:18px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 20px 50px rgba(2,6,30,.35)}
+.next{display:flex;gap:14px;align-items:center}
+.next .ic{flex:0 0 54px;height:54px;border-radius:17px;background:linear-gradient(135deg,#4c6bff,#8a6bff);display:grid;place-items:center;color:#fff;box-shadow:0 8px 22px rgba(76,107,255,.5)}
+.next .ic svg{width:28px;height:28px}
+.next .tx{flex:1;min-width:0}
+.next .tx b{font-size:19px;display:block;color:#fff;letter-spacing:-.01em;margin:1px 0}
+.next .sub{color:var(--hdim)}
+.req{display:inline-block;font-size:10px;font-weight:750;letter-spacing:.07em;text-transform:uppercase;color:#ffd166;background:rgba(255,209,102,.14);border:1px solid rgba(255,209,102,.35);border-radius:6px;padding:0 6px;margin-left:6px;vertical-align:1px}
+.card .req{color:var(--watch);background:var(--watch-soft);border-color:transparent}
+.later{margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.12);font-size:13.5px;color:var(--hdim);display:grid;gap:4px}
+.later b{color:#fff;font-weight:600}
+.later:empty{display:none}
+.btn{border:0;background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;border-radius:14px;padding:12px 22px;font-weight:700;cursor:pointer;white-space:nowrap;box-shadow:0 8px 20px rgba(63,91,255,.28);transition:transform .15s,box-shadow .15s,opacity .15s}
+.btn:hover{transform:translateY(-1px);box-shadow:0 12px 26px rgba(63,91,255,.36)}
+.btn:active{transform:scale(.98)} .btn:disabled{opacity:.35;cursor:not-allowed;transform:none;box-shadow:none}
+.btn.white{background:#fff;color:#0c1a52;box-shadow:0 8px 26px rgba(124,192,255,.35)}
+.btn.ghost{background:var(--soft);color:var(--ink);box-shadow:none}
+.btn.ghost:hover{background:var(--brand-soft)}
+.btn.sm{padding:7px 13px;border-radius:10px;font-size:13.5px}
+.linkbtn{background:none;border:0;color:var(--muted);cursor:pointer;font-size:13.5px;text-decoration:underline;text-underline-offset:3px;padding:0}
+
+/* ================= hologram ================= */
+.holo{border-radius:28px;padding:14px;position:relative;
+  background:linear-gradient(rgba(140,180,255,.07) 1px,transparent 1px) 0 0/24px 24px,linear-gradient(90deg,rgba(140,180,255,.07) 1px,transparent 1px) 0 0/24px 24px,radial-gradient(90% 70% at 50% 46%,rgba(46,104,230,.55) 0%,rgba(12,30,96,.5) 60%,rgba(6,14,52,.55) 100%);
+  border:1px solid var(--hline);box-shadow:inset 0 0 60px rgba(60,120,255,.18),0 24px 60px rgba(2,6,30,.45)}
+.holo::before,.holo::after{content:"";position:absolute;width:22px;height:22px;border:2px solid var(--glow);opacity:.7}
+.holo::before{left:10px;top:10px;border-right:0;border-bottom:0;border-radius:8px 0 0 0}
+.holo::after{right:10px;bottom:10px;border-left:0;border-top:0;border-radius:0 0 8px 0}
+.hrow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.hbox{background:rgba(8,20,70,.55);border:1px solid var(--hline);border-radius:14px;padding:8px 10px;text-align:center;font-size:11px;letter-spacing:.08em;color:var(--hdim);text-transform:uppercase}
+.hbox b{display:block;color:#fff;font-size:26px;font-weight:750;letter-spacing:-.01em;text-transform:none;line-height:1.15;text-shadow:0 0 14px rgba(124,192,255,.55)}
+.hbox b small{font-size:12px;color:var(--hdim);font-weight:500}
+.hmid{display:grid;grid-template-columns:1fr minmax(120px,200px) 1fr 24px;align-items:center;gap:6px;margin:8px 0 4px}
+.hcol{display:grid;gap:26px}
+.hcol.r{text-align:right}
+.co{font-size:10.5px;color:var(--hdim);text-transform:uppercase;letter-spacing:.08em;position:relative}
+.co b{display:block;color:#fff;font-size:20px;font-weight:700;letter-spacing:-.01em;text-transform:none}
+.co b small{font-size:11px;color:var(--hdim);font-weight:500}
+.co.watch b,.hbox.watch b{color:#ffd166;text-shadow:0 0 14px rgba(255,209,102,.5)} .co.urgent b,.hbox.urgent b{color:#ff8fa0;text-shadow:0 0 14px rgba(255,120,140,.6)}
+.hsvg{width:100%;height:auto;display:block;overflow:visible}
+.hs{fill:rgba(96,156,255,.17);stroke:var(--glow);stroke-width:1.5;stroke-linejoin:round;filter:drop-shadow(0 0 3px #4aa3ff) drop-shadow(0 0 10px rgba(74,163,255,.55))}
+.lung{fill:rgba(140,205,255,.26);transform-box:fill-box;transform-origin:center;animation:breathe var(--br,4.2s) ease-in-out infinite}
+@keyframes breathe{0%,100%{transform:scale(.86);opacity:.5}50%{transform:scale(1.07);opacity:1}}
+.heart{fill:#ff5d7a;filter:drop-shadow(0 0 5px #ff5d7a);transform-box:fill-box;transform-origin:center;animation:beat var(--bt,1s) infinite}
+@keyframes beat{0%{transform:scale(1)}12%{transform:scale(1.34)}24%{transform:scale(1)}36%{transform:scale(1.15)}50%,100%{transform:scale(1)}}
+.scanband{animation:scanmove 4.6s linear infinite}
+@keyframes scanmove{from{transform:translateY(-40px)}to{transform:translateY(420px)}}
+.ring{fill:rgba(124,192,255,.10);stroke:var(--glow);stroke-width:2;filter:drop-shadow(0 0 8px #4aa3ff)}
+.ring2{fill:none;stroke:var(--glow);stroke-width:1.2;stroke-dasharray:10 7;opacity:.8;animation:spin 6s linear infinite}
+@keyframes spin{to{stroke-dashoffset:-170}}
+.lvl{display:flex;flex-direction:column-reverse;gap:3px;align-items:center}
+.lvl i{width:14px;height:7px;border-radius:2px;background:rgba(140,180,255,.16)}
+.lvl i.on{background:var(--green);box-shadow:0 0 7px var(--green)}
+.lvl i.on.w{background:#ffd166;box-shadow:0 0 7px #ffd166}
+.lvl span{font-size:9.5px;color:var(--hdim);letter-spacing:.06em;text-transform:uppercase;margin-top:5px;writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap}
+.hstats{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--hline);padding-top:10px;text-align:center}
+.hstats div{font-size:10.5px;color:var(--hdim);text-transform:uppercase;letter-spacing:.07em;border-left:1px solid var(--hline)}
+.hstats div:first-child{border-left:0}
+.hstats b{display:block;color:var(--green);font-size:21px;letter-spacing:-.01em;text-shadow:0 0 10px rgba(95,240,160,.5)}
+.hstats b small{font-size:11px;color:#8fc0ff;margin-left:1px}
+.hsrc{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:12px;font-size:12px;color:var(--hdim);flex-wrap:wrap}
+.live{display:inline-flex;align-items:center;gap:7px;min-width:0}
+.live::before{content:"";flex:0 0 8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:blink 1.6s infinite}
+@keyframes blink{50%{opacity:.3}}
+.hbtn{border:1px solid var(--hline);background:rgba(124,192,255,.12);color:#fff;border-radius:11px;padding:7px 13px;font-size:13px;font-weight:650;cursor:pointer;transition:background .15s}
+.hbtn:hover{background:rgba(124,192,255,.26)}
+.hbtn.pri{background:rgba(124,192,255,.9);color:#06123f;border-color:transparent}
+.hbtn.pri:hover{background:#a9d6ff}
+
+/* ================= light section ================= */
+main{position:relative;z-index:2;margin-top:-58px;padding-bottom:28px;display:grid;gap:16px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.card{background:var(--card);border-radius:24px;padding:20px;box-shadow:0 1px 2px rgba(19,26,51,.04),0 12px 32px rgba(19,26,51,.07);min-width:0;border:1px solid rgba(228,232,242,.7)}
+.card h2{margin:0 0 3px;font-size:17px;letter-spacing:-.01em}
+.sub{color:var(--muted);font-size:13.5px;margin:0}
+.chead{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.rise{animation:rise .7s cubic-bezier(.2,.8,.2,1) both}
+.rise.d1{animation-delay:.08s}.rise.d2{animation-delay:.16s}.rise.d3{animation-delay:.24s}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.ringp{width:60px;height:60px;flex:0 0 auto}
+.ringp circle{transition:stroke-dashoffset .6s cubic-bezier(.2,.8,.2,1)}
+.agrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:14px 0}
+.agrid button{border:1.5px solid var(--line);background:#fff;border-radius:14px;padding:10px 10px;cursor:pointer;text-align:left;display:flex;gap:8px;align-items:center;transition:border-color .15s,background .15s,transform .15s;min-width:0}
+.agrid button:hover{border-color:var(--brand);transform:translateY(-1px)}
+.agrid button i{flex:0 0 22px;height:22px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-style:normal;font-size:12px;font-weight:800;color:#fff}
+.agrid button.done{background:var(--ok-soft);border-color:transparent}
+.agrid button.done i{background:var(--ok);border-color:var(--ok)}
+.agrid button.nx{border-color:var(--brand);background:var(--brand-soft)}
+.agrid button.nx i{border-color:var(--brand)}
+.agrid span{min-width:0}
+.agrid b{display:block;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.agrid small{color:var(--muted);font-size:11.5px}
+.srows{display:grid;gap:6px;margin:14px 0}
+.srow{display:flex;align-items:center;gap:10px;background:var(--soft);border-radius:13px;padding:9px 12px;font-size:14px}
+.srow .dy{flex:0 0 58px;font-size:12px;color:var(--muted);font-weight:600}
+.srow b{flex:1;min-width:0}
+.srow .when{font-size:12.5px;color:var(--muted)}
+.srow.duenow{background:var(--brand-soft);box-shadow:inset 0 0 0 1.5px var(--brand)}
+.srow.over{background:var(--watch-soft)}
+.note{border-radius:13px;padding:9px 12px;font-size:13.5px;margin:0 0 14px}
+.note.ok{background:var(--ok-soft);color:#0d6b47}.note.watch{background:var(--watch-soft);color:#7a5000}
+.chat{display:grid;gap:8px}
+.bubble{max-width:90%;padding:10px 13px;border-radius:17px;font-size:14px}
+.bubble.me{justify-self:end;background:linear-gradient(135deg,#e6ebff,#efe9ff);border-bottom-right-radius:5px}
+.bubble.them{justify-self:start;background:var(--soft);border-bottom-left-radius:5px}
+.bubble .meta{font-size:11.5px;color:var(--muted);margin-bottom:2px}
+.sig{display:inline-flex;align-items:flex-end;gap:3px;font-size:12px;font-weight:600;color:var(--muted);background:var(--soft);border-radius:999px;padding:5px 11px;white-space:nowrap}
+.sig i{display:inline-block;width:3px;border-radius:2px;background:var(--brand)}
+.sig span{margin-left:4px;line-height:1.2}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.tile{background:linear-gradient(180deg,#fff,var(--soft));border:1px solid var(--line);border-radius:18px;padding:14px;cursor:pointer;transition:transform .15s,box-shadow .15s,border-color .15s}
+.tile:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(19,26,51,.08)}
+.tile.on{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
+.tile .k{font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.tile .k i{width:8px;height:8px;border-radius:50%;background:linear-gradient(135deg,var(--brand),var(--brand2))}
+.tile .v{font-size:23px;font-weight:750;letter-spacing:-.02em;margin:4px 0 0} .tile .n{font-size:12px;color:var(--muted)}
+.detail{margin-top:12px;background:var(--soft);border-radius:16px;padding:13px 15px;font-size:14px;display:none}
+.detail.on{display:block}
+.links{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;font-size:13px;padding-top:4px}
+footer{padding:4px 0 34px;color:var(--muted);font-size:12px;text-align:center}
+.tag{display:inline-block;font-size:10px;font-weight:650;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);background:var(--soft);border-radius:5px;padding:1px 6px;vertical-align:middle}
+.tag.live{color:var(--ok);background:var(--ok-soft)}
+table.rules{width:100%;border-collapse:collapse;font-size:13px}
+table.rules td,table.rules th{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+table.rules th{color:var(--muted);font-weight:500}
+svg.viz{width:100%;display:block}
+.src{border:1px solid var(--line);border-radius:16px;padding:12px 13px;margin-top:8px}
+.src .h{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.src .h b{font-size:14.5px}
+.src .d{font-size:12.5px;color:var(--muted);margin-top:2px}
+.src .r{font-size:13px;margin-top:7px;display:none;background:var(--soft);border-radius:10px;padding:8px 10px}
+.src .r.on{display:block}
+
+/* demo bar */
+.demo{position:sticky;bottom:0;background:rgba(8,16,52,.92);backdrop-filter:blur(10px);color:#dbe7ff;display:none;z-index:20;border-top:1px solid rgba(140,180,255,.25)}
+.demo.on{display:block}
+.demo .wrap{display:flex;gap:12px;flex-wrap:wrap;align-items:center;padding-top:9px;padding-bottom:9px;font-size:13px}
+.demo select{border:1px solid rgba(140,180,255,.3);border-radius:8px;padding:4px 6px;background:#0c1a52;color:#fff}
+.demo input[type=range]{width:190px;vertical-align:middle;accent-color:var(--glow)}
+.demo .btn.ghost{background:rgba(255,255,255,.1);color:#fff}
+
+/* sheet */
+.scrim{position:fixed;inset:0;background:rgba(5,10,36,.55);backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:opacity .2s;z-index:30}
+.scrim.on{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:50%;bottom:0;transform:translate(-50%,105%);width:min(540px,100%);max-height:94vh;overflow-y:auto;overflow-x:hidden;background:#fff;border-radius:28px 28px 0 0;padding:20px 22px 24px;z-index:31;visibility:hidden;box-shadow:0 30px 80px rgba(5,10,36,.4);transition:transform .28s cubic-bezier(.2,.8,.2,1),visibility 0s linear .28s}
+.sheet.on{transform:translate(-50%,0);visibility:visible;transition:transform .28s cubic-bezier(.2,.8,.2,1),visibility 0s}
+@media (min-width:700px){.sheet{top:50%;bottom:auto;border-radius:28px;transform:translate(-50%,-46%);opacity:0;transition:transform .22s,opacity .22s,visibility 0s linear .22s}.sheet.on{transform:translate(-50%,-50%);opacity:1;transition:transform .22s,opacity .22s,visibility 0s}}
+.sh-top{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.prog{flex:1;height:6px;border-radius:4px;background:var(--line);overflow:hidden}
+.prog i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,var(--brand),var(--brand2));transition:width .3s}
+.x{width:32px;height:32px;border-radius:50%;border:0;background:var(--soft);cursor:pointer;font-size:18px;color:var(--muted);flex:0 0 auto;margin-left:auto}
+.illu{display:grid;place-items:center;margin:14px 0 4px}
+.illu svg{max-width:180px;max-height:min(170px,26vh);width:100%;height:auto}
+.st{font-size:23px;font-weight:780;letter-spacing:-.02em;margin:12px 0 6px}
+.ss{color:var(--muted);margin:0 0 12px}
+.go{width:100%;margin-top:16px;padding:14px}
+.go[hidden],.skip[hidden]{display:none}
+.skip{display:block;margin:10px auto 0;background:none;border:0;color:var(--muted);cursor:pointer;font-size:13.5px}
+.bigval{font-size:44px;font-weight:780;text-align:center;letter-spacing:-.03em}
+input[type=range]{width:100%;accent-color:var(--brand)}
+input[type=text],input[type=number],input[type=date],input[type=email],input[type=password]{width:100%;border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;background:#fff;transition:border-color .15s}
+input[type=text]:focus,input[type=number]:focus,input[type=date]:focus,input[type=email]:focus,input[type=password]:focus{outline:0;border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
+.faces{display:flex;justify-content:space-between;gap:6px}
+.faces button{flex:1;border:1.5px solid var(--line);background:#fff;border-radius:16px;padding:10px 0;font-size:26px;cursor:pointer;transition:all .15s}
+.faces button:hover{transform:translateY(-2px)}
+.faces button.on{border-color:var(--brand);background:var(--brand-soft)}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:7px 14px;cursor:pointer;transition:all .15s}
+.chip.on{border-color:var(--brand);background:var(--brand-soft)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.lab{font-size:13px;color:var(--muted);margin:10px 0 3px;display:block}
+.pad{height:170px;border-radius:22px;background:var(--soft);display:grid;place-items:center;font-weight:700;font-size:18px;cursor:pointer;user-select:none;text-align:center;transition:background .08s}
+.pad.go2{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff}
+.box{background:var(--soft);border-radius:16px;padding:12px 14px;margin-top:12px;font-size:14px}
+.quality{height:10px;border-radius:6px;background:var(--line);overflow:hidden;margin-top:8px}
+.quality i{display:block;height:100%;width:0;background:#e0a100;transition:width .3s,background .3s}
+.check{display:flex;gap:10px;align-items:center;padding:6px 0;font-size:14.5px}
+.check span{flex:0 0 22px;height:22px;border-radius:50%;background:var(--ok-soft);color:var(--ok);display:grid;place-items:center;font-size:13px;font-weight:700}
+.consent{display:flex;gap:10px;align-items:flex-start;margin-top:12px;font-size:14px}
+.scanpick{display:flex;gap:12px;align-items:center}
+.scanpick svg{width:118px;flex:0 0 auto}
+.sil{fill:#eceff7;stroke:#c3cbdd;stroke-width:1.3;stroke-linejoin:round}
+.spot{fill:var(--brand);opacity:.88;cursor:pointer}
+.spot:hover{opacity:1}
+.spot.ok{fill:var(--ok)} .spot.watch{fill:#e0a100} .spot.urgent{fill:var(--urgent)} .spot.pending{fill:#9aa3b8}
+.halo{fill:none;stroke:var(--brand);stroke-width:2;opacity:.5;animation:halo 1.8s ease-out infinite;transform-box:fill-box;transform-origin:center;pointer-events:none}
+@keyframes halo{from{transform:scale(1);opacity:.6}to{transform:scale(2.4);opacity:0}}
+.arealist{display:grid;gap:6px;flex:1;font-size:14px;min-width:0}
+.arealist button{display:flex;justify-content:space-between;align-items:center;gap:8px;border:0;background:var(--soft);border-radius:12px;padding:8px 12px;cursor:pointer;text-align:left;transition:background .15s}
+.arealist button:hover{background:var(--brand-soft)}
+.arealist .pill{white-space:nowrap}
+
+@media (max-width:860px){
+  .hgrid{grid-template-columns:1fr;gap:20px;margin-top:20px}
+  .hello{font-size:30px}
+  .two{grid-template-columns:1fr}
+  .tiles{grid-template-columns:1fr 1fr}
+  .hero{padding-bottom:100px}
+  .next{flex-wrap:wrap}.next .btn{width:100%}
+}
+@media (max-width:480px){
+  .wrap{padding:0 16px}
+  .hmid{grid-template-columns:1fr 112px 1fr 18px;gap:4px}.co b{font-size:16px}.hbox b{font-size:22px}.hstats b{font-size:17px}.lvl i{width:11px}.hcol{gap:18px}
+  .tl div{font-size:10px}
+  .agrid{grid-template-columns:1fr 1fr}
+  .scanpick{gap:8px;align-items:flex-start}.scanpick svg{width:84px}.arealist{font-size:13px}.arealist button{padding:8px 10px}
+  .demo.on .wrap{flex-wrap:nowrap;overflow-x:auto;white-space:nowrap;gap:8px;font-size:12px}
+}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001s!important;animation-iteration-count:1!important;transition-duration:.001s!important}}
+</style>
+</head>
+<body>
+<div class="hero">
+  <div class="stars"></div><div class="stars s2"></div><div class="orbit"></div>
+  <div class="wrap">
+    <div class="top"><div class="brand"><i></i>Baseline</div><div class="topr"><span class="daychip" id="dayChip"></span><button class="daychip cloud" id="cloudBtn" type="button">Sign in</button><button class="icon-btn" id="helpBtn" aria-label="How Baseline works">?</button></div></div>
+    <div class="hgrid">
+      <div>
+        <div class="eyebrow" id="dayTxt"></div>
+        <h1 class="hello" id="hello"></h1>
+        <div class="mood"><span class="pill" id="statusPill"></span><span id="statusTxt"></span></div>
+        <div class="tl" id="tl"></div>
+        <section class="nextcard">
+          <div class="next"><div class="ic" id="nextIc"></div><div class="tx"><div class="sub" id="nextWhen"></div><b id="nextWhat"></b><div class="sub" id="nextWhy"></div></div><button class="btn white" id="mainBtn">Start</button></div>
+          <div class="later" id="later"></div>
+        </section>
+      </div>
+      <section class="holo" aria-label="Your body, live">
+        <div class="hrow"><div class="hbox" id="hbHR">Heart rate<b>–</b></div><div class="hbox" id="hbBP">Blood pressure<b>–</b></div></div>
+        <div class="hmid">
+          <div class="hcol" id="hcL"></div>
+          <div id="holoFig"></div>
+          <div class="hcol r" id="hcR"></div>
+          <div class="lvl" id="lvl"></div>
+        </div>
+        <div class="hstats" id="hstats"></div>
+        <div class="hsrc"><span class="live" id="liveTxt"></span><span style="display:flex;gap:6px"><button class="hbtn" id="enterBtn">Enter readings</button><button class="hbtn pri" id="connBtn">Connect</button></span></div>
+      </section>
+    </div>
+  </div>
+  <div class="limb"></div>
+</div>
+
+<div class="wrap">
+  <main>
+    <div class="two">
+      <section class="card rise">
+        <div class="chead"><div><h2 id="scanTitle">Scans</h2><p class="sub" id="scanTxt"></p></div><div id="scanRing"></div></div>
+        <div id="scanBody"></div>
+        <button class="btn" id="scanBtn" style="width:100%">Start a scan</button>
+        <div style="text-align:center;margin-top:10px"><button class="linkbtn" id="scanOther">Scan a different area</button></div>
+      </section>
+      <section class="card rise d1">
+        <div class="chead"><div><h2>Messages</h2><p class="sub" id="earthSub"></p></div><span class="sig" id="sig"></span></div>
+        <div class="chat" id="chat" style="margin-top:12px"></div>
+        <div id="shareWrap"></div>
+      </section>
+    </div>
+    <section class="card rise d2">
+      <h2>How you're doing</h2><p class="sub">Compared with your own normal. Tap one for more.</p>
+      <div class="tiles" id="tiles" style="margin-top:14px"></div>
+      <div class="detail" id="detail"></div>
+    </section>
+    <div class="links"><button class="linkbtn" id="tourBtn">Show the welcome tour again</button><button class="linkbtn" id="rulesBtn">How I decide what to tell Earth</button><button class="linkbtn" id="demoLink">Demo controls</button></div>
+  </main>
+  <footer>Prototype · not medical advice · made for the crew tablet · NASA ISS Live · NASA OSDR · NASA DONKI · NASA-STD-3001 · PhysioNet CVES · PMData · simulated crew data · optional sync: Supabase</footer>
+</div>
+
+<div class="demo" id="demo"><div class="wrap">
+  <b style="font-size:11px;letter-spacing:.08em;color:var(--glow)">DEMO</b>
+  <label>Mission <select id="dMission"><option value="iss">ISS (6 months)</option><option value="mars">Mars</option></select></label>
+  <label>Jump to <input type="range" id="dDay"> <b id="dDayTxt"></b></label>
+  <label>Doctors' reply <select id="dReply"><option value="normal">Looks like your baseline</option><option value="followup">Wants a follow-up</option><option value="urgent">Needs a call now</option></select></label>
+  <button class="btn ghost sm" id="dSeed">Add 30 training days</button>
+  <button class="btn ghost sm" id="dReset">Reset everything</button>
+</div></div>
+
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true">
+  <div class="sh-top"><div class="prog" id="prog"><i></i></div><button class="x" id="closeBtn" aria-label="Close">×</button></div>
+  <div id="stepBody"></div>
+  <button class="btn go" id="goBtn">Next</button>
+  <button class="skip" id="skipBtn" hidden>Skip this</button>
+</div>
+
+<script src="data.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(() => {
+const D = window.DATA || {}, SM = D.samples || {}, $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const f = (x, d = 0) => (x === null || x === undefined || isNaN(x)) ? "–" : (+x).toFixed(d);
+const cap = t => t ? t[0].toUpperCase() + t.slice(1) : t;
+const pl = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
+const DAY = 864e5;
+
+const big = inner => `<svg viewBox="0 0 64 64" width="120" height="120" fill="none" stroke="#3f5bff" stroke-width="2.5"><circle cx="32" cy="32" r="28" fill="#e9edff" stroke="none"/>${inner}</svg>`;
+const I = {
+  sun: '<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2"><circle cx="16" cy="16" r="6"/><path d="M16 3v4M16 25v4M3 16h4M25 16h4M6.8 6.8l2.8 2.8M22.4 22.4l2.8 2.8M6.8 25.2l2.8-2.8M22.4 9.6l2.8-2.8"/></svg>',
+  probe: '<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4h10v10l-2 4h-6l-2-4z"/><path d="M13 18c0 3-1 6 3 10M19 18c0 3 1 6-3 10"/></svg>',
+  bolt: '<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 3 7 18h8l-2 11 12-16h-8z"/></svg>',
+  pill: '<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="11" width="20" height="10" rx="5" transform="rotate(-35 16 16)"/></svg>',
+  stand: '<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2"><circle cx="16" cy="5" r="2.6"/><path d="M16 8v11m0 0-4 9m4-9 4 9M10 12h12"/></svg>',
+  rocket: '<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3c5 4 7 9 6 16H10C9 12 11 7 16 3z"/><circle cx="16" cy="12" r="2.5"/><path d="M10 19l-4 5h5M22 19l4 5h-5M14 23l2 6 2-6"/></svg>',
+  home: '<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 15 16 6l11 9M8 13v13h16V13"/></svg>',
+  check: '<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 16l6 6 12-13"/></svg>',
+  hand: big('<path d="M24 40V24a3 3 0 0 1 6 0v10m0-8a3 3 0 0 1 6 0v8m0-6a3 3 0 0 1 6 0v8c0 8-5 12-11 12s-9-3-11-8l-3-7a3 3 0 0 1 5-2l2 3"/>'),
+  lock: big('<rect x="21" y="29" width="22" height="17" rx="4"/><path d="M25 29v-5a7 7 0 0 1 14 0v5"/>'),
+  list: big('<path d="M20 24h4M20 32h4M20 40h4M28 24h16M28 32h16M28 40h16"/>'),
+  sent: big('<circle cx="32" cy="32" r="13"/><path d="M19 32h26M32 19c5 4 5 22 0 26M32 19c-5 4-5 22 0 26"/>'),
+  done: '<svg viewBox="0 0 64 64" width="110" height="110" fill="none" stroke="#16a56d" stroke-width="3"><circle cx="32" cy="32" r="28" fill="#e2f6ed" stroke="none"/><path d="M21 33l7 7 15-16"/></svg>',
+};
+
+// ---------------- mission clock: the phase follows the date ----------------
+const MISSIONS = {iss: {name: "ISS", delayMin: 1 / 60, doseRate: 0.5, landing: 180}, mars: {name: "Mars mission", delayMin: 20, doseRate: 1.8, landing: 210}};
+const todayIdx = () => Math.floor(Date.now() / DAY);
+const DEF = {onboarded: false, name: "", sex: "f", age: 38, height: 172, weight: 68, mission: "iss", launch: todayIdx() + 30, travel: 0, reply: "followup", log: {}, scans: [], msgs: [], open: null, demoOpen: false};
+let S; try { S = Object.assign(structuredClone(DEF), JSON.parse(localStorage.getItem("baseline-v6") || "{}")); } catch (e) { S = structuredClone(DEF); }
+const save = () => { try { localStorage.setItem("baseline-v6", JSON.stringify(S)); } catch (e) {} };
+const M = () => MISSIONS[S.mission];
+const day = () => todayIdx() + S.travel - S.launch;          // 0 = launch day, 1 = first day in space
+const LAND = () => M().landing;
+function phase(d = day()) {
+  if (d < 0) return "training"; if (d === 0) return "launch"; if (d === 1) return "arrive";
+  if (d < LAND() - 1) return "orbit"; if (d === LAND() - 1) return "prereturn"; if (d === LAND()) return "landed"; return "after";
+}
+const mars = () => S.mission === "mars";
+const inFlight = () => ["arrive", "orbit", "prereturn"].includes(phase());
+const onGround = () => !inFlight();
+const nearDoctors = () => onGround() && !(mars() && ["landed", "after"].includes(phase()));
+const PHASE_LABEL = {training: () => "Training on Earth", launch: () => "Launch day", arrive: () => mars() ? "First day in space" : "Arrived at the station",
+  orbit: () => mars() ? "Cruising to Mars" : "Living on the station", prereturn: () => mars() ? "Day before Mars landing" : "Last day before going home",
+  landed: () => mars() ? "First day on Mars" : "Back on Earth", after: () => mars() ? "Living on Mars" : "Recovering on Earth"};
+const dayChip = (d = day()) => d < 0 ? `L−${-d}` : d === 0 ? "L−0" : d < LAND() ? `Day ${d}` : `R+${d - LAND()}`;
+const key = (d = day()) => `${S.mission}:${d}`;
+const L = (d = day()) => (S.log[key(d)] = S.log[key(d)] || {});
+const delayMs = () => M().delayMin * 1000;   // demo speed: 1 minute of real delay = 1 second
+const clock = ms => { const s = Math.max(0, Math.ceil(ms / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
+
+// your normal = middle value of what you recorded during training (demo values until you have some)
+const DEMO_BASE = {mood: 4, sleep: 7.2, rt: 300, hr: 62, sbp: 118, dbp: 76, temp: 36.6, glu: 90, stand: 7};
+const trainingRows = () => Object.entries(S.log).filter(([k2]) => k2.startsWith(S.mission + ":") && +k2.split(":")[1] < 0).map(([, v]) => v);
+function baseInfo() {
+  const rows = trainingRows();
+  const med = a => { a = a.filter(x => x !== null && x !== undefined && !isNaN(x)).sort((x, y) => x - y); return a.length ? a[Math.floor(a.length / 2)] : null; };
+  const v = {}; for (const k2 of ["mood", "sleep", "hr", "sbp", "dbp", "temp", "glu"]) v[k2] = med(rows.map(r => r.daily && r.daily[k2]));
+  v.rt = med(rows.map(r => r.rt)); v.stand = med(rows.map(r => r.stand && r.stand.hr));
+  const out = {}; for (const k2 in DEMO_BASE) out[k2] = v[k2] ?? DEMO_BASE[k2];
+  return {v: out, n: rows.filter(r => r.daily).length};
+}
+const base = () => baseInfo().v;
+
+// ---------------- the six scan areas: one guided ultrasound for all ----------------
+const AREAS = {
+  neck: {label: "Neck veins", pt: [86, 80], why: "In space, blood can flow more slowly in the neck veins, usually with no symptoms.", time: "about 30 min with setup",
+    steps: [["Add gel", "Put a pea-sized blob of gel on the probe."], ["Place it here", "Side of your neck, just above the collarbone, marker dot pointing to your right."], ["Press gently, then lift", "Watch the screen: a healthy vein squeezes flat."], ["Hold still", "Breathe normally. I'll record 10 seconds."]]},
+  eyes: {label: "Eyes", pt: [93, 40], why: "Many long-mission astronauts get small changes at the back of the eye.", time: "about 15 min with setup",
+    steps: [["Close your eye", "Put plenty of gel on the closed eyelid."], ["Place it here", "Rest the probe on the eyelid. No pressure at all."], ["Look ahead", "Keep looking straight ahead behind your closed lid."], ["Hold still", "I'll record both eyes, one at a time."]]},
+  heart: {label: "Heart", pt: [110, 130], why: "Your heart adapts to weightlessness. We track its size and how it pumps.", time: "about 40 min with setup",
+    steps: [["Add gel", "Plenty of gel on the probe."], ["Place it here", "Just left of your breastbone, between the ribs."], ["Tilt slowly", "Tilt the probe toward your right shoulder until you see all four chambers."], ["Hold still", "Breathe out and pause. I'll record 5 seconds."]]},
+  lungs: {label: "Lungs", pt: [84, 114], why: "A quick look at your lungs, especially if you feel short of breath.", time: "about 15 min with setup",
+    steps: [["Add gel", "A little gel on the probe."], ["Place it here", "Front of your chest, below the collarbone, between two ribs."], ["Breathe normally", "Watch for the bright line that slides as you breathe."], ["Then the sides", "Repeat under each armpit. I'll show each spot."]]},
+  bladder: {label: "Bladder", pt: [100, 232], why: "Checks that your bladder empties fully, which is harder in weightlessness.", time: "about 10 min with setup",
+    steps: [["After the toilet", "Best done right after you've emptied your bladder."], ["Place it here", "Low on your belly, just above the pubic bone."], ["Angle down", "Point the probe slightly toward your feet."], ["Hold still", "I'll record two directions."]]},
+  legs: {label: "Leg veins", pt: [84, 268], why: "Checks the leg veins for clots, mainly after landing or long sitting.", time: "about 30 min with setup",
+    steps: [["Add gel", "Gel on the probe."], ["Place it here", "In the groin crease, where you feel your pulse. Later, behind the knee."], ["Press gently, then lift", "A healthy vein squeezes flat."], ["Hold still", "I'll record each spot for a few seconds."]]},
+};
+const mins = a => AREAS[a].time.replace(" with setup", "").replace("about ", "~");
+const longTime = a => AREAS[a].time.replace(" min", " minutes");
+// required in-flight scans (mission day), like NASA's protocol scans around flight day 50 and 150
+const SCHED = {eyes: [30, 120], neck: [50, 150], heart: [90]};
+const scanDone = (a, from, to = Infinity) => S.scans.some(s => s.mission === S.mission && s.area === a && s.day >= from && s.day < to && s.day <= day());
+function schedule() {
+  const out = []; for (const a in SCHED) SCHED[a].forEach((x, i) => { if (x < LAND() - 1) out.push({a, d: x, done: scanDone(a, x, SCHED[a][i + 1] ?? Infinity)}); });
+  return out.sort((p, q) => p.d - q.d);
+}
+const dueScans = () => inFlight() ? schedule().filter(x => x.d <= day() && !x.done) : phase() === "landed" && !scanDone("legs", LAND()) ? [{a: "legs", d: LAND(), done: false}] : [];
+const trainingScans = () => new Set(S.scans.filter(s => s.mission === S.mission && s.day <= 0).map(s => s.area));
+const missingBase = () => { const ts = trainingScans(); return Object.keys(AREAS).filter(a => !ts.has(a)); };
+const standBase = () => Object.entries(S.log).some(([k2, v]) => k2.startsWith(S.mission + ":") && +k2.split(":")[1] < 0 && v.stand);
+function scanState(area) {
+  const s = [...S.scans].reverse().find(x => x.area === area && x.mission === S.mission && x.day <= day()); if (!s) return {l: "none", line: "Not scanned yet"};
+  if (s.repliedAt > Date.now()) return {l: "pending", line: `Sent · reply in about ${clock(s.repliedAt - Date.now())}`};
+  return {l: {normal: "ok", followup: "watch", urgent: "urgent"}[s.reply], line: {normal: "Doctors: looks like your baseline", followup: "Doctors: follow-up scan next week", urgent: "Doctors want to talk now"}[s.reply]};
+}
+
+// ---------------- today's plan: follows the mission clock ----------------
+function plan() {
+  const p = phase(), d = day(), l = L(), dn = l.done || {}, q = [];
+  const add = (id, ic, what, dur, when, why, flow, done = !!dn[id], req = false) => q.push({id, ic, what, dur, when, why, flow, done, req});
+  if (p === "training") {
+    add("train", "sun", "Training check", "about 5 minutes", "After waking", `Sleep, mood, vitals and the reflex game. Every training day sharpens your normal (${pl(baseInfo().n, "day")} recorded).`, ["daily", "rt", "fin"]);
+    const miss = missingBase(); if (miss.length) add("bscan", "probe", `Baseline scan: ${AREAS[miss[0]].label}`, longTime(miss[0]), "During training", `Needed before launch, so your doctors can compare later. ${6 - miss.length} of 6 done.`, [`scan:${miss[0]}`], false, true);
+    if (!standBase()) add("bstand", "stand", "Baseline stand-up test", "15 minutes, with your medical team", "Once during training", "Needed before launch: how your body handles standing before flight.", ["stand", "fin"], false, true);
+  }
+  if (p === "launch") add("last", "sun", "Last check before you board", "about 5 minutes", "Before suit-up", "Your final Earth reading, so the first one in space has something fresh to compare with.", ["daily", "rt", "fin"], !!dn.last, true);
+  if (p === "arrive") add("arrive", "sun", "Arrival check", "about 5 minutes", mars() ? "Once you've settled in" : "After docking", "Your first reading in weightlessness. Then I check in every day.", ["daily", "rt", "fin"], !!dn.arrive, true);
+  if (p === "orbit") {
+    add("daily", "sun", "Daily check", "90 seconds", "After waking", "How you slept and how you feel. Monitoring runs on its own the rest of the day.", ["daily", "fin"]);
+    if (d % 7 === 0) add("rt", "bolt", "Reflex game", "3 minutes", "This morning", "Your weekly alertness check.", ["rt", "fin"]);
+  }
+  if (p === "prereturn") add("pre", "pill", mars() ? "Before-landing check" : "Before-you-go-home check", "about 10 minutes", "After waking", `Daily check, reflex game and your landing medicines. Before ${mars() ? "landing" : "deorbit"} you'll drink 24–48 oz of salty water.`, ["daily", "rt", "meds", "fin"], !!dn.pre, true);
+  if (p === "landed") add("home", "home", mars() ? "First check on Mars" : "Welcome-home check", "about 20 minutes, with someone helping", "As soon as you can", "How your body handles gravity again.", ["daily", "stand", "fin"], !!dn.home, true);
+  dueScans().forEach((x, i) => add("scan" + i, "probe", `${AREAS[x.a].label} scan`, longTime(x.a), x.d === d ? (p === "landed" ? "Later today" : "15:00") : `Overdue by ${pl(d - x.d, "day")}`, x.a === "legs" ? "A clot check after the trip." : "Scheduled. I'll guide you, then send the images to your doctors.", [`scan:${x.a}`], false, true));
+  if (p === "after") add("rec", "sun", "Recovery check", "90 seconds", "After waking", "Tracking how you get back to your normal.", ["daily", "fin"]);
+  return q;
+}
+
+// ---------------- status: computed from what you logged ----------------
+function statuses() {
+  const d = L().daily, b = base(), p = phase(), out = [];
+  if (d) {
+    if (d.mood <= 2) out.push({l: "watch", what: "your mood is low today", private: true});
+    if (d.sleep < b.sleep - 1.5) out.push({l: "watch", what: "you slept a lot less than usual"});
+    const red = d.hr <= 40 || d.hr >= 131 || d.sbp <= 90 || d.sbp >= 220 || d.temp <= 35 || d.temp >= 39.1 || d.glu < 54;
+    const amb = d.hr >= 111 || d.hr <= 50 || d.sbp <= 100 || d.temp >= 38.1 || d.glu < 70 || d.glu > 180 || Math.abs(d.hr - b.hr) >= 20;
+    if (red) out.push({l: "urgent", what: "a vital sign is outside safe limits", auto: "vitals"}); else if (amb) out.push({l: "watch", what: "a vital sign is off your normal"});
+  }
+  if (L().rt && p !== "training" && L().rt > b.rt * 1.15) out.push({l: "watch", what: "your reflexes are slower than usual"});
+  const st = L().stand; if (st && p === "landed" && (st.hr >= 30 || st.sbpDrop >= 20)) out.push({l: "watch", what: "standing up is still hard"});
+  if (L().meds && L().meds.some(m => m.expired)) out.push({l: "watch", what: "one landing medicine expires before landing"});
+  Object.keys(AREAS).forEach(a => { const s = scanState(a); if (s.l === "watch" || s.l === "urgent") out.push({l: s.l, what: `${AREAS[a].label.toLowerCase()} scan: ${s.line.replace("Doctors: ", "").replace("Doctors ", "")}`}); });
+  // required scans
+  const miss = missingBase().length, need = miss + (standBase() ? 0 : 1);
+  if (p === "training" && need && -day() <= 7) out.push({l: "watch", scan: true, what: `${pl(need, "baseline item")} still needed before launch (${pl(-day(), "day")} left)`});
+  if (p === "launch" && need) out.push({l: "watch", scan: true, what: `your baseline is incomplete (${need} missing): tell your flight surgeon before you board`});
+  dueScans().filter(x => day() - x.d > 3).forEach(x => out.push({l: "watch", scan: true, what: `your ${AREAS[x.a].label.toLowerCase()} scan is ${pl(day() - x.d, "day")} overdue`}));
+  return out.sort((a, b2) => (b2.l === "urgent") - (a.l === "urgent"));
+}
+const shareItems = () => statuses().filter(x => x.l === "watch" && !x.private && !x.scan && !x.what.includes("scan"));
+
+// ---------------- render ----------------
+function render() {
+  const p = phase(), d = day(), h = new Date().getHours(), greet = h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
+  $("#hello").textContent = `${greet}${S.name ? "," : ""} `; const nm = document.createElement("span"); nm.style.whiteSpace = "nowrap"; nm.textContent = `${S.name || ""} 👋`.trim(); $("#hello").appendChild(nm);
+  const st = statuses(), worst = st.some(x => x.l === "urgent") ? "urgent" : st.some(x => x.l === "watch") ? "watch" : "ok";
+  const q = plan(), next = q.find(x => !x.done), dueN = q.filter(x => !x.done).length;
+  const fresh = p === "training" && baseInfo().n === 0 && !st.length;
+  $("#statusPill").className = "pill " + (fresh ? "none" : worst); $("#statusPill").textContent = fresh ? "Welcome" : {ok: "You're doing well", watch: "Worth a look", urgent: "Needs attention"}[worst];
+  $("#statusTxt").textContent = fresh ? "Let's start learning your normal during training." : st.length ? cap(st[0].what) + (st.length > 1 ? ` (and ${st.length - 1} more)` : "") : `${dueN ? `${pl(dueN, "thing")} for you today` : "All done for today"}`;
+  $("#dayChip").textContent = dayChip();
+  $("#dayTxt").textContent = p === "training" ? `${PHASE_LABEL.training()} · ${pl(-d, "day")} to launch` : p === "orbit" ? `${PHASE_LABEL.orbit()} · ${pl(LAND() - d, "day")} to ${mars() ? "Mars landing" : "going home"}` : PHASE_LABEL[p]();
+  const steps = ["Training", "Launch", "Day 1", mars() ? "Cruise" : "In orbit", "Last day", mars() ? "Mars" : "Home"], at = {training: 0, launch: 1, arrive: 2, orbit: 3, prereturn: 4, landed: 5, after: 5}[p];
+  const frac = p === "orbit" ? 2 + (d - 1) / (LAND() - 2) * 2 : at;
+  $("#tl").innerHTML = `<span class="bar" style="width:${Math.min(5, frac) / 5 * 83.34}%"></span>` + steps.map((s, i) => `<div class="${i < at ? "past" : i === at ? "now" : ""}"><i></i>${s}</div>`).join("");
+  if (next) { setNext(next.ic, `${next.when} · ${next.dur}${next.req ? '<span class="req">Required</span>' : ""}`, next.what, next.why, true);
+    const rest = q.filter(x => !x.done && x !== next); $("#later").innerHTML = rest.map(x => `<div>Later: <b>${x.what}</b> · ${x.when} · ${x.dur}</div>`).join("") + `<div>🔔 I'll remind you once at the right time. Never during sleep, spacewalks or exercise.</div>`; }
+  else if (p === "launch") { setNext("rocket", "Launch day", "Checked in. Enjoy the ride!", "Your suit and the vehicle look after you now. Next reading: when you arrive.", false); $("#later").innerHTML = ""; }
+  else { setNext("check", "Today", "All done. Nice work!", inFlight() ? "Monitoring keeps running in the background. See you tomorrow morning." : "Nothing else for you today.", false); $("#later").innerHTML = ""; }
+  renderScan(); renderChat(); renderTiles(); renderHolo(false); renderDemo(); save();
+}
+function setNext(ic, when, what, why, btn) { $("#nextIc").innerHTML = I[ic]; $("#nextWhen").innerHTML = when; $("#nextWhat").textContent = what; $("#nextWhy").textContent = why; $("#mainBtn").hidden = !btn; }
+
+const mir = d => d.replace(/(-?\d+(\.\d+)?),(-?\d+(\.\d+)?)/g, (_, x, _a, y) => `${200 - x},${y}`);
+function bodyParts() {
+  const m = S.sex === "m";
+  const arm = m ? "M60,92 Q44,98 41,132 L35,206 Q33,224 43,226 Q50,224 50,210 L58,142 Z" : "M68,94 Q54,100 51,132 L45,204 Q43,220 51,222 Q57,220 57,207 L64,142 Z";
+  const leg = m ? "M66,252 L99,252 L96,392 Q93,410 79,406 L76,392 Z" : "M62,244 L99,244 L95,392 Q92,410 80,406 L77,392 Z";
+  const torso = m ? "M58,90 Q100,76 142,90 L148,150 Q140,198 137,226 Q140,244 134,258 L66,258 Q60,244 63,226 Q60,198 52,150 Z" : "M66,92 Q100,80 134,92 L138,140 Q128,172 129,196 Q142,222 141,248 L59,248 Q58,222 71,196 Q72,172 62,140 Z";
+  const head = m ? `<ellipse cx="100" cy="44" rx="22" ry="26"/>` : `<path d="M78,46 Q76,16 100,16 Q124,16 122,46 Q124,64 116,72 L84,72 Q76,64 78,46 Z"/>`;
+  return `<path d="${arm}"/><path d="${mir(arm)}"/><path d="${leg}"/><path d="${mir(leg)}"/><path d="${torso}"/><rect x="90" y="66" width="20" height="18" rx="6"/>${head}`;
+}
+const outline = extra => `<svg viewBox="0 0 200 420" aria-label="Body outline"><g class="sil">${bodyParts()}</g>${extra}</svg>`;
+
+// ---------------- the hologram: your body, live ----------------
+const CONN = {};   // live connections: hr (Bluetooth strap), iss (ISS Live), donki
+const sim = {rr: 14, spo2: 98, t: 0};
+function vitalsNow() {
+  const b = base(), d = L().daily, p = phase(), off = {training: 0, launch: 8, arrive: 4, orbit: 2, prereturn: 2, landed: 16, after: 6}[p];
+  sim.t++; const wobble = Math.sin(sim.t / 5) * 2 + (Math.random() - .5) * 2;
+  let hr, src;
+  if (CONN.hr && Date.now() - CONN.hr.at < 5000) { hr = CONN.hr.bpm; src = `LIVE · ${CONN.hr.name || "Bluetooth heart-rate strap"}`; }
+  else { hr = Math.round((d && d.hr ? d.hr : b.hr + off) + wobble); src = inFlight() ? "LIVE · Bio-Monitor shirt (simulated)" : p === "training" ? "LIVE · training wearable (simulated)" : "LIVE · wearable (simulated)"; }
+  sim.rr = Math.max(10, Math.min(20, Math.round(14 + Math.sin(sim.t / 9) + (p === "landed" ? 3 : 0))));
+  sim.spo2 = 97 + (sim.t % 7 === 0 ? 1 : 0) + (p === "landed" ? -1 : 0);
+  return {hr, src, rr: sim.rr, spo2: sim.spo2, sbp: d && d.sbp ? d.sbp : b.sbp, dbp: d && d.dbp ? d.dbp : b.dbp, temp: d && d.temp ? d.temp : b.temp, entered: !!(d && d.sbp)};
+}
+const lvlClass = (v, lo, hi, rlo, rhi) => (v <= rlo || v >= rhi) ? "urgent" : (v < lo || v > hi) ? "watch" : "";
+function renderHolo(full) {
+  const v = vitalsNow(), b = base();
+  if (full || !$("#holoFig svg") || renderHolo.sex !== S.sex) { renderHolo.sex = S.sex; const parts = bodyParts();
+    $("#holoFig").innerHTML = `<svg class="hsvg" viewBox="-10 0 220 440" aria-hidden="true"><defs><clipPath id="bclip">${parts}</clipPath><linearGradient id="sg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7cc0ff" stop-opacity="0"/><stop offset=".5" stop-color="#bfe2ff" stop-opacity=".55"/><stop offset="1" stop-color="#7cc0ff" stop-opacity="0"/></linearGradient></defs>
+      <ellipse class="ring" cx="100" cy="410" rx="72" ry="13"/><ellipse class="ring2" cx="100" cy="410" rx="54" ry="8"/>
+      <g class="hs">${parts}</g>
+      <g clip-path="url(#bclip)"><ellipse class="lung" cx="86" cy="124" rx="12" ry="24"/><ellipse class="lung" cx="114" cy="124" rx="12" ry="24"/><rect class="scanband" x="0" y="0" width="200" height="34" fill="url(#sg)"/></g>
+      <path class="heart" d="M108,124 c-4,-6 -12,-2 -8,5 l8,8 l8,-8 c4,-7 -4,-11 -8,-5z"/>
+      <circle cx="122" cy="102" r="3" fill="#5ff0a0" style="filter:drop-shadow(0 0 4px #5ff0a0)"><title>Dosimeter</title></circle></svg>`; }
+  const hEl = $(".heart"); if (hEl) hEl.style.setProperty("--bt", (60 / Math.max(30, v.hr)).toFixed(2) + "s");
+  $$(".lung").forEach(e => e.style.setProperty("--br", (60 / v.rr).toFixed(1) + "s"));
+  $("#hbHR").className = "hbox " + lvlClass(v.hr, Math.min(51, b.hr - 20), Math.max(110, b.hr + 20), 40, 131); $("#hbHR").innerHTML = `Heart rate<b>${v.hr} <small>bpm</small></b>`;
+  $("#hbBP").className = "hbox " + lvlClass(v.sbp, 101, 179, 90, 220); $("#hbBP").innerHTML = `Blood pressure<b>${v.sbp}/${v.dbp}</b>`;
+  $("#hcL").innerHTML = `<div class="co ${lvlClass(v.temp, 35.5, 38, 35, 39.1)}">Temperature<b>${f(v.temp, 1)} <small>°C</small></b></div><div class="co">Breathing<b>${v.rr} <small>/min</small></b></div>`;
+  const dose = 120 + Math.max(0, Math.min(day(), LAND())) * M().doseRate, pct = dose / 600 * 100;
+  $("#hcR").innerHTML = `<div class="co">Oxygen<b>${v.spo2} <small>%</small></b></div><div class="co">Dose<b>${f(dose)} <small>mSv</small></b></div>`;
+  const on = Math.max(1, Math.round(pct / 100 * 14));
+  $("#lvl").innerHTML = Array.from({length: 14}, (_, i) => `<i class="${i < on ? "on" + (pct > 80 ? " w" : "") : ""}"></i>`).join("") + `<span>${f(pct)}% dose limit</span>`;
+  const bmi = S.weight / Math.pow(S.height / 100, 2);
+  $("#hstats").innerHTML = `<div><b>${S.age}</b>Age</div><div><b>${S.height}<small>cm</small></b>Height</div><div><b>${S.weight}<small>kg</small></b>Weight</div><div><b>${f(bmi, 1)}</b>BMI</div>`;
+  $("#liveTxt").textContent = v.src + (v.entered ? " · BP & temp from today's check" : " · BP & temp: your normal until you enter them");
+}
+
+// ---------------- scans: required, with progress ----------------
+let scanTarget = null;
+function ringSvg(n, t, col) { const c = 2 * Math.PI * 24, p = t ? n / t : 0; return `<svg class="ringp" viewBox="0 0 60 60"><circle cx="30" cy="30" r="24" fill="none" stroke="#e4e8f2" stroke-width="6"/><circle cx="30" cy="30" r="24" fill="none" stroke="${col}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${(c * (1 - p)).toFixed(1)}" transform="rotate(-90 30 30)"/><text x="30" y="35" text-anchor="middle" font-size="15" font-weight="700" fill="#131a33">${n}/${t}</text></svg>`; }
+function renderScan() {
+  const p = phase(), d = day(), ts = trainingScans(), miss = missingBase(), due = dueScans();
+  const pillFor = a => { const s = scanState(a); return s.l === "none" ? `<span class="pill ok">Done</span>` : `<span class="pill ${s.l === "pending" ? "none" : s.l}" title="${s.line}">${{pending: "Sent", ok: "OK", watch: "Follow-up", urgent: "Call"}[s.l]}</span>`; };
+  let title = "Scans", txt = "", ring = "", body = "", btn = "Scan an area"; scanTarget = null;
+  if (p === "training" || (p === "launch" && miss.length)) {
+    const left = -d, all = !miss.length && standBase(), andStand = standBase() ? "" : " and the stand-up test";
+    title = `Baseline scans <span class="req">Required before launch</span>`;
+    txt = "Your doctors compare every in-flight scan with these, so all 6 are needed before launch day.";
+    ring = ringSvg(ts.size, 6, miss.length ? "#3f5bff" : "#16a56d");
+    body = `<div class="agrid">${Object.keys(AREAS).map(a => `<button data-a="${a}" class="${ts.has(a) ? "done" : a === miss[0] ? "nx" : ""}"><i>${ts.has(a) ? "✓" : ""}</i><span><b>${AREAS[a].label}</b><small>${ts.has(a) ? "Baseline saved" : mins(a)}</small></span></button>`).join("")}</div>`
+      + (all ? `<div class="note ok">✓ Baseline complete. You're ready for launch.</div>` : !miss.length ? `<div class="note watch">All 6 scans done. Still needed: your baseline stand-up test.</div>` : p === "launch" ? `<div class="note watch">Launch day: ${pl(miss.length, "baseline scan")}${andStand} missing. Tell your flight surgeon before you board.</div>` : left <= 7 ? `<div class="note watch">${pl(left, "day")} to launch: ${pl(miss.length, "scan")}${andStand} still to do.</div>` : "");
+    scanTarget = miss[0] || null; btn = miss.length ? `${ts.size ? "Continue" : "Start"}: ${AREAS[miss[0]].label} (${mins(miss[0])})` : "Scan an area again";
+  } else if (inFlight() || p === "landed") {
+    const rows = p === "landed" ? [{a: "legs", d: LAND(), done: scanDone("legs", LAND())}] : schedule(), nd = rows.filter(r => r.done).length;
+    title = `Scans <span class="req">Scheduled</span>`;
+    txt = due.length ? `${due.length === 1 ? "One scan is" : `${due.length} scans are`} waiting for you. You can also scan any area if something feels off.` : "You're up to date. You can scan any area any time if something feels off.";
+    ring = ringSvg(nd, rows.length, due.length ? "#3f5bff" : "#16a56d");
+    body = `<div class="srows">${rows.map(r => { const over = !r.done && r.d < d, now = !r.done && r.d === d;
+      return `<div class="srow ${now ? "duenow" : over ? "over" : ""}"><span class="dy">${dayChip(r.d)}</span><b>${AREAS[r.a].label}</b>${r.done ? pillFor(r.a) : now ? `<span class="pill due">Due today</span>` : over ? `<span class="pill watch">Overdue ${d - r.d} d</span>` : `<span class="when">in ${pl(r.d - d, "day")}</span>`}</div>`; }).join("")}</div>`;
+    scanTarget = due.length ? due[0].a : null; if (due.length) btn = `Start: ${AREAS[due[0].a].label} scan (${mins(due[0].a)})`;
+  } else {
+    txt = p === "launch" ? "All 6 baseline scans are saved. Nothing to scan today." : "Scan any area if something feels off. I'll show you where to place the probe.";
+    const seen = Object.keys(AREAS).filter(a => scanState(a).l !== "none");
+    body = seen.length ? `<div class="srows">${seen.map(a => `<div class="srow"><b>${AREAS[a].label}</b>${pillFor(a)}</div>`).join("")}</div>` : `<div style="height:14px"></div>`;
+  }
+  $("#scanTitle").innerHTML = title; $("#scanTxt").textContent = txt; $("#scanRing").innerHTML = ring; $("#scanBody").innerHTML = body; $("#scanBtn").textContent = btn;
+  $("#scanBtn").className = "btn" + (scanTarget ? "" : " ghost"); $("#scanOther").parentElement.style.display = scanTarget ? "" : "none";
+}
+function renderChat() {
+  const now = Date.now(), msgs = S.msgs.filter(m => m.mission === S.mission && (m.me || m.at <= now)), near = nearDoctors();
+  $("#earthSub").textContent = near ? "Your flight surgeon, on Earth with you." : mars() ? "Replies take a while from this far out." : "Your doctors on Earth, a moment away.";
+  $("#sig").innerHTML = `<i style="height:6px"></i><i style="height:10px"></i><i style="height:14px"></i><span>${near ? "On Earth" : mars() ? "20 min each way" : "~1 s delay"}</span>`;
+  $("#chat").innerHTML = msgs.length ? msgs.slice(-5).map(m => `<div class="bubble ${m.me ? "me" : "them"}"><div class="meta">${m.me ? (m.auto ? "Sent automatically" : "You shared") + (m.at > now ? ` · arrives in ${clock(m.at - now)}` : " · delivered") : 'Your flight surgeon <span class="tag">simulated</span>'}</div>${m.text}</div>`).join("")
+    : `<div class="bubble them"><div class="meta">Baseline</div>Nothing here yet. Your scan images and anything you choose to share will appear here, with your doctors' replies.</div>`;
+  const shareable = shareItems().filter(x => !S.msgs.some(m => m.me && m.text.toLowerCase().includes(x.what)));
+  $("#shareWrap").innerHTML = shareable.length ? `<button class="btn ghost" id="shareBtn" style="margin-top:12px;width:100%">Share with my flight surgeon</button>` : "";
+  const sb = $("#shareBtn"); if (sb) sb.onclick = () => openFlow(["share"]);
+}
+function spark(vals, lo, hi, band) { const v = vals.filter(x => x !== null && x !== undefined); if (v.length < 2) return ""; const W = 260, H = 50, y = x => H - 4 - (x - lo) / (hi - lo) * (H - 8), xx = i => i / (vals.length - 1) * W;
+  return `<svg class="viz" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="height:${H}px;margin:6px 0">${band ? `<rect x="0" y="${y(band[1])}" width="${W}" height="${y(band[0]) - y(band[1])}" fill="#e9edff"/>` : ""}<polyline fill="none" stroke="#3f5bff" stroke-width="2" points="${vals.map((x, i) => x === null || x === undefined ? null : `${xx(i)},${y(x)}`).filter(Boolean).join(" ")}"/></svg>`; }
+function renderTiles() {
+  const d = L().daily, b = base(), bi = baseInfo(), cur = day();
+  const mine = Array.from({length: 14}, (_, i) => { const r = S.log[key(cur - 13 + i)]; return r && r.daily ? r.daily.sleep : null; });
+  const useMine = mine.filter(x => x !== null).length >= 2, hist = useMine ? mine : [...((D.crew && D.crew[0] && D.crew[0].days) || []).slice(40, 53).map(r => r.sleep_min ? r.sleep_min / 60 : null), d ? d.sleep : null];
+  const iss = CONN.iss, snap = SM.isslive_snapshot || {}, co2 = iss && iss.co2 !== undefined ? iss.co2 : snap.NODE3000003_ppCO2;
+  const air = onGround() ? {id: "air", k: "Cabin air", v: "–", n: "starts once you're in space", more: `<div class="sub">In space I show the station's cabin CO₂ here, from NASA's ISS Live feed (or your ship's sensors on a Mars mission).</div>`}
+    : mars() ? {id: "air", k: "Cabin air", v: "Ship", n: "from your ship's sensors", more: `<div class="sub">On a Mars ship, the cabin CO₂ comes from the ship's own sensors. ISS readings don't apply.</div>`}
+    : {id: "air", k: "Cabin air", v: `${f(co2, 1)} mmHg`, n: iss && iss.co2 !== undefined ? "CO₂ · NASA ISS Live" : "CO₂ · ISS snapshot", more: `<div class="sub">Station CO₂ from NASA's ISS Live feed ${iss && iss.co2 !== undefined ? `<span class="tag live">live</span>${iss.ageH > 1 ? ` · this reading is ${f(iss.ageH / 24, 1)} days old` : ""}` : '<span class="tag">snapshot</span> (tap Connect for live)'}. NASA's limit is a 3 mmHg <b>1-hour average</b>, so one reading isn't an alarm. Context only: the station's own alarms and Mission Control own the air. If you wake with a headache, mention it in your daily check.</div>`};
+  const T = [
+    {id: "sleep", k: "Sleep", v: d && d.sleep ? `${f(d.sleep, 1)} h` : "–", n: `usually ${f(b.sleep, 1)} h`, more: `${spark(hist, 3, 10, [b.sleep - 1.5, b.sleep + 1])}<div class="sub">Last two weeks ${useMine ? "" : '<span class="tag">demo history</span>'}. NASA plans 8.5 h for sleep; in space most people get 6–6.5 h. I only flag big drops from <i>your</i> usual.</div>`},
+    {id: "mood", k: "Mood", v: d && d.mood ? ["😞", "🙁", "😐", "🙂", "😄"][d.mood - 1] : "–", n: "only you see this", more: `<div class="sub">Your mood is private and never sent anywhere automatically. If it stays low, talking to a crewmate or calling home can help.</div>`},
+    {id: "rt", k: "Reflexes", v: L().rt ? `${L().rt} ms` : "–", n: `usually ${f(b.rt)} ms`, more: `<div class="sub">From the reflex game. ${phase() === "training" ? "Every training game builds your normal." : "I flag it if you're more than 15% slower than your normal."} Your normal comes from ${bi.n ? pl(bi.n, "training day") : 'demo values <span class="tag">demo</span>'}.</div>`},
+    air,
+  ];
+  $("#tiles").innerHTML = T.map(t => `<div class="tile ${t.id === S.open ? "on" : ""}" data-t="${t.id}"><div class="k"><i></i>${t.k}</div><div class="v">${t.v}</div><div class="n">${t.n}</div></div>`).join("");
+  const o = T.find(t => t.id === S.open); $("#detail").classList.toggle("on", !!o); $("#detail").innerHTML = o ? `<b>${o.k}</b>${o.more}` : "";
+}
+function renderDemo() { $("#demo").classList.toggle("on", !!S.demoOpen); $("#dMission").value = S.mission; $("#dReply").value = S.reply;
+  const r = $("#dDay"); r.min = -60; r.max = LAND() + 3; r.value = day(); $("#dDayTxt").textContent = `${dayChip()} · ${PHASE_LABEL[phase()]()}`; }
+
+// ---------------- connect: real NASA and device APIs ----------------
+const SOURCES = [
+  {id: "hr", name: "Heart-rate chest strap", what: "Bluetooth Heart Rate standard. NASA tested Bluetooth chest straps for ISS exercise, and the station's Flight Ergometer (FERGO) takes heart rate over Bluetooth.", btn: "Connect"},
+  {id: "iss", name: "NASA ISS Live", what: "Station cabin air: CO₂, pressure and temperature, streamed from NASA's public ISS telemetry (Lightstreamer).", btn: "Connect"},
+  {id: "donki", name: "NASA DONKI (space weather)", what: "Solar flares, particle events and radiation-belt alerts from NASA's Space Weather Database (CCMC).", btn: "Connect"},
+  {id: "radlab", name: "NASA OSDR RadLab", what: "Radiation measured inside ISS modules by the station's dosimeters (REM/Timepix, DosTel, TEPC).", btn: "Connect"},
+  {id: "bio", name: "CSA Bio-Monitor (Hexoskin)", what: "The smart shirt crews wear on the ISS: ECG, breathing, activity. Its data API needs a crew account, so here it's simulated.", btn: null},
+  {id: "us", name: "Ultrasound probe", what: "ISS Ultrasound-2 and the Butterfly iQ that NASA evaluated. No public API: images reach the ground through the station's downlink, which is what the scan guide mimics.", btn: null},
+];
+const setRes = (id, html) => { const e = $(`#r-${id}`); if (e) { e.classList.add("on"); e.innerHTML = html; } };
+async function connect(id) {
+  try {
+    if (id === "hr") {
+      if (!navigator.bluetooth) return setRes(id, "This browser has no Bluetooth access. Try Chrome or Edge on a laptop or Android tablet.");
+      const dev = await navigator.bluetooth.requestDevice({filters: [{services: ["heart_rate"]}]});
+      setRes(id, `Connecting to ${dev.name || "strap"}…`);
+      const ch = await (await (await dev.gatt.connect()).getPrimaryService("heart_rate")).getCharacteristic("heart_rate_measurement");
+      ch.addEventListener("characteristicvaluechanged", e => { const v = e.target.value, fl = v.getUint8(0); CONN.hr = {bpm: (fl & 1) ? v.getUint16(1, true) : v.getUint8(1), at: Date.now(), name: dev.name}; });
+      await ch.startNotifications(); dev.addEventListener("gattserverdisconnected", () => { delete CONN.hr; });
+      setRes(id, `<b>Connected: ${dev.name || "heart-rate strap"}.</b> Your live heart rate now drives the body.`);
+    }
+    if (id === "iss") {
+      setRes(id, "Connecting to NASA ISS Live…");
+      const go = () => { const c = new LightstreamerClient("https://push.lightstreamer.com", "ISSLIVE");
+        const sub = new Subscription("MERGE", ["NODE3000003", "USLAB000058", "USLAB000059"], ["TimeStamp", "Value"]);
+        sub.addListener({onItemUpdate: u => { const v = parseFloat(u.getValue("Value")), n = u.getItemName(), ts = parseFloat(u.getValue("TimeStamp"));
+          CONN.iss = CONN.iss || {}; if (n === "NODE3000003") { CONN.iss.co2 = v; const y0 = Date.UTC(new Date().getUTCFullYear(), 0, 1); CONN.iss.ageH = (Date.now() - y0) / 36e5 - ts; } if (n === "USLAB000058") CONN.iss.p = v; if (n === "USLAB000059") CONN.iss.t = v;
+          setRes("iss", `<b>Live from the ISS:</b> CO₂ ${f(CONN.iss.co2, 2)} mmHg${CONN.iss.ageH > 1 ? ` (reading ${f(CONN.iss.ageH / 24, 1)} days old)` : ""} · pressure ${f(CONN.iss.p, 1)} mmHg · ${f(CONN.iss.t, 1)} °C`); renderTiles(); }});
+        c.subscribe(sub); c.connect(); };
+      if (window.LightstreamerClient) go(); else { const s = document.createElement("script"); s.src = "https://unpkg.com/lightstreamer-client-web@9.2.3/lightstreamer.min.js"; s.onload = go; s.onerror = () => setRes("iss", "Couldn't reach ISS Live. Using the snapshot."); document.head.appendChild(s); }
+    }
+    if (id === "donki") {
+      setRes(id, "Asking NASA DONKI…");
+      const end = new Date(), st = new Date(Date.now() - 30 * DAY), ymd = x => x.toISOString().slice(0, 10);
+      const items = await (await fetch(`https://ccmc.gsfc.nasa.gov/DONKI-API/get/notifications?startDate=${ymd(st)}&endDate=${ymd(end)}&type=all`)).json();
+      const c = {}; items.forEach(i => c[i.messageType] = (c[i.messageType] || 0) + 1); CONN.donki = c;
+      const names = {CME: "solar eruptions (CME)", RBE: "radiation-belt alerts", SEP: "solar particle events", FLR: "solar flares", GST: "geomagnetic storms", IPS: "shock arrivals", Report: "weekly reports", MPC: "magnetopause crossings"};
+      setRes(id, `<b>Live, last 30 days:</b> ${Object.entries(c).map(([k2, n]) => `${n} ${names[k2] || k2}`).join(" · ") || "quiet"}. ${c.SEP ? "A particle event was reported: your flight surgeon may ask you to shelter." : "No solar particle events: nothing for you to do."}`);
+    }
+    if (id === "radlab") {
+      setRes(id, "Asking NASA OSDR RadLab…");
+      try { const r = await fetch("https://visualization.osdr.nasa.gov/radlab/api/?query=(timestamp%3E=2019-12-05)AND(timestamp%3C2019-12-05T01:00)&fields+=absorbed_dose_rate,module&format=csv"); await r.text(); setRes(id, "<b>Connected.</b>"); }
+      catch (e) { const m = (SM.radlab && SM.radlab.modules) || [], n3 = m.find(x => x.module === "Node 3") || m[0];
+        setRes(id, `NASA's RadLab server doesn't allow direct calls from a web page (no CORS header), so this shows the sample our script fetched from the same API: ${SM.radlab ? SM.radlab.query_window : ""}, ${SM.radlab ? SM.radlab.rows : 0} readings. ${n3 ? `${n3.module} (${n3.instrument}): ${f(n3.mean_uGy_h, 1)} µGy/h ≈ ${f(n3.mean_uGy_h * 24 / 1000, 2)} mGy a day, in line with the 0.5 mSv/day used here.` : ""} A real app would call it from a small server.`); }
+    }
+  } catch (e) { setRes(id, `Not connected: ${e.message || e}.`); }
+}
+
+// ---------------- guided flows: one thing per screen ----------------
+let flow = [], k = 0, cur, scratch = {}, running = null;
+const scanSteps = area => [`si:${area}`, ...AREAS[area].steps.map((_, i) => `sp:${area}:${i}`), `sr:${area}`, `ss:${area}`];
+const expand = list => list.flatMap(s => s === "daily" ? ["d1", "d2", "d3", "d4"] : s.startsWith("scan:") ? scanSteps(s.split(":")[1]) : [s]);
+const pointer = (area, ring) => { const a = AREAS[area]; return outline(`<circle cx="${a.pt[0]}" cy="${a.pt[1]}" r="10" fill="#3f5bff"/>${ring ? `<circle class="halo" cx="${a.pt[0]}" cy="${a.pt[1]}" r="10"/>` : ""}`); };
+const PH_DEF = {training: [7.5, 62, 118, 76, 36.6, 90], launch: [6, 70, 124, 80, 36.7, 92], arrive: [5, 68, 120, 78, 36.8, 92], orbit: [5.5, 64, 116, 74, 36.7, 88], prereturn: [6, 66, 114, 72, 36.7, 90], landed: [6.5, 82, 108, 70, 36.9, 94], after: [7, 70, 114, 74, 36.7, 90]};
+const STEP = {
+  welcome1: () => ({ill: I.hand, title: "Hi, I'm Baseline", sub: "I help you notice changes in your body, from your first training day to the day you're home. I compare you with you, not with anyone else."}),
+  welcome2: () => ({ill: I.lock, title: "Your data is yours", sub: "Your check-ins stay with you. Scan images and anything that could affect your safety go to your flight surgeon, and you'll always see exactly what was sent."}),
+  welcome3: () => ({ill: I.list, title: "How it works", html: `<div class="check"><span>1</span>During training: a short check every day builds your normal, plus 6 baseline scans.</div><div class="check"><span>2</span>One last check before you board, one when you arrive.</div><div class="check"><span>3</span>In space: 90 seconds a day, monitoring runs on its own, and I guide every scan.</div><div class="check"><span>4</span>One check before you go home, and one when you land.</div>`}),
+  welcome4: () => ({title: "A bit about you", html: `<span class="lab">First name</span><input type="text" id="nm" placeholder="Your first name" value="${S.name || ""}"><div class="grid3"><div><span class="lab">Age</span><input type="number" id="ag" value="${S.age}"></div><div><span class="lab">Height cm</span><input type="number" id="ht" value="${S.height}"></div><div><span class="lab">Weight kg</span><input type="number" id="wt" value="${S.weight}"></div></div><span class="lab">Body outline</span><div class="chips" id="sx"><button class="chip ${S.sex === "f" ? "on" : ""}" data-v="f">Female</button><button class="chip ${S.sex === "m" ? "on" : ""}" data-v="m">Male</button></div><span class="lab">Launch date (I count the days from here)</span><input type="date" id="ld" value="${new Date(S.launch * DAY).toISOString().slice(0, 10)}">`,
+    init() { $$("#sx .chip").forEach(c => c.onclick = () => $$("#sx .chip").forEach(x => x.classList.toggle("on", x === c))); },
+    save() { S.name = $("#nm").value.trim(); S.sex = $("#sx .chip.on").dataset.v; S.age = +$("#ag").value || S.age; S.height = +$("#ht").value || S.height; S.weight = +$("#wt").value || S.weight;
+      const ld = Date.parse($("#ld").value); if (!isNaN(ld)) { S.launch = Math.floor(ld / DAY); S.travel = 0; } }, go: "Let's start"}),
+  d1: () => { const v = (PH_DEF[phase()] || PH_DEF.training)[0];
+    return {title: "How long did you sleep?", html: `<div class="bigval"><span id="slv">${v}</span> h</div><input type="range" id="sl" min="3" max="10" step=".5" value="${v}">`, init() { $("#sl").oninput = e => $("#slv").textContent = e.target.value; }, save() { scratch.sleep = +$("#sl").value; }}; },
+  d2: () => ({title: "How are you feeling?", sub: "Only you see this.", needs: !scratch.mood, html: `<div class="faces" id="fc">${["😞", "🙁", "😐", "🙂", "😄"].map((e, i) => `<button data-v="${i + 1}" class="${scratch.mood === i + 1 ? "on" : ""}" aria-label="${["Very low", "Low", "Okay", "Good", "Great"][i]}">${e}</button>`).join("")}</div>`,
+    init() { $$("#fc button").forEach(b => b.onclick = () => { $$("#fc button").forEach(x => x.classList.toggle("on", x === b)); scratch.mood = +b.dataset.v; $("#goBtn").disabled = false; }); }}),
+  d3: () => ({title: "Anything bothering you?", sub: "Tap any that apply, or just continue.", html: `<div class="chips" id="sy">${["Headache", "Stuffy nose", "Back pain", "Feeling sick", "Dizzy"].map(s => `<button class="chip">${s}</button>`).join("")}</div>`,
+    init() { $$("#sy .chip").forEach(c => c.onclick = () => c.classList.toggle("on")); }, save() { scratch.symptoms = $$("#sy .chip.on").map(c => c.textContent); }}),
+  d4: () => { const dv = (PH_DEF[phase()] || PH_DEF.training).slice(1), v = vitalsNow();
+    return {title: "Your readings", sub: CONN.hr ? "Heart rate is filled in from your strap. Add the rest if you measured them." : "Type in what you measured, or tap Connect on the body to stream it. Pre-filled for the demo.", skip: true,
+      html: `<div class="grid2"><div><span class="lab">Heart rate</span><input type="number" id="hr" value="${CONN.hr ? v.hr : dv[0]}"></div><div><span class="lab">Temperature °C</span><input type="number" id="tp" step=".1" value="${dv[3]}"></div><div><span class="lab">Blood pressure (top)</span><input type="number" id="bp" value="${dv[1]}"></div><div><span class="lab">Blood pressure (bottom)</span><input type="number" id="bpd" value="${dv[2]}"></div><div><span class="lab">Blood sugar mg/dL</span><input type="number" id="gl" value="${dv[4]}"></div></div>`,
+      save() { Object.assign(scratch, {hr: +$("#hr").value, sbp: +$("#bp").value, dbp: +$("#bpd").value, temp: +$("#tp").value, glu: +$("#gl").value}); },
+      after() { L().daily = Object.assign({}, L().daily || {}, scratch); }}; },
+  rt: () => ({title: "Reflex game", sub: "Tap the box as soon as it turns blue. 10 taps (the real test runs 3 minutes).", needs: true, html: `<div class="pad" id="pad" tabindex="0">Tap to start</div><div class="box" id="rto" hidden></div>`,
+    init() { const pad = $("#pad"); let st = "idle", t0 = 0, ts = [], tm; const nx = () => { st = "wait"; pad.classList.remove("go2"); pad.textContent = "Wait for it…"; tm = setTimeout(() => { st = "go"; pad.classList.add("go2"); pad.textContent = "Tap!"; t0 = performance.now(); }, 800 + Math.random() * 1700); };
+      const hit = () => { if (st === "idle") { ts = []; nx(); } else if (st === "wait") { clearTimeout(tm); pad.textContent = "A bit early. Wait for blue"; setTimeout(nx, 700); }
+        else if (st === "go") { ts.push(performance.now() - t0); if (ts.length >= 10) { st = "done"; pad.classList.remove("go2"); const m = Math.round(ts.sort((a, b) => a - b)[5]); L().rt = m;
+          pad.textContent = "Done 🎉"; $("#rto").hidden = false; $("#rto").innerHTML = `Your speed: <b>${m} ms</b>${phase() === "training" ? " · added to your normal" : ` · your normal ${f(base().rt)} ms`}`; $("#goBtn").disabled = false; } else nx(); } };
+      pad.onclick = hit; pad.onkeydown = e => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); hit(); } }; }}),
+  pick: () => { const due = dueScans(), tr = day() <= 0, a = due.length ? due[0].a : tr ? missingBase()[0] : null, ts = trainingScans();
+    return {title: "Which area?", sub: tr ? "All 6 are needed before launch. Tap a spot or a name." : "Tap a spot on the body or a name below.", needs: true,
+      html: `<div class="scanpick"><div id="pfig">${outline(Object.entries(AREAS).map(([k2, x]) => { const s = scanState(k2).l; return `${k2 === a ? `<circle class="halo" cx="${x.pt[0]}" cy="${x.pt[1]}" r="8"/>` : ""}<circle class="spot ${s === "none" ? "" : s}" data-a="${k2}" cx="${x.pt[0]}" cy="${x.pt[1]}" r="9"><title>${x.label}</title></circle>`; }).join(""))}</div>
+        <div class="arealist" id="plist">${Object.entries(AREAS).map(([k2, x]) => { const s = scanState(k2), done = tr && ts.has(k2);
+          return `<button data-a="${k2}"><span><b>${x.label}</b>${k2 === a ? ` <span class="tag">${tr ? "next" : "due"}</span>` : ""}<br><span class="sub">${done ? "Baseline saved ✓" : s.line}</span></span><span class="pill none" style="padding:2px 8px">${mins(k2)}</span></button>`; }).join("")}</div></div>`,
+      init() { const go = e => { const t = e.target.closest("[data-a]"); if (!t) return; flow.splice(k + 1, flow.length - k - 1, ...scanSteps(t.dataset.a)); advance(true); }; $("#pfig").onclick = go; $("#plist").onclick = go; $("#goBtn").hidden = true; }}; },
+  si: area => { const a = AREAS[area]; return {ill: pointer(area, true), title: `${a.label} scan`, sub: `${a.why} Takes ${a.time}. I'll guide you step by step, and you can stop any time.`,
+    html: `<div class="box"><b>You'll need</b><div class="check"><span>✓</span>Ultrasound probe and the crew tablet</div><div class="check"><span>✓</span>Gel and a towel</div><div class="check"><span>✓</span>${onGround() ? "A bed or chair" : "A foot restraint, so you stay still"}</div></div>`, go: "I'm ready"}; },
+  sp: (area, i) => { const s = AREAS[area].steps[i]; return {ill: pointer(area, s[0] === "Place it here"), title: s[0], sub: s[1], go: i === AREAS[area].steps.length - 1 ? "Record" : "Done, next"}; },
+  sr: () => ({title: "Recording…", sub: "Hold still. I'm checking the image quality.", needs: true, html: `<div class="box"><div id="qtx">Image quality: adjusting…</div><div class="quality"><i id="qb"></i></div></div>`, go: "Send to my doctors",
+    init() { let p = 0; const t = setInterval(() => { p += 20; if ($("#qb")) $("#qb").style.width = p + "%"; if (p >= 60 && $("#qb")) { $("#qb").style.background = "var(--ok)"; $("#qtx").textContent = "Image quality: good ✓"; } if (p >= 100) { clearInterval(t); $("#goBtn").disabled = false; } }, 300); }}),
+  ss: area => { const tr = day() <= 0, rest = tr ? missingBase().filter(a => a !== area) : [], nextA = rest[0];
+    return {ill: I.sent, title: "Sent to your doctors", sub: `Your images are on their way${mars() && !nearDoctors() ? " (up to 20 minutes to reach Earth)" : ""}. Radiologists will look at them and reply in Messages. I don't diagnose; they do.${tr ? ` <b>${6 - rest.length} of 6 baseline scans done.</b>` : ""}`,
+      go: nextA ? `Next: ${AREAS[nextA].label} (${mins(nextA)})` : "Done", skip: !!nextA, skipLabel: "Stop for today", chain: nextA ? () => [`scan:${nextA}`] : null,
+      after() { if (cur.sent) return; cur.sent = true; const at = Date.now(), lag = nearDoctors() ? 1000 : delayMs(), reply = tr ? "normal" : S.reply, name = AREAS[area].label.toLowerCase();
+        S.scans.push({area, at, reply, repliedAt: at + 2 * lag + 2500, mission: S.mission, day: day()});
+        S.msgs.push({me: true, auto: true, mission: S.mission, at: at + lag, text: `${AREAS[area].label} ultrasound images${tr ? " (baseline)" : ""}`});
+        S.msgs.push({me: false, mission: S.mission, at: at + 2 * lag + 2500, text: tr ? `Got your baseline ${name} scan. Good images, saved for comparison during the mission.` : {normal: `We've looked at your ${name} scan. It looks like your baseline, nothing to do. Thanks!`, followup: `Thanks for the ${name} scan. We'd like a follow-up scan next week. Nothing to worry about right now; keep your normal routine.`, urgent: `Please call us at the next opportunity about your ${name} scan. Don't start any medicine until we've talked; we'll walk you through the next steps.`}[reply]}); }}; },
+  stand: () => ({title: "Stand-up test", sub: "With someone helping you. Lie still for 2 minutes, then stand. Heart rate and blood pressure are recorded. Shown sped up.", needs: true, html: `<svg class="viz" id="hrv" viewBox="0 0 300 90" style="height:90px"></svg><div class="box" id="sto">Measuring…</div>`,
+    init() { const tr = phase() === "training", hr = tr ? D.examples.baseline.hr : D.examples.today.hr, t = D.curve.t, sel = (a, b) => t.map((x, j) => (x >= a && x < b) ? hr[j] : null).filter(v => v !== null && v !== undefined), mean = a => a.reduce((x, y) => x + y, 0) / a.length, b0 = mean(sel(-60, 0)), rise = Math.round(mean(sel(60, 241)) - b0);
+      const pts = hr.map((v, j) => v === null ? null : [j, v - b0]).filter(Boolean), xy = ([x, y]) => `${(x / (hr.length - 1) * 300).toFixed(1)},${(90 - (y + 10) / 45 * 90).toFixed(1)}`; let n = 0;
+      $("#hrv").innerHTML = `<line x1="100" x2="100" y1="0" y2="90" stroke="#c7cdd9" stroke-dasharray="3 3"/><text x="104" y="11" font-size="10" fill="#6f7689">stand up</text><polyline id="pl" fill="none" stroke="#3f5bff" stroke-width="2"/>`;
+      const tm = setInterval(() => { n += 12; if ($("#pl")) $("#pl").setAttribute("points", pts.slice(0, n).map(xy).join(" ")); if (n >= pts.length) { clearInterval(tm); const drop = tr ? 4 : 14; L().stand = {hr: rise, sbpDrop: drop};
+        $("#sto").innerHTML = `Heart rate <b>+${rise}</b> · blood pressure <b>−${drop}</b> when standing${tr ? " · saved as your normal" : ` · your normal +${f(base().stand)}`} <span class="tag">Earth data</span>`; $("#goBtn").disabled = false; } }, 30); }}),
+  meds: () => { const land = LAND(), items = [{n: "Anti-nausea (for landing)", exp: land - 10}, {n: "Pain relief", exp: land + 200}, {n: "Salt tablets (for fluid loading)", exp: land + 400}];
+    return {title: "Landing medicines", sub: "Checking each expiry date against your landing day.", html: items.map(i => `<div class="check"><span style="${i.exp < land ? "background:var(--watch-soft);color:var(--watch)" : ""}">${i.exp < land ? "!" : "✓"}</span><span style="all:unset">${i.n}: ${i.exp < land ? "<b>expires before landing, use the backup pack</b>" : "fine"}</span></div>`).join("") + `<div class="sub" style="margin-top:8px">Before deorbit you'll also drink 24–48 oz of salty water (by body weight) to help your blood pressure. <span class="tag">demo kit</span></div>`,
+      after() { L().meds = items.map(i => ({n: i.n, expired: i.exp < land})); }}; },
+  connect: () => ({title: "Connect equipment", sub: "Real connections where an open API exists. Everything else stays simulated and is labelled.", go: "Done",
+    html: SOURCES.map(s => `<div class="src"><div class="h"><b>${s.name}</b>${s.btn ? `<button class="btn sm" data-c="${s.id}">${CONN[s.id] ? "Reconnect" : s.btn}</button>` : '<span class="tag">simulated</span>'}</div><div class="d">${s.what}</div><div class="r" id="r-${s.id}"></div></div>`).join("") + `<button class="btn ghost" id="manBtn" style="width:100%;margin-top:12px">Or type readings in by hand</button>`,
+    init() { $$("[data-c]").forEach(b => b.onclick = () => connect(b.dataset.c)); $("#manBtn").onclick = () => { flow = ["d4"]; k = 0; show(); }; }}),
+  fin: () => { const st = statuses(); return {ill: I.done, title: st.length ? (st.length === 1 ? "Saved. One thing to keep an eye on" : `Saved. ${st.length} things to keep an eye on`) : "All saved. Nice!", sub: st.length ? cap(st.map(x => x.what).join("; ")) + "." : phase() === "training" ? `Added to your normal (${pl(baseInfo().n, "training day")} so far).` : "Everything is in line with your normal.", go: "Done"}; },
+  share: () => { const items = shareItems(); return {title: "Share with your flight surgeon?", sub: "Totally your choice.", go: "Send",
+    html: items.map(x => `<div class="check"><span style="background:var(--watch-soft);color:var(--watch)">!</span><span style="all:unset">${cap(x.what)}</span></div>`).join("") + `<label class="consent"><input type="checkbox" id="det"><span>Include my numbers (otherwise just the summary)</span></label>`,
+    after() { const det = $("#det").checked, lag = nearDoctors() ? 1000 : delayMs(), at = Date.now(), d = L().daily || {};
+      S.msgs.push({me: true, mission: S.mission, at: at + lag, text: cap(items.map(x => x.what).join("; ")) + (det && d.hr ? ` · HR ${d.hr}, BP ${d.sbp}/${d.dbp}, sleep ${d.sleep} h` : "")});
+      S.msgs.push({me: false, mission: S.mission, at: at + 2 * lag + 2000, text: "Thanks for letting us know. Nothing urgent from our side. Keep following your plan and tell us if it changes."}); }}; },
+  rules: () => ({title: "How I decide what to tell Earth", go: "Got it", html: `<table class="rules"><tr><th>What</th><th>When</th><th>Who is told</th></tr><tr><td>Any scan</td><td>Always</td><td>Images go to your doctors <b>automatically</b>; they decide what it means</td></tr><tr><td>Required scans</td><td>More than 3 days overdue</td><td>You first; then it shows in your flight surgeon's next report</td></tr><tr><td>Vital signs</td><td>Outside safe limits (e.g. heart rate ≤40 or ≥131, blood sugar &lt;54)</td><td>Flight surgeon, <b>automatically</b></td></tr><tr><td>Vital signs, sleep, reflexes</td><td>Off your normal</td><td>You, and you choose whether to share</td></tr><tr><td>Mood</td><td>Any</td><td><b>Only you</b>, never sent automatically</td></tr><tr><td>Medicines</td><td>Expire before landing</td><td>You, and you use the backup pack</td></tr></table><div class="sub" style="margin-top:8px">Your normal is the middle value of everything you recorded during training. Limits: NASA-STD-3001 where NASA sets a number; otherwise clinical scores (NEWS2, ADA).</div>`}),
+};
+function runStep(id) { const [n, a, b] = id.split(":"); return ["si", "sp", "sr", "ss"].includes(n) ? STEP[n](a, b !== undefined ? +b : undefined) : STEP[id](); }
+function openFlow(list, item) { flow = expand(list); k = 0; scratch = {}; running = item || null; $("#scrim").classList.add("on"); $("#sheet").classList.add("on"); show(); }
+function closeFlow() { $("#scrim").classList.remove("on"); $("#sheet").classList.remove("on"); render(); cloudSync(); }
+function show() { cur = runStep(flow[k]);
+  $("#prog").style.visibility = flow.length > 1 ? "visible" : "hidden"; $("#prog i").style.width = `${(k + 1) / flow.length * 100}%`;
+  $("#stepBody").innerHTML = `${cur.ill ? `<div class="illu">${cur.ill}</div>` : ""}<p class="st">${cur.title}</p>${cur.sub ? `<p class="ss">${cur.sub}</p>` : ""}${cur.html || ""}`;
+  $("#goBtn").hidden = false; $("#goBtn").disabled = !!cur.needs; $("#goBtn").textContent = cur.go || (k === flow.length - 1 ? "Done" : "Next");
+  $("#skipBtn").hidden = !cur.skip; $("#skipBtn").textContent = cur.skipLabel || "Skip this"; $("#sheet").scrollTop = 0; cur.init && cur.init(); }
+function advance(skipped) { if (!skipped) cur.save && cur.save(); const chain = !skipped && cur.chain ? cur.chain : null; cur.after && cur.after();
+  if (chain) flow.push(...expand(chain()));
+  if (k < flow.length - 1) { k++; show(); return; }
+  if (flow[0] === "welcome1") S.onboarded = true;
+  if (running) { const l = L(); l.done = l.done || {}; l.done[running] = true; }
+  autoVitals(); closeFlow(); }
+function autoVitals() { if (statuses().some(x => x.auto === "vitals") && !S.msgs.some(m => m.autoV === key())) { const at = Date.now(), lag = nearDoctors() ? 1000 : delayMs(), d = L().daily;
+  S.msgs.push({me: true, auto: true, autoV: key(), mission: S.mission, at: at + lag, text: `Vital signs outside safe limits: HR ${d.hr}, BP ${d.sbp}/${d.dbp}, ${d.temp} °C, blood sugar ${d.glu}`});
+  S.msgs.push({me: false, mission: S.mission, at: at + 2 * lag + 2000, text: "We see your numbers. Please re-measure now and stay with a crewmate; we're on it."}); } }
+$("#goBtn").onclick = () => advance(false); $("#skipBtn").onclick = () => advance(true);
+// closing on the "sent" screen still records the scan that was just sent
+$("#closeBtn").onclick = () => { if (flow[0] === "welcome1") S.onboarded = true; if (cur && flow[k] && flow[k].startsWith("ss:")) cur.after(); closeFlow(); }; $("#scrim").onclick = () => $("#closeBtn").onclick();
+document.addEventListener("keydown", e => { if (e.key === "Escape" && $("#sheet").classList.contains("on")) $("#closeBtn").onclick(); });
+
+$("#mainBtn").onclick = () => { const n = plan().find(x => !x.done); if (n) openFlow(n.flow, n.flow[0].startsWith("scan:") ? null : n.id); };
+$("#scanBtn").onclick = () => openFlow(scanTarget ? [`scan:${scanTarget}`] : ["pick"]);
+$("#scanOther").onclick = () => openFlow(["pick"]);
+$("#scanBody").onclick = e => { const t = e.target.closest("[data-a]"); if (t) openFlow([`scan:${t.dataset.a}`]); };
+$("#connBtn").onclick = () => openFlow(["connect"]);
+$("#enterBtn").onclick = () => openFlow(["d4"]);
+$("#tiles").onclick = e => { const t = e.target.closest("[data-t]"); if (t) { S.open = S.open === t.dataset.t ? null : t.dataset.t; render(); } };
+const tour = () => openFlow(["welcome1", "welcome2", "welcome3", "welcome4"]);
+$("#helpBtn").onclick = tour; $("#tourBtn").onclick = tour; $("#rulesBtn").onclick = () => openFlow(["rules"]);
+$("#demoLink").onclick = () => { S.demoOpen = !S.demoOpen; render(); };
+$("#dMission").onchange = e => { S.mission = e.target.value; S.open = null; render(); };
+$("#dDay").oninput = e => { S.travel = +e.target.value + S.launch - todayIdx(); S.open = null; render(); };
+$("#dReply").onchange = e => { S.reply = e.target.value; render(); };
+$("#dSeed").onclick = () => { const days = ((D.crew && D.crew[0] && D.crew[0].days) || []).slice(20, 50), now = Date.now();
+  for (let i = 1; i <= 30; i++) { const r = days[i - 1] || {}, l = S.log[`${S.mission}:${-i}`] = S.log[`${S.mission}:${-i}`] || {};
+    l.daily = {sleep: r.sleep_min ? Math.round(r.sleep_min / 30) / 2 : 7, mood: 3 + (i % 3 ? 1 : 0), hr: 58 + (i * 7) % 7, sbp: 114 + (i * 5) % 8, dbp: 74 + (i * 3) % 5, temp: 36.5 + (i % 3) / 10, glu: 86 + (i * 11) % 9};
+    l.rt = 285 + (i * 13) % 30; l.done = {train: true}; if (i === 10) l.stand = {hr: 8, sbpDrop: 4}; }
+  const have = new Set(S.scans.filter(s => s.mission === S.mission && s.day < 0).map(s => s.area));
+  Object.keys(AREAS).forEach((a, i) => { if (!have.has(a)) S.scans.push({area: a, at: now, reply: "normal", repliedAt: now, mission: S.mission, day: -(20 - i * 2)}); });
+  render(); };
+$("#dReset").onclick = () => { S = Object.assign(structuredClone(DEF), {demoOpen: true}); render(); tour(); };
+// ---------------- cloud: optional sync to the mission database (Supabase) ----------------
+// Signed out, everything stays on this device. Signed in, check-ins and anything you send to
+// your doctors are copied to the database, where row-level security keeps them private to you.
+const SB_URL = "https://eyfkcygyrjwyebykhrjr.supabase.co", SB_KEY = "sb_publishable_Yy9P-e52LN-NDCwer8frsA_4qvjtNOH";   // public values, safe in a browser
+let sb = null; try { sb = window.supabase ? window.supabase.createClient(SB_URL, SB_KEY) : null; } catch (e) { sb = null; }
+const CLOUD = {user: null, crew: null, stored: null, last: null, err: null, busy: false, sig: ""};
+const PHASE_DB = {training: "preflight", launch: "preflight", arrive: "early_orbit", orbit: "long_stay", prereturn: "pre_landing", landed: "recovery", after: "recovery"};
+const esc = t => String(t ?? "").replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
+const num = (x, lo, hi) => (typeof x === "number" && isFinite(x) && x >= lo && x <= hi) ? x : null;
+function renderCloud() { const b = $("#cloudBtn"); if (!b) return;
+  b.textContent = !sb ? "This device only" : CLOUD.crew ? `Synced · ${CLOUD.crew.callsign}` : CLOUD.user ? "Signed in · not linked" : "Sign in";
+  b.title = !sb ? "The sync service could not be loaded. Everything is saved on this device." : CLOUD.crew ? "Your check-ins are copied to the mission database." : "Optional: sign in to copy your check-ins to the mission database."; }
+async function cloudLoad() { if (!sb) return renderCloud();
+  try { const {data} = await sb.auth.getSession(); CLOUD.user = data && data.session ? data.session.user : null; CLOUD.crew = null; CLOUD.stored = null; CLOUD.err = null;
+    if (CLOUD.user) { const r = await sb.from("crew").select("id,callsign,role").eq("user_id", CLOUD.user.id).maybeSingle();
+      if (r.error) CLOUD.err = r.error.message; CLOUD.crew = r.data || null; }
+  } catch (e) { CLOUD.err = e.message || String(e); }
+  renderCloud(); if (CLOUD.crew) cloudSync(true); }
+function cloudRows() { const out = [];
+  for (const [k2, v] of Object.entries(S.log)) { const [m, ds] = k2.split(":"), d = +ds, x = v.daily || {}; if (m !== S.mission || (!v.daily && !v.rt)) continue;
+    out.push({crew_id: CLOUD.crew.id, mission_day: d, phase: PHASE_DB[phase(d)], mood: num(x.mood, 1, 5), sleep_min: num(x.sleep, 0, 24) === null ? null : Math.round(x.sleep * 60),
+      resting_hr: num(x.hr, 20, 250), systolic: num(x.sbp, 40, 300), diastolic: num(x.dbp, 20, 200), temp_c: num(x.temp, 30, 45), glucose_mgdl: num(x.glu, 10, 800), reaction_ms: num(v.rt, 50, 5000),
+      headache: x.symptoms ? x.symptoms.includes("Headache") : null, slept_badly: null,
+      notes: `Mission: ${MISSIONS[m].name}${x.symptoms && x.symptoms.length ? ` · reported: ${x.symptoms.join(", ")}` : ""}`}); }
+  return out; }
+async function cloudSync(force) { if (!sb || !CLOUD.crew || CLOUD.busy) return; CLOUD.busy = true;
+  try { const rows = cloudRows(), sig = JSON.stringify(rows);
+    if (rows.length && (force || sig !== CLOUD.sig)) { const r = await sb.from("checkins").upsert(rows, {onConflict: "crew_id,mission_day"}); if (r.error) throw r.error; CLOUD.sig = sig; }
+    // messages you sent to your doctors: scans and shares you pressed Send on, plus the automatic safety-limit message
+    const pend = S.msgs.filter(m => m.me && !m.cloud);
+    if (pend.length) { const now = Date.now(), pk = pend.map(m => { const dl = MISSIONS[m.mission] ? MISSIONS[m.mission].delayMin : 0;
+        return {crew_id: CLOUD.crew.id, consented: !m.autoV, auto_safety: !!m.autoV, sent_at: new Date(now).toISOString(), one_way_delay_min: +dl.toFixed(3), earliest_reply_at: new Date(now + 2 * dl * 6e4).toISOString(),
+          summary: {kind: m.autoV ? "vitals_outside_safe_limits" : m.auto ? "scan_images" : "shared_by_crew", text: m.text, mission: m.mission}}; });
+      const r = await sb.from("ground_packets").insert(pk); if (r.error) throw r.error; pend.forEach(m => m.cloud = true); save(); }
+    const c = await sb.from("checkins").select("id", {count: "exact", head: true}); if (!c.error) CLOUD.stored = c.count;
+    CLOUD.last = new Date(); CLOUD.err = null;
+  } catch (e) { CLOUD.err = e.message || String(e); }
+  CLOUD.busy = false; renderCloud(); const box = $("#cloudBox"); if (box) box.innerHTML = cloudStatusHtml(); }
+function cloudStatusHtml() {
+  if (!CLOUD.user) return "";
+  if (!CLOUD.crew) return `<b>Signed in, but not linked to a crew member yet.</b><div class="sub">Ask the mission admin to link this account. Until then, everything stays on this device.</div>${CLOUD.err ? `<div class="sub">Details: ${esc(CLOUD.err)}</div>` : ""}`;
+  return `<div class="check"><span>✓</span>Linked to <b style="margin-left:4px">${esc(CLOUD.crew.callsign)}</b></div>`
+    + `<div class="check"><span>✓</span>${CLOUD.stored === null ? "Checking the database…" : `${pl(CLOUD.stored, "check-in")} stored for you <span class="tag" style="margin-left:6px">simulated history included</span>`}</div>`
+    + (CLOUD.err ? `<div class="note watch" style="margin:8px 0 0">Last sync did not go through: ${esc(CLOUD.err)}. Your data is still saved on this device.</div>` : `<div class="sub" style="margin-top:6px">${CLOUD.last ? `Last synced at ${CLOUD.last.toLocaleTimeString()}.` : "Not synced yet in this session."} Only you can read your check-ins. Your flight surgeon sees only what you send.</div>`); }
+STEP.signin = () => !sb ? ({title: "Saved on this device", sub: "The sync service could not be loaded, so nothing leaves this device. Everything else works as usual.", go: "OK"})
+  : CLOUD.user ? ({title: "Mission database", sub: "", go: "Done",
+      html: `<div class="sub" id="cloudWho"></div><div class="box" id="cloudBox">${cloudStatusHtml()}</div><div class="grid2" style="margin-top:12px"><button class="btn ghost" id="cloudNow">Sync now</button><button class="btn ghost" id="cloudOut">Sign out</button></div>`,
+      init() { $("#cloudWho").textContent = `Signed in as ${CLOUD.user.email || "your account"}`; $("#cloudNow").onclick = () => cloudSync(true);
+        $("#cloudOut").onclick = async () => { await sb.auth.signOut(); CLOUD.user = CLOUD.crew = null; CLOUD.sig = ""; renderCloud(); show(); }; }})
+  : ({title: "Sign in to sync", sub: "Optional. Without signing in, everything stays on this device. Use the demo account your mission admin gave you.",
+      html: `<span class="lab">Email</span><input type="email" id="cEm" autocomplete="username"><span class="lab">Password</span><input type="password" id="cPw" autocomplete="current-password"><div class="note watch" id="cMsg" style="margin:12px 0 0" hidden></div><button class="btn go" id="cGo">Sign in</button>`,
+      init() { $("#goBtn").hidden = true; const go = async () => { const b = $("#cGo"), msg = $("#cMsg"); b.disabled = true; b.textContent = "Signing in…"; msg.hidden = true;
+          let err = null; try { const r = await sb.auth.signInWithPassword({email: $("#cEm").value.trim(), password: $("#cPw").value}); err = r.error; } catch (e) { err = e; }
+          if (err) { b.disabled = false; b.textContent = "Sign in"; msg.hidden = false; msg.textContent = `Could not sign in: ${err.message || err}`; return; }
+          await cloudLoad(); if ($("#sheet").classList.contains("on") && flow[k] === "signin") show(); };
+        $("#cGo").onclick = go; $("#cPw").onkeydown = e => { if (e.key === "Enter") go(); }; }});
+$("#cloudBtn").onclick = () => openFlow(["signin"]);
+if (sb) sb.auth.onAuthStateChange(ev => { if (ev === "SIGNED_OUT" || ev === "TOKEN_REFRESHED") setTimeout(() => { if (ev === "SIGNED_OUT") { CLOUD.user = CLOUD.crew = null; renderCloud(); } }, 0); });
+
+if (/[?&]demo/.test(location.search)) S.demoOpen = true;
+setInterval(() => { if (!document.hidden) renderHolo(false); const now = Date.now(); if ([...S.msgs.map(m => m.at), ...S.scans.map(s => s.repliedAt)].some(t => t > now - 1500) && !$("#sheet").classList.contains("on")) render(); }, 1000);
+render(); renderCloud(); cloudLoad();
+if (!S.onboarded) tour();
+})();
+</script>
+</body>
+</html>
