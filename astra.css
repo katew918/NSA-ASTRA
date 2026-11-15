@@ -1145,3 +1145,6 @@ rect.ch-cursor{fill:var(--navy);stroke:none;opacity:.06}
 .cmp-body:empty{display:none}
 #holoFig.is3d{height:420px}
 @media (max-width:640px){.callbar{flex-wrap:wrap}.cb-time{margin-left:auto}#holoFig.is3d{height:320px}}
+#holoFig:has(.b2d) .b3-reset{display:none}
+#holoFig:has(.b2d){height:440px}
+@media (max-width:640px){#holoFig:has(.b2d){height:340px}}

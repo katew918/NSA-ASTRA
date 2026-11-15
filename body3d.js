@@ -1,262 +1,76 @@
 (() => {
-const URL3 = "https://esm.sh/three@0.160.0";
-const URL3_FALLBACK = "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
-const URL_LOADER = "https://esm.sh/three@0.160.0/examples/jsm/loaders/GLTFLoader.js";
-const URL_MODEL = "https://cdn.jsdelivr.net/gh/mrdoob/three.js@r160/examples/models/gltf/Xbot.glb";
-const MODEL_WAIT = 8000;
+const NS = "http://www.w3.org/2000/svg";
+const BODY = "M197 70C200 69 200 69 203 70C205 70 209 70 211 71C213 72 214 72 217 73C219 74 221 75 224 77C226 79 230 83 232 85C233 87 233 88 234 90C235 92 235 93 236 96C236 98 236 100 237 106C237 111 237 121 237 128C236 134 236 139 235 143C234 147 233 151 232 154C231 157 230 159 228 161C226 163 224 166 223 168C221 170 221 170 221 172C221 173 221 177 221 179C221 180 221 177 221 179C221 181 221 187 222 189C222 191 223 192 225 193C226 193 226 194 228 194C230 194 232 194 236 194C239 194 243 192 248 192C252 192 260 192 264 193C268 193 269 194 271 195C273 195 275 196 276 197C277 198 278 199 279 200C279 200 279 200 280 202C280 204 279 208 280 210C280 212 281 214 282 216C283 218 282 220 284 224C286 227 291 235 293 240C295 244 296 246 297 250C298 254 299 260 300 266C301 271 301 280 302 285C303 289 303 290 304 294C305 297 306 299 308 303C310 307 316 314 318 318C320 321 320 320 321 323C321 325 322 329 322 331C323 332 322 332 324 334C325 335 328 338 330 341C331 343 332 345 333 348C334 350 335 353 336 358C337 363 338 372 340 378C341 383 342 388 344 394C345 399 348 404 350 409C351 413 353 415 355 418C356 421 357 423 358 427C358 430 358 438 359 441C359 444 358 441 360 443C361 445 367 449 369 452C371 454 371 456 374 459C376 462 382 469 385 472C387 475 387 475 387 476C387 477 387 478 387 479C387 479 387 479 386 480C385 480 384 480 383 480C381 480 380 481 379 482C378 482 378 482 378 483C377 484 377 484 377 486C376 487 376 489 377 490C377 491 376 491 378 494C379 496 382 503 384 505C385 508 384 508 385 509C385 510 384 510 384 511C384 512 383 512 382 513C381 514 379 515 378 516C376 516 375 518 375 519C374 519 375 519 373 520C370 520 364 520 361 520C357 519 356 517 354 517C351 516 349 516 348 516C346 515 346 515 346 514C345 513 345 514 344 510C342 505 339 493 338 488C336 482 334 481 333 478C331 476 331 475 331 473C330 470 329 467 329 464C329 461 329 456 329 453C329 450 329 450 328 448C327 446 324 442 323 439C322 436 322 435 322 433C321 430 321 425 321 422C320 419 319 416 318 414C317 411 319 413 316 408C313 403 304 390 300 384C296 378 295 376 294 372C292 368 291 366 290 362C289 357 290 352 289 347C287 342 282 338 281 332C279 327 278 319 277 314C276 309 275 307 273 303C271 299 267 293 265 290C263 287 263 286 262 285C260 284 259 282 258 282C256 281 256 281 255 281C254 280 253 280 253 281C252 281 251 281 251 282C250 282 248 283 247 286C246 289 246 293 247 300C247 306 247 314 250 327C253 339 260 365 262 374C264 383 263 378 264 380C265 382 267 384 268 386C269 388 270 392 270 394C271 395 271 394 271 396C271 398 270 405 270 407C270 409 271 410 272 411C272 411 272 411 274 413C275 414 279 415 281 417C283 419 283 419 284 423C285 426 287 431 288 436C289 440 290 446 290 452C291 458 291 466 291 473C290 480 289 488 288 494C287 501 287 504 285 512C283 519 278 532 276 539C274 546 274 548 274 552C274 556 274 559 275 563C275 568 278 574 278 579C279 583 277 588 278 591C278 594 278 594 279 595C279 596 280 598 281 600C282 601 282 601 283 606C284 610 286 622 286 629C287 635 286 642 286 647C286 651 286 651 285 656C284 661 283 669 282 676C281 683 278 693 277 699C276 705 276 708 276 712C275 716 275 717 276 722C276 726 277 735 278 740C278 745 279 748 280 752C281 756 283 761 285 765C286 768 289 772 290 775C291 778 292 780 292 782C292 783 292 784 292 786C292 787 291 788 291 790C291 791 291 794 292 795C292 796 292 796 293 797C293 798 295 799 297 801C299 803 303 805 305 807C306 809 307 811 307 812C307 813 307 814 307 816C307 817 306 818 306 820C305 821 305 821 304 822C302 823 301 824 299 825C297 825 294 825 291 826C287 827 282 829 279 830C275 830 273 830 271 830C268 830 266 829 265 829C263 828 262 826 261 826C260 825 260 826 260 823C260 820 260 812 259 808C258 803 255 797 255 794C254 790 255 787 255 784C254 781 253 779 253 776C252 772 253 766 253 765C253 763 253 766 254 764C254 762 254 754 254 752C253 749 253 752 253 751C253 750 254 748 253 743C253 738 251 729 250 721C249 713 247 703 245 694C242 684 237 673 235 666C233 658 232 653 231 649C230 645 230 644 230 640C230 635 231 625 231 620C231 614 229 612 229 609C228 606 229 606 228 604C228 602 226 598 226 595C225 592 225 589 226 584C227 579 229 569 230 563C230 557 230 554 230 549C229 544 229 540 227 533C225 526 222 514 220 508C218 502 218 500 218 497C217 493 217 493 217 489C216 485 217 478 217 475C216 472 216 472 215 471C214 470 213 469 212 468C210 467 208 467 207 468C205 468 204 468 202 469C200 469 198 469 197 469C195 468 194 468 193 468C192 467 189 467 188 468C187 469 185 470 185 471C184 472 183 472 183 475C183 478 183 485 183 489C183 493 183 493 182 497C181 500 181 502 180 508C178 514 174 526 173 533C171 540 170 544 170 549C170 554 169 557 170 563C171 569 173 579 174 584C174 589 174 592 174 595C174 598 172 602 172 604C171 606 172 606 171 609C171 612 169 616 169 620C168 623 168 626 169 628C169 631 170 631 170 635C170 638 169 644 169 649C168 654 167 658 165 666C162 673 157 686 155 694C153 701 153 701 152 709C150 717 147 734 147 743C146 752 146 760 146 764C146 768 146 763 147 765C147 766 147 772 147 776C147 779 145 781 145 784C145 787 146 790 145 794C144 797 141 803 141 808C140 812 140 820 140 823C139 826 139 825 139 826C138 826 137 827 137 828C136 828 136 828 135 829C134 829 131 830 129 830C127 830 124 830 121 830C118 829 112 827 109 826C106 825 103 825 101 825C98 824 97 823 96 822C95 821 95 821 94 820C93 818 93 817 93 816C92 814 92 813 93 812C93 811 93 809 95 807C97 805 101 803 103 801C105 799 106 798 107 797C108 796 108 796 108 795C108 794 109 791 109 790C108 788 108 787 108 786C107 784 107 783 108 782C108 780 108 778 110 775C111 772 113 768 115 765C117 761 118 756 120 752C121 748 121 745 122 740C123 735 124 726 124 722C124 717 124 716 124 712C124 708 124 705 123 699C121 693 119 683 118 676C116 669 115 661 115 656C114 651 114 651 114 647C113 642 113 635 114 629C114 622 116 610 117 606C117 601 118 601 119 600C119 598 120 596 121 595C122 594 122 594 122 591C122 588 121 583 122 579C122 574 124 568 125 563C126 559 126 556 126 552C125 548 125 546 124 539C122 532 117 519 115 512C113 504 113 501 112 494C111 488 109 480 109 473C109 466 109 458 110 452C110 446 111 440 112 436C113 431 114 426 116 423C117 419 117 419 119 417C120 415 125 413 127 412C128 411 129 409 129 409C130 408 130 409 130 407C130 404 129 399 129 396C129 394 130 393 130 392C131 390 131 389 132 386C133 383 135 381 138 375C140 369 143 356 145 348C147 340 148 335 150 329C151 323 151 319 152 315C153 310 153 304 154 300C154 295 153 289 153 287C153 284 153 285 152 284C151 283 150 282 149 281C148 280 149 281 148 281C147 281 144 280 143 281C141 282 139 284 138 286C136 287 136 287 135 290C133 292 129 299 127 303C125 307 124 309 123 314C121 319 121 327 119 332C117 338 113 343 111 347C110 352 111 355 110 359C109 363 108 368 106 372C104 376 103 378 100 384C96 390 87 403 84 408C81 413 82 411 82 414C81 416 80 419 79 422C78 425 78 430 78 433C78 435 78 436 77 439C76 442 73 446 72 448C71 450 71 450 71 453C70 456 71 461 71 464C70 467 70 470 69 473C68 475 68 476 67 478C66 481 64 482 62 488C60 493 57 505 56 510C55 514 55 513 54 514C53 515 53 515 52 516C51 516 48 516 46 517C44 517 42 519 39 520C36 520 29 520 27 520C25 519 26 519 25 519C24 518 23 516 22 516C21 515 19 514 18 513C16 512 16 512 16 511C15 510 15 510 15 509C15 508 15 508 16 505C17 503 21 496 22 494C23 491 23 491 23 490C23 489 23 487 23 486C23 484 22 484 22 483C22 482 21 482 21 482C20 481 18 480 17 480C16 480 15 480 15 480C14 480 13 479 13 479C12 478 12 477 13 476C13 475 12 477 14 474C16 472 22 465 25 461C27 457 29 454 31 452C32 449 33 449 34 448C35 447 35 448 36 447C37 446 39 444 40 443C41 442 41 444 41 441C41 438 41 430 42 427C43 423 44 421 45 418C46 415 48 413 50 409C52 404 54 399 56 394C58 388 59 383 60 378C61 372 62 363 64 358C65 353 65 350 67 348C68 345 68 343 70 341C72 338 75 335 76 334C77 332 77 332 78 331C78 329 78 325 79 323C80 320 79 321 82 318C84 314 89 307 92 303C94 299 95 297 96 294C97 290 97 289 98 285C98 280 99 271 100 266C100 260 101 254 103 250C104 246 104 244 107 240C109 235 114 227 116 224C117 220 115 223 116 221C117 218 119 213 120 210C121 207 120 204 120 202C120 200 120 200 121 200C122 199 122 198 124 197C125 196 127 195 129 195C131 194 132 193 136 193C139 192 147 192 152 192C157 192 161 194 164 194C167 194 170 194 172 194C173 194 174 193 175 193C176 192 177 191 178 189C179 187 178 181 179 179C179 177 179 180 179 179C179 177 179 173 179 172C178 170 178 170 177 168C176 166 173 163 172 161C170 159 169 157 168 154C166 151 165 147 165 143C164 139 163 134 163 128C163 121 163 111 163 106C163 100 163 99 164 96C165 93 166 90 167 88C167 85 168 85 170 83C171 82 172 80 174 79C176 77 177 76 179 75C181 74 183 73 186 72C189 71 194 70 197 70Z";
 const LABEL = {head: "Head", eyes: "Eyes", neck: "Neck", heart: "Heart", lungs: "Lungs", abdomen: "Abdomen", legs: "Legs"};
 const WORDS = {ok: "OK", watch: "Amber, worth a look", urgent: "Red, needs attention"};
 const RANK = {ok: 0, watch: 1, urgent: 2};
-const TILT = 18 * Math.PI / 180;
-const CENTER = 3.6, HEIGHT = 7.2, FILL = 0.86, BASE = 0xdce9f7, RIM = 0x6fa9cf;
-let T = null, box = null, canvas = null, layer = null, renderer = null, scene = null, camera = null, pivot = null, fig = null, mat = null, shadow = null;
-let anchors = {}, pins = {}, pinOf = {}, sex = "", areas = [], levels = {}, isNew = {}, btns = {}, mounted = null, kind = "";
-const view = {yaw: -0.28, tilt: 0.05, vy: 0}, anim = {from: null, to: null, t0: 0, dur: 700}, drag = {on: false, id: 0, x: 0, y: 0, lx: 0, lt: 0, moved: 0};
-let raf = 0, inertia = false, pieces = {};
+const F = "front", B = "back";
+const ANCHORS = {head: [F, 200, 104], eyes: [F, 200, 131], neck: [F, 214, 182], heart: [F, 222, 262], abdomen: [F, 200, 362], lungs: [B, 226, 262], legs: [B, 142, 678]};
+const PINS = {
+  eye_r: [F, 187, 131], eye_l: [F, 213, 131], neck_l: [F, 212, 184], heart: [F, 219, 272], bladder: [F, 200, 444], shin_l: [F, 262, 690],
+  brain: [F, 200, 86], pancreas: [F, 213, 318], core: [F, 200, 262],
+  lung_r_low: [B, 224, 300], kidney_l: [B, 180, 338], heel_l: [B, 126, 818], calf_l: [B, 141, 662], popliteal_l: [B, 147, 606]
+};
+const FLIP_MS = 260;
+let box = null, svg = null, grp = null, layer = null, views = null, mounted = null;
+let pinOf = {}, sex = "", areas = [], levels = {}, isNew = {}, btns = {};
+let view = F, flip = null, raf = 0, drag = {on: false, id: 0, x: 0, done: false};
 
-const ease = t => 1 - Math.pow(1 - t, 3);
-const wrap = a => Math.atan2(Math.sin(a), Math.cos(a));
-const clampT = v => Math.max(-TILT, Math.min(TILT, v));
-
-function hasGL() { try { const c = document.createElement("canvas"); return !!(window.WebGLRenderingContext && (c.getContext("webgl2") || c.getContext("webgl"))); } catch (e) { return false; } }
-
-function loadModel(Loader) {
-  return new Promise((res, rej) => new Loader().load(URL_MODEL, res, null, rej));
-}
+const el = (tag, attrs, parent) => { const e = document.createElementNS(NS, tag); Object.keys(attrs || {}).forEach(k => e.setAttribute(k, attrs[k])); if (parent) parent.appendChild(e); return e; };
+const mirror = v => v === F ? "" : "translate(400 0) scale(-1 1)";
 
 function mount(container) {
   if (mounted) return mounted;
-  mounted = (async () => {
-    if (!container || !hasGL()) return false;
-    let Loader = null;
-    try { T = await import(URL3); } catch (e) { T = null; }
-    if (T) { try { Loader = (await import(URL_LOADER)).GLTFLoader; } catch (e) { Loader = null; } }
-    else { try { T = await import(URL3_FALLBACK); } catch (e) { return false; } }
-    try { setup(container); } catch (e) { teardown(); return false; }
-    sex = "f";
-    const job = Loader ? loadModel(Loader) : Promise.reject(new Error("no loader"));
-    const got = await Promise.race([job.then(g => g, () => null), new Promise(r => setTimeout(() => r(undefined), MODEL_WAIT))]);
-    if (got) { try { buildModel(got); return true; } catch (e) {} }
-    try { buildPicto(); } catch (e) { teardown(); return false; }
-    if (got === undefined) job.then(g => { try { buildModel(g); markers(); draw(); } catch (e) { buildPicto(); draw(); } }, () => {});
-    return true;
-  })();
-  return mounted;
-}
-
-function teardown() { if (renderer) { try { renderer.dispose(); } catch (e) {} } if (canvas) canvas.remove(); if (layer) layer.remove(); renderer = null; canvas = null; layer = null; box = null; }
-
-function shadowTex() {
-  const c = document.createElement("canvas"); c.width = c.height = 128;
-  const g = c.getContext("2d"), r = g.createRadialGradient(64, 64, 0, 64, 64, 64);
-  r.addColorStop(0, "rgba(40,70,110,0.32)"); r.addColorStop(0.55, "rgba(40,70,110,0.12)"); r.addColorStop(1, "rgba(40,70,110,0)");
-  g.fillStyle = r; g.fillRect(0, 0, 128, 128);
-  const t = new T.CanvasTexture(c); t.colorSpace = T.SRGBColorSpace; return t;
-}
-
-function setup(container) {
+  if (!container) return (mounted = Promise.resolve(false));
   box = container;
-  renderer = new T.WebGLRenderer({antialias: true, alpha: true});
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-  renderer.setClearColor(0x000000, 0);
-  renderer.outputColorSpace = T.SRGBColorSpace;
-  canvas = renderer.domElement;
-  canvas.className = "b3-canvas";
-  canvas.tabIndex = 0;
-  canvas.setAttribute("role", "img");
-  canvas.setAttribute("aria-label", "Body figure");
+  svg = el("svg", {class: "b2d b3-canvas", viewBox: "0 0 400 900", role: "img", "aria-label": "Body figure", tabindex: "0"});
+  grp = el("g", {}, svg);
+  el("path", {class: "b2d-body", d: BODY}, grp);
   layer = document.createElement("div");
   layer.className = "b3-markers";
-  box.appendChild(canvas);
+  views = document.createElement("div");
+  views.className = "b2d-views";
+  views.innerHTML = '<button class="b2d-view" aria-pressed="true" data-v="front" type="button">Front</button><button class="b2d-view" aria-pressed="false" data-v="back" type="button">Back</button>';
+  box.appendChild(svg);
   box.appendChild(layer);
-  scene = new T.Scene();
-  camera = new T.PerspectiveCamera(26, 1, 0.1, 100);
-  scene.add(new T.HemisphereLight(0xffffff, 0xbfd3ea, 2.1));
-  const key = new T.DirectionalLight(0xffffff, 1.1);
-  key.position.set(-4, 7, 6);
-  scene.add(key);
-  const fill = new T.DirectionalLight(0xffffff, 0.45);
-  fill.position.set(5, 2, 3);
-  scene.add(fill);
-  const rim = new T.DirectionalLight(RIM, 1.6);
-  rim.position.set(1.5, 4, -7);
-  scene.add(rim);
-  mat = new T.MeshStandardMaterial({color: BASE, roughness: 0.6, metalness: 0});
-  pivot = new T.Group();
-  pivot.position.y = CENTER;
-  scene.add(pivot);
-  shadow = new T.Mesh(new T.PlaneGeometry(2.6, 1.3), new T.MeshBasicMaterial({map: shadowTex(), transparent: true, depthWrite: false}));
-  shadow.rotation.x = -Math.PI / 2;
-  shadow.position.y = -CENTER + 0.01;
-  shadow.renderOrder = -1;
-  pivot.add(shadow);
+  box.appendChild(views);
   wire();
-  new ResizeObserver(resize).observe(box);
-  resize();
+  if (window.ResizeObserver) new ResizeObserver(() => draw()).observe(box);
+  sex = "f";
+  setView(F, false);
+  return (mounted = Promise.resolve(true));
 }
 
-function resize() {
-  if (!renderer || !box) return;
-  const w = box.clientWidth, h = box.clientHeight;
-  if (!w || !h) return;
-  renderer.setSize(w, h, false);
-  camera.aspect = w / h;
-  const tv = Math.tan(13 * Math.PI / 180), dv = HEIGHT / FILL / 2 / tv, dh = 3.4 / FILL / 2 / (tv * camera.aspect);
-  camera.position.set(0, CENTER + 0.04, Math.max(dv, dh));
-  camera.lookAt(0, CENTER, 0);
-  camera.updateProjectionMatrix();
+function spot(key) { const ar = areas.find(x => x.key === key); return (ar && ar.pin && PINS[ar.pin.anchor]) || ANCHORS[key] || null; }
+
+function setView(v, animate) {
+  if (!svg) return;
+  if (v !== F && v !== B) v = F;
+  views.querySelectorAll(".b2d-view").forEach(b => b.setAttribute("aria-pressed", b.dataset.v === v ? "true" : "false"));
+  if (!animate || (v === view && !flip)) { flip = null; view = v; grp.setAttribute("transform", mirror(v)); layer.style.visibility = ""; draw(); return; }
+  flip = {from: view, to: v, t0: performance.now()};
+  layer.style.visibility = "hidden";
+  kick();
+}
+
+function kick() { if (!raf) raf = requestAnimationFrame(frame); }
+function frame(now) {
+  raf = 0;
+  if (!flip) return;
+  const t = Math.min(1, (now - flip.t0) / FLIP_MS), s = Math.max(0.001, Math.abs(Math.cos(t * Math.PI)));
+  const v = t < 0.5 ? flip.from : flip.to;
+  grp.setAttribute("transform", `translate(200 0) scale(${s.toFixed(4)} 1) translate(-200 0) ${mirror(v)}`);
+  if (t < 1) { kick(); return; }
+  view = flip.to; flip = null;
+  grp.setAttribute("transform", mirror(view));
+  layer.style.visibility = "";
   draw();
 }
 
-function freshFig() {
-  if (fig) { pivot.remove(fig); if (kind === "picto") fig.traverse(o => { if (o.geometry) o.geometry.dispose(); }); }
-  pieces = {}; anchors = {}; pins = {};
-  fig = new T.Group();
-  fig.position.y = -CENTER;
-  pivot.add(fig);
-  pivot.rotation.set(0, 0, 0);
-  fig.rotation.set(0, 0, 0);
-}
-
-function buildModel(gltf) {
-  const root = gltf.scene, skinned = [];
-  root.traverse(o => {
-    if (!o.isMesh) return;
-    o.material = mat; o.frustumCulled = false; o.castShadow = false;
-    if (!o.geometry.attributes.normal) o.geometry.computeVertexNormals();
-    if (o.isSkinnedMesh) skinned.push(o);
-  });
-  const clip = gltf.animations.find(a => a.name === "idle") || gltf.animations[0];
-  if (clip) { const mx = new T.AnimationMixer(root); mx.clipAction(clip).play(); mx.setTime(0); }
-  root.position.set(0, 0, 0); root.rotation.set(0, 0, 0); root.scale.set(1, 1, 1);
-  root.updateMatrixWorld(true);
-  const bb = new T.Box3(), v = new T.Vector3();
-  skinned.forEach(o => { const p = o.geometry.attributes.position; for (let i = 0; i < p.count; i += 3) { v.fromBufferAttribute(p, i); o.applyBoneTransform(i, v); v.applyMatrix4(o.matrixWorld); bb.expandByPoint(v); } });
-  if (bb.isEmpty()) bb.setFromObject(root);
-  const size = bb.getSize(new T.Vector3()), c = bb.getCenter(new T.Vector3()), s = HEIGHT / size.y;
-  root.scale.setScalar(s);
-  root.position.set(-c.x * s, -bb.min.y * s, -c.z * s);
-  freshFig();
-  kind = "model";
-  fig.add(root);
-  pivot.updateMatrixWorld(true);
-  skinned.forEach(o => { o.computeBoundingSphere(); o.computeBoundingBox(); });
-  const bone = n => { const b = root.getObjectByName("mixamorig" + n); return b ? fig.worldToLocal(b.getWorldPosition(new T.Vector3())) : null; };
-  const V = (x, y, z) => new T.Vector3(x, y, z || 0);
-  const B = {};
-  ["Hips", "Spine", "Spine1", "Spine2", "Neck", "Head", "HeadTop_End", "LeftEye", "RightEye", "LeftLeg", "LeftFoot", "LeftToeBase"].forEach(n => { B[n] = bone(n); });
-  if (!B.Head || !B.Spine2 || !B.LeftLeg || !B.LeftFoot) throw new Error("bones");
-  const mid = (a, b, t) => a.clone().lerp(b, t);
-  const ray = new T.Raycaster();
-  mat.side = T.DoubleSide;
-  const hit = (from, dir) => {
-    const d = dir.clone().normalize();
-    ray.set(fig.localToWorld(from.clone()), d.clone().transformDirection(fig.matrixWorld));
-    const h = ray.intersectObjects(skinned, false).filter(x => x.distance > 1e-4)[0];
-    return {p: h ? fig.worldToLocal(h.point.clone()).addScaledVector(d, 0.015) : from.clone(), n: d};
-  };
-  const top = B.HeadTop_End || B.Head.clone().add(V(0, 0.8)), hc = mid(B.Head, top, 0.45), neckY = (B.Neck ? mid(B.Neck, B.Head, 0.55) : B.Head).y;
-  const eyeY = B.LeftEye ? B.LeftEye.y : hc.y, sp = B.Spine || B.Spine1, sp1 = B.Spine1 || B.Spine2;
-  const knee = B.LeftLeg, ank = B.LeftFoot;
-  anchors.head = hit(hc, V(0, 0.78, 0.62));
-  anchors.eyes = hit(V(hc.x, eyeY, hc.z), V(0, 0.05, 1));
-  anchors.neck = hit(V(hc.x, neckY, (B.Neck || hc).z), V(1, 0, 0.55));
-  anchors.heart = hit(V(B.Spine2.x + 0.2, B.Spine2.y - 0.05, B.Spine2.z), V(0.25, 0.1, 1));
-  anchors.lungs = hit(V(B.Spine2.x - 0.28, B.Spine2.y + 0.05, B.Spine2.z), V(-0.25, 0.1, -1));
-  anchors.abdomen = hit(V(sp.x, sp.y - 0.05, sp.z), V(0, 0, 1));
-  anchors.legs = hit(mid(knee, ank, 0.35), V(0.1, 0, -1));
-  const eye = e => hit(V(e.x, e.y, hc.z), V((e.x - hc.x) * 0.9, 0.03, 1));
-  pins.eye_r = eye(B.RightEye || V(hc.x - 0.12, eyeY, hc.z));
-  pins.eye_l = eye(B.LeftEye || V(hc.x + 0.12, eyeY, hc.z));
-  pins.neck_l = hit(V(hc.x, neckY, (B.Neck || hc).z), V(1, 0, 0.8));
-  pins.heart = hit(V(B.Spine2.x + 0.18, B.Spine2.y - 0.2, B.Spine2.z), V(0.25, 0.05, 1));
-  pins.lung_r_low = hit(V(sp1.x - 0.3, sp1.y, sp1.z), V(-0.3, 0, -1));
-  pins.kidney_l = hit(V(sp.x + 0.28, mid(sp, sp1, 0.2).y, sp.z), V(0.3, 0, -1));
-  pins.bladder = hit(V(B.Hips.x, B.Hips.y - 0.05, B.Hips.z), V(0, -0.1, 1));
-  pins.heel_l = hit(V(ank.x, ank.y - 0.12, ank.z), V(0, -0.2, -1));
-  pins.shin_l = hit(mid(knee, ank, 0.45), V(0.1, 0, 1));
-  pins.calf_l = hit(mid(knee, ank, 0.25), V(0.1, 0, -1));
-  pins.brain = hit(mid(B.Head, top, 0.6), V(0, 0.85, 0.5));
-  pins.pancreas = hit(V(sp.x + 0.12, mid(sp, sp1, 0.55).y, sp.z), V(0.12, 0, 1));
-  pins.core = hit(V(B.Spine2.x, B.Spine2.y - 0.1, B.Spine2.z), V(0, 0.05, 1));
-  pins.popliteal_l = hit(knee, V(0, 0, -1));
-  mat.side = T.FrontSide;
-  mat.needsUpdate = true;
-}
-
-function piece(name, geo, pos, rz) {
-  const m = new T.Mesh(geo, mat);
-  m.position.copy(pos);
-  if (rz) m.rotation.z = rz;
-  fig.add(m);
-  pieces[name] = m;
-  return m;
-}
-
-function torsoGeo() {
-  const top = SH.top, h = SH.th, bot = top - h, mid = (top + bot) / 2, w = SH.w, n = 2.35, pts = [];
-  for (let i = 0; i <= 96; i++) {
-    const a = -Math.PI / 2 + Math.PI * i / 96, c = Math.cos(a), sn = Math.sin(a);
-    const e = sn > 0 ? 3.2 : n, y = mid + h / 2 * Math.sign(sn) * Math.pow(Math.abs(sn), 2 / e);
-    const k = (y - bot) / h, ww = w * (0.86 + 0.14 * Math.pow(k, 0.7));
-    pts.push(new T.Vector2(Math.max(0.0001, ww * Math.pow(Math.max(0, c), 2 / e)), y - mid));
-  }
-  const g = new T.LatheGeometry(pts, 64);
-  g.scale(1, 1, SH.zs);
-  g.computeVertexNormals();
-  return g;
-}
-
-const SH = {head: 0.55, hy: 6.6, top: 5.85, th: 2.6, w: 0.75, zs: 0.58, ar: 0.19, al: 2.3, atop: 5.62, agap: 0.13, tilt: 5 * Math.PI / 180, lr: 0.27, lgap: 0.12, ltop: 3.17};
-function buildPicto() {
-  freshFig();
-  kind = "picto";
-  const V = (x, y, z) => new T.Vector3(x, y, z || 0);
-  piece("head", new T.SphereGeometry(SH.head, 64, 48), V(0, SH.hy));
-  piece("torso", torsoGeo(), V(0, SH.top - SH.th / 2));
-  const ax = SH.w + SH.agap + SH.ar, alen = SH.al - 2 * SH.ar;
-  [1, -1].forEach(sd => {
-    const dir = V(sd * Math.sin(SH.tilt), -Math.cos(SH.tilt)), c = V(sd * ax, SH.atop - SH.ar).addScaledVector(dir, alen / 2);
-    piece(sd > 0 ? "armL" : "armR", new T.CapsuleGeometry(SH.ar, alen, 20, 56), c, sd * SH.tilt);
-    const llen = SH.ltop - 2 * SH.lr;
-    piece(sd > 0 ? "legL" : "legR", new T.CapsuleGeometry(SH.lr, llen, 20, 56), V(sd * (SH.lgap / 2 + SH.lr), SH.ltop / 2));
-  });
-  pivot.updateMatrixWorld(true);
-  const ray = new T.Raycaster();
-  const hit = (name, o, d) => { ray.set(o, d.clone().normalize()); const h = ray.intersectObject(pieces[name], false)[0]; return h ? fig.worldToLocal(h.point.clone()) : fig.worldToLocal(o.clone()); };
-  const sph = d => V(0, SH.hy).addScaledVector(d.clone().normalize(), SH.head);
-  anchors.head = {p: sph(V(0, 0.78, 0.62)), n: V(0, 0.78, 0.62).normalize()};
-  anchors.eyes = {p: sph(V(0, 0, 1)), n: V(0, 0.05, 1).normalize()};
-  const gy = (SH.hy - SH.head + SH.top) / 2;
-  anchors.neck = {p: V(0.25, gy, 0.06), n: V(1, 0, 0.55).normalize()};
-  const W = V;
-  anchors.heart = {p: hit("torso", W(0.3, 5.12, 3), V(0, 0, -1)), n: V(0.25, 0.1, 1).normalize()};
-  anchors.lungs = {p: hit("torso", W(-0.32, 5.12, -3), V(0, 0, 1)), n: V(-0.25, 0.1, -1).normalize()};
-  anchors.abdomen = {p: hit("torso", W(0, 3.85, 3), V(0, 0, -1)), n: V(0, 0, 1)};
-  const lx = SH.lgap / 2 + SH.lr;
-  anchors.legs = {p: hit("legL", W(lx, 0.95, -3), V(0, 0, 1)), n: V(0.1, 0, -1).normalize()};
-  const eye = (x, y) => { const d = V(x, y, 1).normalize(); return {p: sph(d), n: d.clone()}; };
-  pins.eye_r = eye(-0.36, 0.08);
-  pins.eye_l = eye(0.36, 0.08);
-  pins.neck_l = {p: V(0.2, gy, 0.12), n: V(1, 0, 0.8).normalize()};
-  pins.heart = {p: hit("torso", W(0.28, 4.95, 3), V(0, 0, -1)), n: V(0.25, 0.1, 1).normalize()};
-  pins.lung_r_low = {p: hit("torso", W(-0.38, 4.45, -3), V(0, 0, 1)), n: V(-0.3, 0, -1).normalize()};
-  pins.kidney_l = {p: hit("torso", W(0.33, 3.95, -3), V(0, 0, 1)), n: V(0.3, 0, -1).normalize()};
-  pins.bladder = {p: hit("torso", W(0, 3.5, 3), V(0, 0, -1)), n: V(0, -0.1, 1).normalize()};
-  pins.heel_l = {p: hit("legL", W(lx, 0.3, -3), V(0, 0, 1)), n: V(0, -0.2, -1).normalize()};
-  pins.shin_l = {p: hit("legL", W(lx, 0.85, 3), V(0, 0, -1)), n: V(0.1, 0, 1).normalize()};
-  pins.calf_l = {p: hit("legL", W(lx, 1.15, -3), V(0, 0, 1)), n: V(0.1, 0, -1).normalize()};
-  pins.brain = {p: sph(V(0, 0.85, 0.5)), n: V(0, 0.85, 0.5).normalize()};
-  pins.pancreas = {p: hit("torso", W(0.14, 4.3, 3), V(0, 0, -1)), n: V(0.12, 0, 1).normalize()};
-  pins.core = {p: hit("torso", W(0, 5.0, 3), V(0, 0, -1)), n: V(0, 0.05, 1).normalize()};
-  pins.popliteal_l = {p: hit("legL", W(lx, 1.6, -3), V(0, 0, 1)), n: V(0, 0, -1)};
-}
-
 function update(data) {
-  if (!renderer || !data) return;
-  const s = data.sex === "m" ? "m" : "f";
+  if (!svg || !data) return;
+  sex = data.sex === "m" ? "m" : "f";
   areas = (data.areas || []).filter(a => a && LABEL[a.key]).map(a => ({key: a.key, label: a.label || LABEL[a.key], level: RANK[a.level] !== undefined ? a.level : "ok", fresh: !!a.fresh, pin: a.pin && a.pin.anchor ? {anchor: String(a.pin.anchor), label: String(a.pin.label || "")} : null}));
-  sex = s;
   const turn = [];
   areas.forEach(a => {
     const prev = levels[a.key], pk = a.pin ? a.pin.anchor + "|" + a.pin.label : "", moved = !!pk && pinOf[a.key] !== pk;
@@ -267,12 +81,11 @@ function update(data) {
     levels[a.key] = a.level;
   });
   markers();
-  canvas.setAttribute("aria-label", "Body figure, drag or use arrow keys to turn. " + areas.map(a => `${a.label}: ${WORDS[a.level]}`).join(". ") + ".");
+  svg.setAttribute("aria-label", "Body figure, front and back views. " + areas.map(a => `${a.label}: ${WORDS[a.level]}`).join(". ") + ".");
   if (turn.length) { turn.sort((x, y) => RANK[y.level] - RANK[x.level]); focus(turn[0].key); } else draw();
 }
 
 function markers() {
-  if (!layer) return;
   const keys = areas.map(a => a.key);
   Object.keys(btns).forEach(k => { if (!keys.includes(k)) { btns[k].remove(); delete btns[k]; } });
   areas.forEach(a => {
@@ -286,49 +99,19 @@ function markers() {
   });
 }
 
-function spot(key) { const ar = areas.find(x => x.key === key); return ar && ar.pin && pins[ar.pin.anchor] ? pins[ar.pin.anchor] : anchors[key]; }
-function facing(key) { const a = spot(key); if (!a) return 0; return wrap(Math.atan2(-a.n.x, a.n.z)); }
-function focus(key) {
-  if (!renderer || !spot(key)) return;
-  const y = facing(key), tgt = view.yaw + wrap(y - view.yaw), tl = key === "head" ? 0.12 : key === "legs" ? -0.1 : 0.04;
-  inertia = false; view.vy = 0;
-  anim.from = {yaw: view.yaw, tilt: view.tilt}; anim.to = {yaw: tgt, tilt: clampT(tl)}; anim.t0 = performance.now(); anim.dur = 700;
-  kick();
-}
-function reset() { if (!renderer) return; inertia = false; view.vy = 0; anim.from = {yaw: view.yaw, tilt: view.tilt}; anim.to = {yaw: Math.round(view.yaw / (2 * Math.PI)) * 2 * Math.PI - 0.28, tilt: 0.05}; anim.t0 = performance.now(); anim.dur = 600; kick(); }
+function focus(key) { const s = spot(key); if (!svg || !s) return; setView(s[0], true); }
+function reset() { setView(F, true); }
 
-function kick() { if (!raf) raf = requestAnimationFrame(frame); }
-function frame(now) {
-  raf = 0;
-  let more = false;
-  if (anim.to) {
-    const t = Math.min(1, (now - anim.t0) / anim.dur), e = ease(t);
-    view.yaw = anim.from.yaw + (anim.to.yaw - anim.from.yaw) * e; view.tilt = anim.from.tilt + (anim.to.tilt - anim.from.tilt) * e;
-    if (t < 1) more = true; else anim.to = null;
-  } else if (inertia && !drag.on) {
-    view.yaw += view.vy; view.vy *= 0.92;
-    if (Math.abs(view.vy) > 0.0006) more = true; else inertia = false;
-  }
-  draw();
-  if (more) kick();
-}
-
-const tmp = () => new T.Vector3();
 function project(key) {
-  const a = spot(key);
-  if (!a || !box || !camera || !fig) return {x: 0, y: 0, front: false};
-  pivot.updateMatrixWorld(true);
-  const p = fig.localToWorld(a.p.clone()), n = a.n.clone().transformDirection(fig.matrixWorld), v = tmp().subVectors(camera.position, p).normalize();
-  const s = p.clone().project(camera), w = box.clientWidth, h = box.clientHeight;
-  return {x: (s.x + 1) / 2 * w, y: (1 - s.y) / 2 * h, front: n.dot(v) >= 0};
+  const s = spot(key);
+  if (!s || !box || !svg) return {x: 0, y: 0, front: false};
+  const br = box.getBoundingClientRect(), r = svg.getBoundingClientRect(), k = Math.min(r.width / 400, r.height / 900), ox = r.left - br.left + (r.width - 400 * k) / 2, oy = r.top - br.top + (r.height - 900 * k) / 2;
+  const on = s[0] === view, x = on ? s[1] : 400 - s[1];
+  return {x: ox + x * k, y: oy + s[2] * k, front: on};
 }
 
 function draw() {
-  if (!renderer || !fig || !box.clientWidth) return;
-  pivot.rotation.set(view.tilt, 0, 0);
-  fig.rotation.set(0, view.yaw, 0);
-  pivot.updateMatrixWorld(true);
-  renderer.render(scene, camera);
+  if (!svg || !box.clientWidth) return;
   areas.forEach(a => { const b = btns[a.key]; if (!b) return; const p = project(a.key);
     b.style.left = `${Math.round(p.x)}px`; b.style.top = `${Math.round(p.y)}px`;
     const c = `b3-mk ${a.level}${a.pin ? " pin" : ""}${p.front ? "" : " back"}${isNew[a.key] ? " new" : ""}`; if (b.className !== c) b.className = c; });
@@ -336,44 +119,50 @@ function draw() {
 }
 
 function wire() {
-  canvas.addEventListener("pointerdown", e => {
-    if (e.button !== undefined && e.button !== 0) return;
-    drag.on = true; drag.id = e.pointerId; drag.x = drag.lx = e.clientX; drag.y = e.clientY; drag.lt = performance.now(); drag.moved = 0;
-    anim.to = null; inertia = false; view.vy = 0;
-    try { canvas.setPointerCapture(e.pointerId); } catch (x) {}
-  });
-  canvas.addEventListener("pointermove", e => {
-    if (!drag.on || e.pointerId !== drag.id) return;
-    const dx = e.clientX - drag.lx, dy = e.clientY - drag.y, now = performance.now(), dt = Math.max(8, now - drag.lt);
-    drag.moved += Math.abs(dx);
-    view.yaw += dx * 0.011;
-    view.vy = view.vy * 0.4 + (dx * 0.011) * (16 / dt) * 0.6;
-    if (e.pointerType !== "touch") { view.tilt = clampT(view.tilt + dy * 0.006); drag.y = e.clientY; }
-    drag.lx = e.clientX; drag.lt = now;
-    kick();
-  });
-  const end = e => {
-    if (!drag.on || e.pointerId !== drag.id) return;
-    drag.on = false;
-    try { canvas.releasePointerCapture(e.pointerId); } catch (x) {}
-    if (performance.now() - drag.lt < 90 && Math.abs(view.vy) > 0.002) { inertia = true; kick(); } else view.vy = 0;
-  };
-  canvas.addEventListener("pointerup", end);
-  canvas.addEventListener("pointercancel", end);
-  canvas.addEventListener("dblclick", e => { e.preventDefault(); reset(); });
-  canvas.addEventListener("keydown", e => {
-    const k = e.key, step = 15 * Math.PI / 180;
-    if (k === "ArrowLeft" || k === "ArrowRight") { e.preventDefault(); const to = (anim.to ? anim.to.yaw : view.yaw) + (k === "ArrowLeft" ? -step : step); anim.from = {yaw: view.yaw, tilt: view.tilt}; anim.to = {yaw: to, tilt: view.tilt}; anim.t0 = performance.now(); anim.dur = 260; kick(); }
-    else if (k === "ArrowUp" || k === "ArrowDown") { e.preventDefault(); view.tilt = clampT(view.tilt + (k === "ArrowUp" ? -0.08 : 0.08)); kick(); }
+  views.addEventListener("click", e => { const b = e.target.closest(".b2d-view"); if (!b) return; e.stopPropagation(); setView(b.dataset.v, true); });
+  svg.addEventListener("pointerdown", e => { if (e.button !== undefined && e.button !== 0) return; drag.on = true; drag.id = e.pointerId; drag.x = e.clientX; drag.done = false; try { svg.setPointerCapture(e.pointerId); } catch (x) {} });
+  svg.addEventListener("pointermove", e => { if (!drag.on || e.pointerId !== drag.id || drag.done) return; if (Math.abs(e.clientX - drag.x) > 36) { drag.done = true; setView(view === F ? B : F, true); } });
+  const end = e => { if (!drag.on || e.pointerId !== drag.id) return; drag.on = false; try { svg.releasePointerCapture(e.pointerId); } catch (x) {} };
+  svg.addEventListener("pointerup", end);
+  svg.addEventListener("pointercancel", end);
+  svg.addEventListener("dblclick", e => { e.preventDefault(); reset(); });
+  svg.addEventListener("keydown", e => {
+    const k = e.key;
+    if (k === "ArrowLeft" || k === "ArrowRight") { e.preventDefault(); setView(view === F ? B : F, true); }
     else if (k === "Home" || k === "0") { e.preventDefault(); reset(); }
   });
 }
 
+function mini(container, list) {
+  if (!container) return null;
+  const old = container.querySelector(".b2d-mini"); if (old) old.remove();
+  const issues = (list || []).filter(a => a && LABEL[a.key] && (a.level === "watch" || a.level === "urgent")).map(a => ({a, s: (a.pin && a.pin.anchor && PINS[a.pin.anchor]) || ANCHORS[a.key]}));
+  const v = issues.length && issues.every(i => i.s[0] === B) ? B : F;
+  const wrap = document.createElement("div");
+  wrap.className = "b2d-mini";
+  const sv = el("svg", {viewBox: "0 0 400 900", "aria-hidden": "true"});
+  el("path", {class: "b2d-body", d: BODY, transform: mirror(v)}, sv);
+  wrap.appendChild(sv);
+  issues.forEach(({a, s}) => {
+    const d = document.createElement("i");
+    d.className = `b2d-dot ${a.level}`;
+    const x = s[0] === v ? s[1] : 400 - s[1];
+    d.style.left = `${(x / 4).toFixed(2)}%`; d.style.top = `${(s[2] / 9).toFixed(2)}%`;
+    wrap.appendChild(d);
+  });
+  if (v === B) { const c = document.createElement("span"); c.className = "b2d-cap"; c.textContent = "Back"; wrap.appendChild(c); }
+  const names = issues.map(i => i.a.label || LABEL[i.a.key]);
+  wrap.setAttribute("role", "img");
+  wrap.setAttribute("aria-label", names.length ? `Body: ${names.join(", ")}` : "Body: no issues");
+  container.appendChild(wrap);
+  return wrap;
+}
+
 const api = window.ASTRABody = {
-  mount, update, focus, reset, project,
+  mount, update, focus, reset, project, mini,
   onPick: null, onFrame: null,
-  get active() { return !!renderer; },
-  get model() { return kind; },
-  render: () => kick()
+  get active() { return !!svg; },
+  get view() { return view; },
+  render: () => draw()
 };
 })();
