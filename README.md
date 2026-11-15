@@ -35,6 +35,12 @@ Everything stays in the browser on that device. There is no sign-in and nothing 
 2. Pick a mission day, from training to recovery.
 3. Press "Demo · trigger an alert" at the bottom right and watch the status turn amber or red.
 
+## How scan comparison works
+
+A guided scan covers a general body area: eyes, neck veins, heart, lungs, bladder and kidneys, or legs. ASTRA's job is to compare the new images with the same crew member's earlier scans and with their pre-flight baseline, and to mark the exact place where something has changed, for example "Left heel bone: less dense than the pre-flight scan". Doctors on the ground then review the images and reply.
+
+In this prototype the scan results are simulated. The comparison step is the part a real system would connect to image-analysis software: that software would line up each scan with the previous ones day by day, measure what changed, and pass ASTRA the location and size of any anomaly. ASTRA would show it on the body figure, set the amber or red status, and send it to the flight surgeon. ASTRA does not diagnose.
+
 ## Data and sources
 
 Bundled in `data.js`:
