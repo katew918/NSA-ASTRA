@@ -85,10 +85,10 @@
   var ROWS = [
     ["Sleep (h)", function (b) { return fmt(b.sleep, 1); }],
     ["Resting heart rate (bpm)", function (b) { return fmt(b.hr); }],
-    ["Blood pressure (mmHg)", function (b) { return num(b.sbp) == null ? "–" : fmt(b.sbp) + "/" + fmt(b.dbp); }],
+    ["Blood pressure (mmHg) <span class='simtag'>Simulated</span>", function (b) { return num(b.sbp) == null ? "–" : fmt(b.sbp) + "/" + fmt(b.dbp); }],
     ["Mood (1–5)", function (b) { return fmt(b.mood, 1); }],
-    ["Reaction time (ms)", function (b) { return fmt(b.rt); }],
-    ["Standing heart-rate rise (bpm)", function (b) { return fmt(b.stand, 1); }]
+    ["Reaction time (ms) <span class='simtag'>Simulated</span>", function (b) { return fmt(b.rt); }],
+    ["Standing heart-rate rise (bpm) <span class='simtag'>Simulated</span>", function (b) { return fmt(b.stand, 1); }]
   ];
 
   function pmIndex(c, i) {
@@ -122,15 +122,15 @@
       h += '<div class="c-sp"><div class="c-sph"><b>' + esc(c.name || c.id) + '</b><span>median ' + fmt(median(vals), 1) + " h</span></div>" +
         sparkline(vals, 160, 40) + "</div>";
     });
-    h += '</div><p class="c-src">Training sleep, last 30 nights with data. Line = nights, dashed = median. ' + real("PMData (volunteers relabelled as crew)") + "</p>";
+    h += '</div><p class="c-src">Sleep, resting heart rate and mood come from real PMData rows; blood pressure, reaction time and standing heart-rate rise are simulated. Training sleep, last 30 nights with data. Line = nights, dashed = median. ' + real("PMData (volunteers relabelled as crew)") + "</p>";
     return h;
   }
 
   function secSex(crew) {
     var f = crew.filter(function (c) { return c.sex === "f"; }), m = crew.filter(function (c) { return c.sex === "m"; });
     function a(list, k) { return avg(list.map(function (c) { return (c.base || {})[k]; })); }
-    var rows = [["Sleep (h)", "sleep", 1], ["Resting heart rate (bpm)", "hr", 0], ["Systolic blood pressure (mmHg)", "sbp", 0],
-      ["Mood (1–5)", "mood", 1], ["Reaction time (ms)", "rt", 0], ["Standing heart-rate rise (bpm)", "stand", 1]];
+    var rows = [["Sleep (h)", "sleep", 1], ["Resting heart rate (bpm)", "hr", 0], ["Systolic blood pressure (mmHg) <span class='simtag'>Simulated</span>", "sbp", 0],
+      ["Mood (1–5)", "mood", 1], ["Reaction time (ms) <span class='simtag'>Simulated</span>", "rt", 0], ["Standing heart-rate rise (bpm) <span class='simtag'>Simulated</span>", "stand", 1]];
     var h = '<div class="c-tw"><table class="c-table c-fm"><thead><tr><th>Crew average</th><th>Female (' + f.length + ')</th><th>Male (' + m.length + ")</th></tr></thead><tbody>";
     rows.forEach(function (r) { h += "<tr><th>" + r[0] + "</th><td>" + fmt(a(f, r[1]), r[2]) + "</td><td>" + fmt(a(m, r[1]), r[2]) + "</td></tr>"; });
     h += "</tbody></table></div>";

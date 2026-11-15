@@ -13,7 +13,8 @@ It compares a crew member with their own normal, from training on Earth through 
 | File | What it is |
 |---|---|
 | `index.html` | The app: page, styles and logic |
-| `flat.css` | The visual design layer |
+| `astra.css` | The visual design layer |
+| `live.js` | The live monitor page (replays a real heart-rate recording) |
 | `compare.js`, `compare.css` | The "How ASTRA works" strip and the "Compare crew" tab |
 | `data.js` | Demo and reference data loaded by the page |
 
@@ -21,11 +22,11 @@ There is no build step. Vercel serves the files as they are, and every push to `
 
 ## How it stores data
 
-Everything stays in the browser on that device. There is no sign-in and nothing is sent to a server. The four crew profiles are simulated; their training baselines are seeded from real PMData rows.
+Everything stays in the browser on that device. There is no sign-in and nothing is sent to a server. The four crew profiles are simulated; every day of sleep, mood and resting heart rate comes from real PMData rows.
 
 ## How to try it
 
-1. Pick a crew member (four crew tabs, plus "Compare crew").
+1. Pick a crew member from the dropdown at the top right (four people, "Live monitor" and "Compare crew").
 2. Pick a mission day, from training to recovery.
 3. Press a "Simulate an issue" button and watch the status turn amber or red.
 

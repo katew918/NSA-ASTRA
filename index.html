@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0B1F3A">
 <title>ASTRA — crew health check-in</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%279%27 fill=%27%232563EB%27/%3E%3Cpath d=%27M9 16h14M16 9v14%27 stroke=%27%23fff%27 stroke-width=%273.4%27 stroke-linecap=%27round%27/%3E%3C/svg%3E">
 <link rel="stylesheet" href="compare.css">
 <style>
 :root{
@@ -286,17 +287,14 @@ input[type=text]:focus,input[type=number]:focus,input[type=date]:focus,input[typ
 .hctl{display:flex;gap:6px;align-items:center}
 .links select{font:inherit;font-size:13px}
 </style>
-<link rel="stylesheet" href="flat.css">
+<link rel="stylesheet" href="astra.css">
 </head>
 <body>
 <div class="hero">
   <div class="wrap">
-    <div class="top"><div class="brand"><span>ASTRA<small>Autonomous System for Telemetry, Risk, and Assessment</small></span></div><div class="topr hctl"><label class="daychip">Mission <select id="mission" aria-label="Mission"><option value="iss">ISS</option><option value="mars">Mars</option></select></label><span class="daychip" id="dayChip"></span><button class="icon-btn" id="helpBtn" aria-label="How ASTRA works">?</button></div></div>
-    <section id="guideStrip"></section>
-    <div class="crewtabs" role="tablist" id="crewtabs"></div>
-    <p class="crewnote sub">A capsule crew is 4 people; the ISS usually holds 7.</p>
-    <div class="daybar" id="daybar"><button class="daystep" data-step="-1" aria-label="One day back">◀</button><div class="days" id="days"></div><button class="daystep" data-step="1" aria-label="One day forward">▶</button><div id="dayNow"></div></div>
-    <div class="simbar" id="simbar"></div>
+    <div class="top"><div class="brand"><span>ASTRA<small>Autonomous System for Telemetry, Risk, and Assessment</small></span></div><div class="topr hctl"><label class="daychip">Mission <select id="mission" aria-label="Mission"><option value="iss">ISS</option><option value="mars">Mars</option></select></label><span class="daychip" id="dayChip"></span><div class="crewpick"><button id="crewBtn" class="crewbtn" type="button" aria-haspopup="listbox" aria-expanded="false"></button><div id="crewMenu" class="crewmenu" role="listbox" hidden></div></div><button class="icon-btn" id="helpBtn" aria-label="How ASTRA works">?</button></div></div>
+    <section id="guideStrip" hidden></section>
+    <div class="ctl"><div class="daybar" id="daybar"><button class="daystep" data-step="-1" aria-label="Previous day">‹</button><div class="days" id="days"></div><button class="daystep" data-step="1" aria-label="Next day">›</button></div><div class="simpick" id="simPick"><button id="simBtn" class="simtoggle" type="button" aria-expanded="false">Simulate an issue<span class="chev" aria-hidden="true"></span></button><div id="simMenu" class="simmenu" hidden></div></div></div>
     <div id="alerts" class="alertbox" aria-live="polite"></div>
     <div class="hgrid" id="crewGrid">
       <div>
@@ -326,6 +324,7 @@ input[type=text]:focus,input[type=number]:focus,input[type=date]:focus,input[typ
 
 <div class="wrap">
   <section id="compareView" hidden></section>
+  <section id="liveView" hidden></section>
   <main id="crewMain">
     <div class="two">
       <section class="card rise">
@@ -341,7 +340,7 @@ input[type=text]:focus,input[type=number]:focus,input[type=date]:focus,input[typ
       </section>
     </div>
     <section class="card rise d2">
-      <h2>How you're doing</h2><p class="sub">Compared with your own normal. Tap one for more.</p>
+      <h2>How you're doing <span class="realtag">Real data · PMData</span></h2><p class="sub">Compared with your own normal. Tap one for more.</p>
       <div class="tiles" id="tiles" style="margin-top:14px"></div>
       <div class="detail" id="detail"></div>
     </section>
@@ -490,6 +489,7 @@ function plan() {
 }
 
 function statuses() {
+  realFill();
   const d = L().daily, b = base(), p = phase(), out = [];
   if (d) {
     if (d.mood <= 2) out.push({l: "watch", what: "your mood is low today", private: true});
@@ -501,7 +501,7 @@ function statuses() {
   if (L().rt && p !== "training" && L().rt > b.rt * 1.15) out.push({l: "watch", what: "your reflexes are slower than usual"});
   const st = L().stand; if (st && p === "landed" && (st.hr >= 30 || st.sbpDrop >= 20)) out.push({l: "watch", what: "standing up is still hard"});
   if (L().meds && L().meds.some(m => m.expired)) out.push({l: "watch", what: "one landing medicine expires before landing"});
-  Object.keys(AREAS).forEach(a => { const s = scanState(a); if (s.l === "watch" || s.l === "urgent") out.push({l: s.l, what: `${AREAS[a].label.toLowerCase()} scan: ${s.line.replace("Doctors: ", "").replace("Doctors ", "")}`}); });
+  Object.keys(AREAS).forEach(a => { const s = scanState(a); if (s.l === "watch" || s.l === "urgent") out.push({l: s.l, what: `${AREAS[a].label.toLowerCase()} scan: ${s.line.replace("Doctors: ", "").replace("Doctors ", "doctors ")}`, result: true}); });
 
   const miss = missingBase().length, need = miss + (standBase() ? 0 : 1);
   if (p === "training" && need && -day() <= 7) out.push({l: "watch", scan: true, what: `${pl(need, "baseline item")} still needed before launch (${pl(-day(), "day")} left)`});
@@ -519,14 +519,14 @@ function render() {
   const q = plan(), next = q.find(x => !x.done), dueN = q.filter(x => !x.done).length;
   const fresh = p === "training" && baseInfo().n === 0 && !st.length;
   $("#statusPill").className = "pill " + (fresh ? "none" : worst); $("#statusPill").textContent = fresh ? "Welcome" : {ok: "You're doing well", watch: "Worth a look", urgent: "Needs attention"}[worst];
-  $("#statusTxt").textContent = fresh ? "Let's start learning your normal during training." : st.length ? cap(st[0].what) + (st.length > 1 ? ` (and ${st.length - 1} more)` : "") : `${dueN ? `${pl(dueN, "thing")} for you today` : "All done for today"}`;
+  $("#statusTxt").textContent = fresh ? "Let's start learning your normal during training." : st.length ? cap(st[0].what) : `${dueN ? `${pl(dueN, "thing")} for you today` : "All done for today"}`;
   $("#dayChip").textContent = dayChip();
   $("#dayTxt").textContent = p === "training" ? `${PHASE_LABEL.training()} · ${pl(-d, "day")} to launch` : p === "orbit" ? `${PHASE_LABEL.orbit()} · ${pl(LAND() - d, "day")} to ${mars() ? "Mars landing" : "going home"}` : PHASE_LABEL[p]();
   const steps = ["Training", "Launch", "Day 1", mars() ? "Cruise" : "In orbit", "Last day", mars() ? "Mars" : "Home"], at = {training: 0, launch: 1, arrive: 2, orbit: 3, prereturn: 4, landed: 5, after: 5}[p];
   const frac = p === "orbit" ? 2 + (d - 1) / (LAND() - 2) * 2 : at;
   $("#tl").innerHTML = `<span class="bar" style="width:${Math.min(5, frac) / 5 * 83.34}%"></span>` + steps.map((s, i) => `<div class="${i < at ? "past" : i === at ? "now" : ""}"><i></i>${s}</div>`).join("");
   if (next) { setNext(next.ic, `${next.when} · ${next.dur}${next.req ? '<span class="req">Required</span>' : ""}`, next.what, next.why, true);
-    const rest = q.filter(x => !x.done && x !== next); $("#later").innerHTML = rest.map(x => `<div>Later: <b>${x.what}</b> · ${x.when} · ${x.dur}</div>`).join("") + `<div>I'll remind you once at the right time. Never during sleep, spacewalks or exercise.</div>`; }
+    const rest = q.filter(x => !x.done && x !== next); $("#later").innerHTML = rest.map(x => `<div>Later: <b>${x.what}</b> · ${x.when} · ${x.dur}</div>`).join(""); }
   else if (p === "launch") { setNext("rocket", "Launch day", "Checked in. Enjoy the ride!", "Your suit and the vehicle look after you now. Next reading: when you arrive.", false); $("#later").innerHTML = ""; }
   else { setNext("check", "Today", "All done. Nice work!", inFlight() ? "Monitoring keeps running in the background. See you tomorrow morning." : "Nothing else for you today.", false); $("#later").innerHTML = ""; }
   renderScan(); renderChat(); renderTiles(); renderHolo(false); refreshAstra(); renderBars(); renderAlerts(st); save(); renderView();
@@ -564,11 +564,11 @@ function renderHolo(full) {
       <g class="hs" id="bodyAll">${parts}</g>
       <g id="areaG"></g>
       <circle cx="122" cy="102" r="3" fill="#1E7F4F"><title>Dosimeter</title></circle></svg>`; renderAreas(); }
-  $("#hbHR").className = "hbox " + lvlClass(v.hr, Math.min(51, b.hr - 20), Math.max(110, b.hr + 20), 40, 131); $("#hbHR").innerHTML = `Heart rate<b>${v.hr} <small>bpm</small></b>`;
+  $("#hbHR").className = "hbox " + lvlClass(v.hr, Math.max(51, b.hr - 20), Math.min(110, b.hr + 20), 40, 131); $("#hbHR").innerHTML = `Heart rate<b>${v.hr} <small>bpm</small></b>`;
   $("#hbBP").className = "hbox " + lvlClass(v.sbp, 101, 179, 90, 220); $("#hbBP").innerHTML = `Blood pressure<b>${v.sbp}/${v.dbp}</b>`;
   $("#hcL").innerHTML = `<div class="co ${lvlClass(v.temp, 35.5, 38, 35, 39.1)}">Temperature<b>${f(v.temp, 1)} <small>°C</small></b></div><div class="co">Breathing<b>${v.rr} <small>/min</small></b></div>`;
   const dose = 120 + Math.max(0, Math.min(day(), LAND())) * M().doseRate, pct = dose / 600 * 100;
-  $("#hcR").innerHTML = `<div class="co">Oxygen<b>${v.spo2} <small>%</small></b></div><div class="co">Dose<b>${f(dose)} <small>mSv</small></b></div>`;
+  $("#hcR").innerHTML = `<div class="co">Oxygen<b>${v.spo2} <small>%</small></b></div><div class="co">Dose <span class="simtag">Simulated</span><b>${f(dose)} <small>mSv</small></b></div>`;
   const on = Math.max(1, Math.round(pct / 100 * 14));
   $("#lvl").innerHTML = Array.from({length: 14}, (_, i) => `<i class="${i < on ? "on" + (pct > 80 ? " w" : "") : ""}"></i>`).join("") + `<span>${f(pct)}% dose limit</span>`;
   const bmi = S.weight / Math.pow(S.height / 100, 2);
@@ -610,7 +610,7 @@ function renderChat() {
   const now = Date.now(), msgs = S.msgs.filter(m => m.mission === S.mission && (m.me || m.at <= now)), near = nearDoctors();
   $("#earthSub").textContent = near ? "Your flight surgeon, on Earth with you." : mars() ? "Replies take a while from this far out." : "Your doctors on Earth, a moment away.";
   $("#sig").innerHTML = `<i style="height:6px"></i><i style="height:10px"></i><i style="height:14px"></i><span>${near ? "On Earth" : mars() ? "20 min each way" : "~1 s delay"}</span>`;
-  $("#chat").innerHTML = msgs.length ? msgs.slice(-5).map(m => `<div class="bubble ${m.me ? "me" : "them"}"><div class="meta">${m.me ? (m.auto ? "Sent automatically" : "You shared") + (m.at > now ? ` · arrives in ${clock(m.at - now)}` : " · delivered") : 'Your flight surgeon <span class="tag">simulated</span>'}</div>${m.text}</div>`).join("")
+  $("#chat").innerHTML = msgs.length ? msgs.slice(-5).map(m => `<div class="bubble ${m.me ? "me" : "them"}"><div class="meta">${m.me ? (m.auto ? "Sent automatically" : "You shared") + (m.at > now ? ` · arrives in ${clock(m.at - now)}` : " · delivered") : 'Your flight surgeon <span class="simtag">Simulated</span>'}</div>${m.text}</div>`).join("")
     : `<div class="bubble them"><div class="meta">ASTRA</div>Nothing here yet. Your scan images and anything you choose to share will appear here, with your doctors' replies.</div>`;
   const shareable = shareItems().filter(x => !S.msgs.some(m => m.me && m.text.toLowerCase().includes(x.what)));
   $("#shareWrap").innerHTML = shareable.length ? `<button class="btn ghost" id="shareBtn" style="margin-top:12px;width:100%">Share with my flight surgeon</button>` : "";
@@ -627,9 +627,9 @@ function renderTiles() {
     : mars() ? {id: "air", k: "Cabin air", v: "Ship", n: "from your ship's sensors", more: `<div class="sub">On a Mars ship, the cabin CO₂ comes from the ship's own sensors. ISS readings don't apply.</div>`}
     : {id: "air", k: "Cabin air", v: `${f(co2, 1)} mmHg`, n: iss && iss.co2 !== undefined ? "CO₂ · NASA ISS Live" : "CO₂ · ISS snapshot", more: `<div class="sub">Station CO₂ from NASA's ISS Live feed ${iss && iss.co2 !== undefined ? `<span class="tag live">live</span>${iss.ageH > 1 ? ` · this reading is ${f(iss.ageH / 24, 1)} days old` : ""}` : '<span class="tag">snapshot</span> (tap Connect for live)'}. NASA's limit is a 3 mmHg <b>1-hour average</b>, so one reading isn't an alarm. Context only: the station's own alarms and Mission Control own the air. If you wake with a headache, mention it in your daily check.</div>`};
   const T = [
-    {id: "sleep", k: "Sleep", v: d && d.sleep ? `${f(d.sleep, 1)} h` : "–", n: `usually ${f(b.sleep, 1)} h`, more: `${spark(hist, 3, 10, [b.sleep - 1.5, b.sleep + 1])}<div class="sub">Last two weeks ${useMine ? "" : '<span class="tag">demo history</span>'}. NASA plans 8.5 h for sleep; in space most people get 6–6.5 h. I only flag big drops from <i>your</i> usual.</div>`},
-    {id: "mood", k: "Mood", v: d && d.mood ? ["Very low", "Low", "Okay", "Good", "Great"][d.mood - 1] : "–", n: "only you see this", more: `<div class="sub">Your mood is private and never sent anywhere automatically. If it stays low, talking to a crewmate or calling home can help.</div>`},
-    {id: "rt", k: "Reflexes", v: L().rt ? `${L().rt} ms` : "–", n: `usually ${f(b.rt)} ms`, more: `<div class="sub">From the reflex game. ${phase() === "training" ? "Every training game builds your normal." : "I flag it if you're more than 15% slower than your normal."} Your normal comes from ${bi.n ? pl(bi.n, "training day") : 'demo values <span class="tag">demo</span>'}.</div>`},
+    {id: "sleep", k: "Sleep", v: d && d.sleep ? `${f(d.sleep, 1)} h` : "–", n: `usually ${f(b.sleep, 1)} h`, more: `${spark(hist, 3, 10, [b.sleep - 1.5, b.sleep + 1])}<div class="sub">Last two weeks ${useMine ? "" : '<span class="realtag">Real data · PMData</span>'}. NASA plans 8.5 h for sleep; in space most people get 6–6.5 h. I only flag big drops from <i>your</i> usual.${d && d.date ? ` Replaying the real night of ${d.date}.` : ""}</div>`},
+    {id: "mood", k: "Mood", v: d && d.mood ? ["Very low", "Low", "Okay", "Good", "Great"][d.mood - 1] : "–", n: "only you see this", more: `<div class="sub">${d && d.date ? `Replaying the real day of ${d.date}. ` : ""}Your mood is private and never sent anywhere automatically. If it stays low, talking to a crewmate or calling home can help.</div>`},
+    {id: "rt", k: "Reflexes", v: L().rt ? `${L().rt} ms` : "–", n: `usually ${f(b.rt)} ms`, more: `<div class="sub">From the reflex game. ${phase() === "training" ? "Every training game builds your normal." : "I flag it if you're more than 15% slower than your normal."} Your normal comes from ${bi.n ? pl(bi.n, "training day") : 'demo values <span class="simtag">Simulated</span>'}.</div>`},
     air,
   ];
   $("#tiles").innerHTML = T.map(t => `<div class="tile ${t.id === S.open ? "on" : ""}" data-t="${t.id}"><div class="k"><i></i>${t.k}</div><div class="v">${t.v}</div><div class="n">${t.n}</div></div>`).join("");
@@ -644,18 +644,21 @@ function fillScheduled() { const now = Date.now();
   for (const a in SCHED) SCHED[a].forEach((x, i) => { if (x >= LAND() - 1) return;
     if (!S.scans.some(s => s.mission === S.mission && s.area === a && s.day >= x && s.day < slotEnd(a, i))) S.scans.push({area: a, at: now, reply: "normal", repliedAt: now, mission: S.mission, day: x, seed: true}); }); }
 function seedFor(c) { const m = S.mission; S.seeded = S.seeded || {}; if (S.seeded[m]) return; S.seeded[m] = true;
-  const rows = ((D.crew && D.crew[c.idx] && D.crew[c.idx].days) || []).slice(20, 50), now = Date.now();
-  for (let i = 1; i <= 30; i++) { const r = rows[i - 1] || {}, l = S.log[`${m}:${-i}`] = S.log[`${m}:${-i}`] || {};
+  const now = Date.now();
+  for (let i = 1; i <= 30; i++) { const r = realRow(-i, c.idx) || {}, l = S.log[`${m}:${-i}`] = S.log[`${m}:${-i}`] || {};
     l.daily = {sleep: r.sleep_min ? Math.round(r.sleep_min / 30) / 2 : 7, mood: r.mood ? Math.max(1, Math.min(5, Math.round(r.mood))) : 3, hr: r.rhr ? Math.round(r.rhr) + 4 : 60,
       sbp: 112 + c.idx * 3 + (i * 5) % 8, dbp: 72 + c.idx + (i * 3) % 5, temp: Math.round(365 + i % 3) / 10, glu: 86 + c.idx * 2 + (i * 11) % 9};
     l.rt = 270 + c.idx * 15 + (i * 13) % 30; l.done = {train: true}; if (i === 10) l.stand = {hr: 6 + c.idx * 2, sbpDrop: 4}; }
   Object.keys(AREAS).forEach((a, i) => S.scans.push({area: a, at: now, reply: "normal", repliedAt: now, mission: m, day: -(20 - i * 2), seed: true}));
   fillScheduled();
-  const b = base(), l50 = S.log[`${m}:50`] = S.log[`${m}:50`] || {};
-  l50.daily = {sleep: b.sleep, mood: 4, hr: b.hr, sbp: b.sbp, dbp: b.dbp, temp: b.temp, glu: b.glu};
-  if (c.id === "c2") l50.daily.sleep = Math.max(3, Math.round((b.sleep - 2.5) * 2) / 2); }
+}
 const ensureSeeded = () => CREW.forEach(c => withMember(c.id, () => seedFor(c)));
-function ensureDaily() { const b = base(); if (!L().daily) L().daily = {sleep: b.sleep, mood: 4, hr: b.hr, sbp: b.sbp, dbp: b.dbp, temp: b.temp, glu: b.glu}; return L().daily; }
+function realRow(d, idx = (CREW.find(c => APP.crew[c.id] === S) || me()).idx) { const rows = (D.crew && D.crew[idx] && D.crew[idx].days) || [], n = rows.length; if (!n) return null;
+  const i = ((d + 60) % n + n) % n; for (let k = 0; k < n; k++) { const r = rows[(i + k) % n]; if (r && r.sleep_min > 0) return r; } return null; }
+function realFill(d = day()) { const l = L(d); if (l.daily) return l.daily; const r = realRow(d); if (!r) return null; const b = base();
+  l.daily = {sleep: Math.round(r.sleep_min / 60 * 10) / 10, mood: r.mood ? Math.max(1, Math.min(5, Math.round(r.mood))) : Math.round(b.mood), hr: r.rhr ? Math.round(r.rhr) + 4 : b.hr, sbp: b.sbp, dbp: b.dbp, temp: b.temp, glu: b.glu, date: r.date, real: true};
+  return l.daily; }
+function ensureDaily() { realFill(); const b = base(); if (!L().daily) L().daily = {sleep: b.sleep, mood: 4, hr: b.hr, sbp: b.sbp, dbp: b.dbp, temp: b.temp, glu: b.glu}; return L().daily; }
 function missTarget() { if (!inFlight()) return null; const c = schedule().filter(x => x.d <= day() - 4 && x.done); return c.length ? c[c.length - 1] : null; }
 const SIMS = [
   {id: "sleep", l: "watch", t: "Short sleep"}, {id: "hr", l: "watch", t: "Heart rate off normal"}, {id: "rt", l: "watch", t: "Slow reflexes"},
@@ -663,21 +666,21 @@ const SIMS = [
   {id: "vital", l: "urgent", t: "Vital sign outside safe limits"}, {id: "scanu", l: "urgent", t: "Scan: doctors want a call now"}];
 function simOff(id) { if (id === "rt" && phase() === "training") return "Reflexes are only compared with your normal after launch."; if (id === "miss" && !missTarget()) return "Only in flight, at least 4 days after a scheduled scan."; return ""; }
 function simulate(id) { const now = Date.now(), b = base();
-  if (id === "clear") { const l = L(); delete l.daily; delete l.rt; S.scans = S.scans.filter(s => !(s.sim && s.mission === S.mission && s.day === day())); fillScheduled(); ensureDaily(); return; }
+  if (id === "clear") { const l = L(); delete l.daily; delete l.rt; S.scans = S.scans.filter(s => !(s.sim && s.mission === S.mission && s.day <= day())); S.msgs = S.msgs.filter(m => !(m.sim && m.mission === S.mission)); fillScheduled(); ensureDaily(); return; }
   if (simOff(id)) return;
   const d = ensureDaily();
   if (id === "sleep") d.sleep = Math.max(3, Math.round((b.sleep - 2.5) * 2) / 2);
   if (id === "hr") d.hr = Math.round(b.hr + 24);
   if (id === "rt") L().rt = Math.round(b.rt * 1.3);
-  if (id === "vital") { d.hr = 136; autoVitals(); }
+  if (id === "vital") { d.hr = 136; const n0 = S.msgs.length; autoVitals(); S.msgs.slice(n0).forEach(m => { m.sim = true; }); }
   if (id === "scanf" || id === "scanu") { const area = id === "scanf" ? "eyes" : "neck", reply = id === "scanf" ? "followup" : "urgent";
     S.scans.push({area, at: now, reply, repliedAt: now, mission: S.mission, day: day(), sim: true});
-    S.msgs.push({me: false, mission: S.mission, at: now, text: reply === "followup" ? `Thanks for the ${AREAS[area].label.toLowerCase()} scan. We'd like a follow-up scan next week.` : `Please call us at the next opportunity about your ${AREAS[area].label.toLowerCase()} scan.`}); }
+    S.msgs.push({me: false, sim: true, mission: S.mission, at: now, text: reply === "followup" ? `Thanks for the ${AREAS[area].label.toLowerCase()} scan. We'd like a follow-up scan next week.` : `Please call us at the next opportunity about your ${AREAS[area].label.toLowerCase()} scan.`}); }
   if (id === "miss") { const x = missTarget(), i = SCHED[x.a].indexOf(x.d), end = slotEnd(x.a, i);
     S.scans = S.scans.filter(s => !(s.mission === S.mission && s.area === x.a && s.day >= x.d && s.day < end)); } }
 const SEEN = {}; let ALERT = {list: [], fresh: new Set()};
 const akey = x => x.l + "|" + x.what;
-const route = x => x.private ? "Stays with you" : (x.auto || x.l === "urgent") ? "Sent to the flight surgeon automatically" : "Shared with crew if you choose";
+const route = x => x.private ? "Stays with you" : x.result ? "Your doctors already know" : x.scan ? "On your schedule; your flight surgeon sees required scans" : (x.auto || x.l === "urgent") ? "Sent to the flight surgeon automatically" : "Shared with crew if you choose";
 const areaOf = x => /eye|reflex/.test(x.what) ? "head" : /neck/.test(x.what) ? "neck" : /heart|lung/.test(x.what) ? "chest" : /leg|standing|bladder/.test(x.what) ? "legs" : "whole";
 const AREA_SHAPE = {head: ['<ellipse cx="100" cy="44" rx="27" ry="31"/>', 100, 44], neck: ['<rect x="84" y="64" width="32" height="24" rx="6"/>', 100, 76],
   chest: ['<ellipse cx="100" cy="128" rx="40" ry="36"/>', 100, 128], legs: ['<rect x="58" y="252" width="84" height="160" rx="20"/>', 100, 330], whole: ['', 100, 200]};
@@ -692,22 +695,29 @@ function renderAreas() { const g = $("#areaG"), all = $("#bodyAll"); if (!g || !
   g.innerHTML = Object.entries(by).filter(([a]) => a !== "whole").map(([a, l]) => AREA_SHAPE[a][0].replace(/^<(\w+)/, `<$1 class="area ${l}"`)).join("")
     + Object.entries(fresh).map(([a, l]) => `<circle class="ping ${l}" cx="${AREA_SHAPE[a][1]}" cy="${AREA_SHAPE[a][2]}" r="16"/>`).join(""); }
 function refreshAstra() {
-  window.ASTRA = {crew: CREW.map(c => withMember(c.id, () => { const st = statuses(), w = worstOf(st);
+  window.ASTRA = {crew: CREW.map(c => withMember(c.id, () => { const st = statuses().filter(x => !x.private), w = worstOf(st);
     return {id: c.id, name: c.name, sex: c.sex, age: c.age, height: c.height, weight: c.weight, role: c.role, source: (D.crew && D.crew[c.idx] && D.crew[c.idx].source) || "",
-      base: Object.assign({}, base()), status: w, statusText: st.length ? `${WORD[w]}: ${cap(st[0].what)}${st.length > 1 ? ` (and ${st.length - 1} more)` : ""}` : "Nothing off their normal today", issues: st.map(x => ({l: x.l, what: x.what}))}; })),
-    activeId: APP.active, dayChip: dayChip(), phase: phase(), mission: S.mission}; }
+      base: Object.assign({}, base()), status: w, statusText: st.length ? `${WORD[w]}: ${cap(st[0].what)}${st.length > 1 ? ` (and ${st.length - 1} more)` : ""}` : "Nothing off their normal today", issues: st.map(x => ({l: x.l, what: x.what})),
+      today: (dd => dd ? {sleep: dd.sleep, mood: dd.mood, hr: dd.hr, date: dd.date || null} : null)(L().daily)}; })),
+    live: {id: "c1"}, activeId: APP.active, dayChip: dayChip(), phase: phase(), mission: S.mission}; }
 function dayMarks() { const L1 = LAND(), mr = mars();
   return [[-30, "Training"], [-7, "Training"], [0, "Launch"], [1, "Arrival"], [30, "Eyes scan"], [50, "Neck scan"], [90, "Heart scan"], [120, "Eyes scan"], [150, "Neck scan"], [L1 - 1, "Last day"], [L1, mr ? "Mars landing" : "Landing"], [L1 + 3, mr ? "On Mars" : "Recovery"]]; }
-function renderBars() { const A = window.ASTRA, cmp = APP.view === "compare";
-  $("#crewtabs").innerHTML = A.crew.map(c => `<button class="crewtab" role="tab" data-id="${c.id}" aria-selected="${!cmp && c.id === APP.active}"><span class="dot ${c.status}" title="${WORD[c.status]}"></span><span class="nm">${c.name}</span><span class="sx">${c.sex.toUpperCase()}</span><span class="rl">${c.role}</span></button>`).join("")
-    + `<button class="crewtab" role="tab" data-id="compare" aria-selected="${cmp}">Compare crew</button>`;
+function renderBars() { const A = window.ASTRA, cmp = APP.view === "compare", lv = APP.view === "live";
+  const ini = n => n.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase(), SW = {ok: "OK", watch: "Worth a look", urgent: "Needs attention"};
+  const who = c => `<span class="av">${ini(c.name)}</span><span class="who"><span class="nm">${c.name}</span><span class="rl">${c.role} · ${c.sex.toUpperCase()}</span></span>`, cur = A.crew.find(c => c.id === APP.active);
+  $("#crewBtn").innerHTML = (lv ? `<span class="av">LV</span><span class="who"><span class="nm">Live monitor</span></span>` : cmp || !cur ? `<span class="av">4</span><span class="who"><span class="nm">Compare crew</span></span>` : who(cur) + `<span class="dot ${cur.status}" title="${SW[cur.status]}"></span><span class="sr">${SW[cur.status]}</span>`) + `<span class="chev" aria-hidden="true"></span>`;
+  $("#crewMenu").innerHTML = A.crew.map(c => `<button class="crewopt" role="option" data-id="${c.id}" aria-selected="${!cmp && !lv && c.id === APP.active}">${who(c)}<span class="st ${c.status}"><span class="dot ${c.status}"></span>${SW[c.status]}</span></button>`).join("")
+    + `<button class="crewopt live" role="option" data-id="live" aria-selected="${lv}"><span class="av">LV</span><span class="who"><span class="nm">Live monitor</span><span class="rl">Maya Ortiz · heart rate now</span></span><span class="st"><span class="dot ok"></span>Live</span></button>`
+    + `<button class="crewopt cmp" role="option" data-id="compare" aria-selected="${cmp}"><span class="av">4</span><span class="who"><span class="nm">Compare crew</span><span class="rl">All four side by side</span></span></button>`;
   const d = day(); $("#days").innerHTML = dayMarks().map(([x, t]) => `<button class="daybtn${x === d ? " on" : ""}" data-day="${x}"><b>${dayChip(x)}</b><span>${t}</span></button>`).join("");
-  $("#dayNow").textContent = `${dayChip()} · ${PHASE_LABEL[phase()]()} · ${M().name}`;
-  $("#simbar").innerHTML = `<span class="lbl">Simulate an issue for ${me().name.split(" ")[0]}</span>` + SIMS.map(x => { const off = simOff(x.id); return `<button class="simbtn ${x.l}" data-sim="${x.id}"${off ? ` disabled title="${off}"` : ""}>${x.t}</button>`; }).join("")
+  { const box = $("#days"), on = box.querySelector(".daybtn.on"); if (on) box.scrollLeft = on.offsetLeft - box.offsetLeft - (box.clientWidth - on.offsetWidth) / 2; }
+  $("#simMenu").innerHTML = SIMS.map(x => { const off = simOff(x.id); return `<button class="simbtn ${x.l}" data-sim="${x.id}"${off ? ` disabled title="${off}"` : ""}><span class="dot ${x.l}"></span>${x.t}</button>`; }).join("")
     + `<button class="simbtn clear" data-sim="clear">Clear today's issues</button><span class="simtag">Simulated</span>`;
   $("#mission").value = S.mission; $("#dReply").value = S.reply; }
-function renderView() { const cmp = APP.view === "compare";
-  ["#crewGrid", "#crewMain", "#simbar", "#alerts"].forEach(s => { $(s).style.display = cmp ? "none" : ""; });
+function renderView() { const lv = APP.view === "live", cmp = APP.view === "compare";
+  ["#crewGrid", "#crewMain", "#simPick", "#alerts"].forEach(s => { $(s).style.display = cmp || lv ? "none" : ""; });
+  $(".ctl").hidden = lv; $("#alerts").hidden = lv;
+  const lvEl = $("#liveView"), wasLive = !lvEl.hidden; lvEl.hidden = !lv; if (lv && !wasLive && window.renderLive) window.renderLive(lvEl, window.ASTRA); if (!lv && wasLive && window.stopLive) window.stopLive();
   $("#compareView").hidden = !cmp; if (cmp && window.renderCompare) window.renderCompare($("#compareView"), window.ASTRA); }
 const setDay = x => { S.travel = Math.max(-60, Math.min(LAND() + 30, x)) + S.launch - todayIdx(); S.open = null; render(); };
 
@@ -809,10 +819,10 @@ const STEP = {
       const tm = setInterval(() => { n += 12; if ($("#pl")) $("#pl").setAttribute("points", pts.slice(0, n).map(xy).join(" ")); if (n >= pts.length) { clearInterval(tm); const drop = tr ? 4 : 14; L().stand = {hr: rise, sbpDrop: drop};
         $("#sto").innerHTML = `Heart rate <b>+${rise}</b> · blood pressure <b>−${drop}</b> when standing${tr ? " · saved as your normal" : ` · your normal +${f(base().stand)}`} <span class="tag">Earth data</span>`; $("#goBtn").disabled = false; } }, 30); }}),
   meds: () => { const land = LAND(), items = [{n: "Anti-nausea (for landing)", exp: land - 10}, {n: "Pain relief", exp: land + 200}, {n: "Salt tablets (for fluid loading)", exp: land + 400}];
-    return {title: "Landing medicines", sub: "Checking each expiry date against your landing day.", html: items.map(i => `<div class="check"><span style="${i.exp < land ? "background:var(--watch-soft);color:var(--watch)" : ""}">${i.exp < land ? "!" : "✓"}</span><span style="all:unset">${i.n}: ${i.exp < land ? "<b>expires before landing, use the backup pack</b>" : "fine"}</span></div>`).join("") + `<div class="sub" style="margin-top:8px">Before deorbit you'll also drink 24–48 oz of salty water (by body weight) to help your blood pressure. <span class="tag">demo kit</span></div>`,
+    return {title: "Landing medicines", sub: "Checking each expiry date against your landing day.", html: items.map(i => `<div class="check"><span style="${i.exp < land ? "background:var(--watch-soft);color:var(--watch)" : ""}">${i.exp < land ? "!" : "✓"}</span><span style="all:unset">${i.n}: ${i.exp < land ? "<b>expires before landing, use the backup pack</b>" : "fine"}</span></div>`).join("") + `<div class="sub" style="margin-top:8px">Before deorbit you'll also drink 24–48 oz of salty water (by body weight) to help your blood pressure. <span class="simtag">Simulated</span></div>`,
       after() { L().meds = items.map(i => ({n: i.n, expired: i.exp < land})); }}; },
   connect: () => ({title: "Connect equipment", sub: "Real connections where an open API exists. Everything else stays simulated and is labelled.", go: "Done",
-    html: SOURCES.map(s => `<div class="src"><div class="h"><b>${s.name}</b>${s.btn ? `<button class="btn sm" data-c="${s.id}">${CONN[s.id] ? "Reconnect" : s.btn}</button>` : '<span class="tag">simulated</span>'}</div><div class="d">${s.what}</div><div class="r" id="r-${s.id}"></div></div>`).join("") + `<button class="btn ghost" id="manBtn" style="width:100%;margin-top:12px">Or type readings in by hand</button>`,
+    html: SOURCES.map(s => `<div class="src"><div class="h"><b>${s.name}</b>${s.btn ? `<button class="btn sm" data-c="${s.id}">${CONN[s.id] ? "Reconnect" : s.btn}</button>` : '<span class="simtag">Simulated</span>'}</div><div class="d">${s.what}</div><div class="r" id="r-${s.id}"></div></div>`).join("") + `<button class="btn ghost" id="manBtn" style="width:100%;margin-top:12px">Or type readings in by hand</button>`,
     init() { $$("[data-c]").forEach(b => b.onclick = () => connect(b.dataset.c)); $("#manBtn").onclick = () => { flow = ["d4"]; k = 0; show(); }; }}),
   fin: () => { const st = statuses(); return {ill: I.done, title: st.length ? (st.length === 1 ? "Saved. One thing to keep an eye on" : `Saved. ${st.length} things to keep an eye on`) : "All saved. Nice!", sub: st.length ? cap(st.map(x => x.what).join("; ")) + "." : phase() === "training" ? `Added to your normal (${pl(baseInfo().n, "training day")} so far).` : "Everything is in line with your normal.", go: "Done"}; },
   share: () => { const items = shareItems(); return {title: "Share with your flight surgeon?", sub: "Totally your choice.", go: "Send",
@@ -851,21 +861,28 @@ $("#connBtn").onclick = () => openFlow(["connect"]);
 $("#enterBtn").onclick = () => openFlow(["d4"]);
 $("#tiles").onclick = e => { const t = e.target.closest("[data-t]"); if (t) { S.open = S.open === t.dataset.t ? null : t.dataset.t; render(); } };
 const tour = () => openFlow(["welcome1", "welcome2", "welcome3"]);
-$("#helpBtn").onclick = tour; $("#tourBtn").onclick = tour; $("#rulesBtn").onclick = () => openFlow(["rules"]);
+$("#helpBtn").onclick = () => { const g = $("#guideStrip"); g.hidden = !g.hidden; }; $("#tourBtn").onclick = tour; $("#rulesBtn").onclick = () => openFlow(["rules"]);
 $("#mission").onchange = e => { S.mission = e.target.value; S.open = null; render(); };
 $("#dReply").onchange = e => { S.reply = e.target.value; render(); };
-$("#crewtabs").onclick = e => { const t = e.target.closest("[data-id]"); if (!t) return; const id = t.dataset.id;
-  if (id === "compare") APP.view = "compare";
+const closeMenus = () => { [["#crewMenu", "#crewBtn"], ["#simMenu", "#simBtn"]].forEach(([m, b]) => { $(m).hidden = true; $(b).setAttribute("aria-expanded", "false"); }); };
+const toggleMenu = (m, b) => { const open = $(m).hidden; closeMenus(); $(m).hidden = !open; $(b).setAttribute("aria-expanded", String(open)); };
+$("#crewBtn").onclick = e => { e.stopPropagation(); toggleMenu("#crewMenu", "#crewBtn"); };
+$("#simBtn").onclick = e => { e.stopPropagation(); toggleMenu("#simMenu", "#simBtn"); };
+document.addEventListener("click", e => { if (!e.target.closest(".crewpick") && !e.target.closest(".simpick")) closeMenus(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeMenus(); });
+$("#crewMenu").onclick = e => { const t = e.target.closest("[data-id]"); if (!t) return; const id = t.dataset.id; closeMenus();
+  if (id === "compare" || id === "live") APP.view = id;
   else { const n = APP.crew[id]; SHARED.forEach(k2 => { n[k2] = S[k2]; }); S = n; APP.active = id; APP.view = "crew"; S.open = null; }
   render(); };
 $("#daybar").onclick = e => { const b = e.target.closest("[data-day],[data-step]"); if (!b) return; setDay(b.dataset.day !== undefined ? +b.dataset.day : day() + +b.dataset.step); };
-$("#simbar").onclick = e => { const b = e.target.closest("[data-sim]"); if (!b || b.disabled) return; simulate(b.dataset.sim); render(); };
+$("#simMenu").onclick = e => { const b = e.target.closest("[data-sim]"); if (!b || b.disabled) return; closeMenus(); simulate(b.dataset.sim); render(); };
 $("#dReset").onclick = () => { APP = freshApp(); S = APP.crew.c1; Object.keys(SEEN).forEach(k2 => delete SEEN[k2]); render(); };
-setInterval(() => { if (!document.hidden && APP.view !== "compare") renderHolo(false); const now = Date.now(); if ([...S.msgs.map(m => m.at), ...S.scans.map(s => s.repliedAt)].some(t => t > now - 1500) && !$("#sheet").classList.contains("on")) render(); }, 1000);
+setInterval(() => { if (!document.hidden && APP.view === "crew") renderHolo(false); const now = Date.now(); if ([...S.msgs.map(m => m.at), ...S.scans.map(s => s.repliedAt)].some(t => t > now - 1500) && !$("#sheet").classList.contains("on")) render(); }, 1000);
 render();
 window.addEventListener("load", () => { window.renderGuide && window.renderGuide(document.getElementById("guideStrip")); renderView(); });
 })();
 </script>
 <script src="compare.js"></script>
+<script src="live.js"></script>
 </body>
 </html>
