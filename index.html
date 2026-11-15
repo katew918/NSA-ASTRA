@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0B1F3A">
 <title>ASTRA — crew health check-in</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%279%27 fill=%27%232563EB%27/%3E%3Cpath d=%27M9 16h14M16 9v14%27 stroke=%27%23fff%27 stroke-width=%273.4%27 stroke-linecap=%27round%27/%3E%3C/svg%3E">
+<link rel="icon" type="image/png" href="favicon.png">
 <link rel="stylesheet" href="compare.css">
 <style>
 :root{
@@ -292,15 +292,18 @@ input[type=text]:focus,input[type=number]:focus,input[type=date]:focus,input[typ
 <body>
 <div class="hero">
   <div class="wrap">
+    <header class="bar" id="bar">
     <div class="top"><div class="brand"><span>ASTRA<small>Autonomous System for Telemetry, Risk, and Assessment</small></span></div><div class="topr hctl"><label class="daychip">Mission <select id="mission" aria-label="Mission"><option value="iss">ISS</option><option value="mars">Mars</option></select></label><span class="daychip" id="dayChip"></span><div class="crewpick"><button id="crewBtn" class="crewbtn" type="button" aria-haspopup="listbox" aria-expanded="false"></button><div id="crewMenu" class="crewmenu" role="listbox" hidden></div></div><button class="icon-btn" id="helpBtn" aria-label="How ASTRA works">?</button></div></div>
-    <section id="guideStrip" hidden></section>
     <div class="ctl"><div class="daybar" id="daybar"><button class="daystep" data-step="-1" aria-label="Previous day">‹</button><div class="days" id="days"></div><button class="daystep" data-step="1" aria-label="Next day">›</button></div><div class="simpick" id="simPick"><button id="simBtn" class="simtoggle" type="button" aria-expanded="false">Simulate an issue<span class="chev" aria-hidden="true"></span></button><div id="simMenu" class="simmenu" hidden></div></div></div>
+    </header>
+    <section id="guideStrip" hidden></section>
     <div id="alerts" class="alertbox" aria-live="polite"></div>
     <div class="hgrid" id="crewGrid">
       <div>
         <div class="eyebrow" id="dayTxt"></div>
         <h1 class="hello" id="hello"></h1>
         <div class="mood"><span class="pill" id="statusPill"></span><span id="statusTxt"></span></div>
+        <div class="datachip" id="dataDate"></div>
         <div class="tl" id="tl"></div>
         <section class="nextcard">
           <div class="next"><div class="ic" id="nextIc"></div><div class="tx"><div class="sub" id="nextWhen"></div><b id="nextWhat"></b><div class="sub" id="nextWhy"></div></div><button class="btn white" id="mainBtn">Start</button></div>
@@ -326,6 +329,24 @@ input[type=text]:focus,input[type=number]:focus,input[type=date]:focus,input[typ
   <section id="compareView" hidden></section>
   <section id="liveView" hidden></section>
   <main id="crewMain">
+    <section class="card datacard" id="dataCard">
+      <div class="dc-head"><h2>Data</h2><span id="dcTag"></span></div>
+      <div class="dc-tabs" role="tablist">
+        <button class="dc-tab" role="tab" aria-selected="true" data-k="sleep">Sleep</button>
+        <button class="dc-tab" role="tab" aria-selected="false" data-k="hr">Heart rate</button>
+        <button class="dc-tab" role="tab" aria-selected="false" data-k="mood">Mood</button>
+        <button class="dc-tab" role="tab" aria-selected="false" data-k="air">Cabin air</button>
+        <button class="dc-tab" role="tab" aria-selected="false" data-k="rad">Radiation</button>
+        <button class="dc-tab" role="tab" aria-selected="false" data-k="weather">Space weather</button>
+      </div>
+      <div class="dc-tools">
+        <div class="dc-range" id="dcRange"><button class="dc-rg" aria-pressed="false" data-r="7">7 days</button><button class="dc-rg" aria-pressed="true" data-r="30">30 days</button><button class="dc-rg" aria-pressed="false" data-r="all">Whole mission</button></div>
+        <div class="dc-read" id="dcRead"></div>
+      </div>
+      <svg class="dc-chart" id="dcChart" viewBox="0 0 800 260" preserveAspectRatio="none"></svg>
+      <div class="dc-foot"><span class="dc-src" id="dcSrc"></span><button class="linkbtn" id="dcTable">Show the numbers</button></div>
+      <div class="dc-table" id="dcTableBox" hidden></div>
+    </section>
     <div class="two">
       <section class="card rise">
         <div class="chead"><div><h2 id="scanTitle">Scans</h2><p class="sub" id="scanTxt"></p></div><div id="scanRing"></div></div>
@@ -339,11 +360,6 @@ input[type=text]:focus,input[type=number]:focus,input[type=date]:focus,input[typ
         <div id="shareWrap"></div>
       </section>
     </div>
-    <section class="card rise d2">
-      <h2>How you're doing <span class="realtag">Real data · PMData</span></h2><p class="sub">Compared with your own normal. Tap one for more.</p>
-      <div class="tiles" id="tiles" style="margin-top:14px"></div>
-      <div class="detail" id="detail"></div>
-    </section>
     <div class="links"><button class="linkbtn" id="tourBtn">Show the welcome tour again</button><button class="linkbtn" id="rulesBtn">How I decide what to tell Earth</button><label class="sub">Doctors' reply to new scans <select id="dReply"><option value="normal">Looks like your baseline</option><option value="followup">Wants a follow-up</option><option value="urgent">Needs a call now</option></select></label><button class="linkbtn" id="dReset">Reset demo</button></div>
   </main>
   <footer>ASTRA prototype · not medical advice · made for the crew tablet · NASA ISS Live · NASA OSDR · NASA DONKI · NASA-STD-3001 · PhysioNet CVES · PMData (real daily rows for 4 volunteers, relabelled) · crew profiles simulated</footer>
@@ -521,6 +537,8 @@ function render() {
   $("#statusPill").className = "pill " + (fresh ? "none" : worst); $("#statusPill").textContent = fresh ? "Welcome" : {ok: "You're doing well", watch: "Worth a look", urgent: "Needs attention"}[worst];
   $("#statusTxt").textContent = fresh ? "Let's start learning your normal during training." : st.length ? cap(st[0].what) : `${dueN ? `${pl(dueN, "thing")} for you today` : "All done for today"}`;
   $("#dayChip").textContent = dayChip();
+  { const dd = L().daily, fmtD = x => new Date(x + "T00:00:00Z").toLocaleDateString("en-GB", {day: "numeric", month: "short", year: "numeric", timeZone: "UTC"});
+    $("#dataDate").innerHTML = !dd ? "" : dd.sim ? `<span class="simtag">Simulated</span>` : dd.entered ? `<span>Entered today</span>` : dd.date ? `<span class="realtag">Real data</span><span>PMData · recorded <b>${fmtD(dd.date)}</b></span>` : ""; }
   $("#dayTxt").textContent = p === "training" ? `${PHASE_LABEL.training()} · ${pl(-d, "day")} to launch` : p === "orbit" ? `${PHASE_LABEL.orbit()} · ${pl(LAND() - d, "day")} to ${mars() ? "Mars landing" : "going home"}` : PHASE_LABEL[p]();
   const steps = ["Training", "Launch", "Day 1", mars() ? "Cruise" : "In orbit", "Last day", mars() ? "Mars" : "Home"], at = {training: 0, launch: 1, arrive: 2, orbit: 3, prereturn: 4, landed: 5, after: 5}[p];
   const frac = p === "orbit" ? 2 + (d - 1) / (LAND() - 2) * 2 : at;
@@ -618,23 +636,7 @@ function renderChat() {
 }
 function spark(vals, lo, hi, band) { const v = vals.filter(x => x !== null && x !== undefined); if (v.length < 2) return ""; const W = 260, H = 50, y = x => H - 4 - (x - lo) / (hi - lo) * (H - 8), xx = i => i / (vals.length - 1) * W;
   return `<svg class="viz" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="height:${H}px;margin:6px 0">${band ? `<rect x="0" y="${y(band[1])}" width="${W}" height="${y(band[0]) - y(band[1])}" fill="#e9edff"/>` : ""}<polyline fill="none" stroke="#3f5bff" stroke-width="2" points="${vals.map((x, i) => x === null || x === undefined ? null : `${xx(i)},${y(x)}`).filter(Boolean).join(" ")}"/></svg>`; }
-function renderTiles() {
-  const d = L().daily, b = base(), bi = baseInfo(), cur = day();
-  const mine = Array.from({length: 14}, (_, i) => { const r = S.log[key(cur - 13 + i)]; return r && r.daily ? r.daily.sleep : null; });
-  const useMine = mine.filter(x => x !== null).length >= 2, hist = useMine ? mine : [...((D.crew && D.crew[me().idx] && D.crew[me().idx].days) || []).slice(40, 53).map(r => r.sleep_min ? r.sleep_min / 60 : null), d ? d.sleep : null];
-  const iss = CONN.iss, snap = SM.isslive_snapshot || {}, co2 = iss && iss.co2 !== undefined ? iss.co2 : snap.NODE3000003_ppCO2;
-  const air = onGround() ? {id: "air", k: "Cabin air", v: "–", n: "starts once you're in space", more: `<div class="sub">In space I show the station's cabin CO₂ here, from NASA's ISS Live feed (or your ship's sensors on a Mars mission).</div>`}
-    : mars() ? {id: "air", k: "Cabin air", v: "Ship", n: "from your ship's sensors", more: `<div class="sub">On a Mars ship, the cabin CO₂ comes from the ship's own sensors. ISS readings don't apply.</div>`}
-    : {id: "air", k: "Cabin air", v: `${f(co2, 1)} mmHg`, n: iss && iss.co2 !== undefined ? "CO₂ · NASA ISS Live" : "CO₂ · ISS snapshot", more: `<div class="sub">Station CO₂ from NASA's ISS Live feed ${iss && iss.co2 !== undefined ? `<span class="tag live">live</span>${iss.ageH > 1 ? ` · this reading is ${f(iss.ageH / 24, 1)} days old` : ""}` : '<span class="tag">snapshot</span> (tap Connect for live)'}. NASA's limit is a 3 mmHg <b>1-hour average</b>, so one reading isn't an alarm. Context only: the station's own alarms and Mission Control own the air. If you wake with a headache, mention it in your daily check.</div>`};
-  const T = [
-    {id: "sleep", k: "Sleep", v: d && d.sleep ? `${f(d.sleep, 1)} h` : "–", n: `usually ${f(b.sleep, 1)} h`, more: `${spark(hist, 3, 10, [b.sleep - 1.5, b.sleep + 1])}<div class="sub">Last two weeks ${useMine ? "" : '<span class="realtag">Real data · PMData</span>'}. NASA plans 8.5 h for sleep; in space most people get 6–6.5 h. I only flag big drops from <i>your</i> usual.${d && d.date ? ` Replaying the real night of ${d.date}.` : ""}</div>`},
-    {id: "mood", k: "Mood", v: d && d.mood ? ["Very low", "Low", "Okay", "Good", "Great"][d.mood - 1] : "–", n: "only you see this", more: `<div class="sub">${d && d.date ? `Replaying the real day of ${d.date}. ` : ""}Your mood is private and never sent anywhere automatically. If it stays low, talking to a crewmate or calling home can help.</div>`},
-    {id: "rt", k: "Reflexes", v: L().rt ? `${L().rt} ms` : "–", n: `usually ${f(b.rt)} ms`, more: `<div class="sub">From the reflex game. ${phase() === "training" ? "Every training game builds your normal." : "I flag it if you're more than 15% slower than your normal."} Your normal comes from ${bi.n ? pl(bi.n, "training day") : 'demo values <span class="simtag">Simulated</span>'}.</div>`},
-    air,
-  ];
-  $("#tiles").innerHTML = T.map(t => `<div class="tile ${t.id === S.open ? "on" : ""}" data-t="${t.id}"><div class="k"><i></i>${t.k}</div><div class="v">${t.v}</div><div class="n">${t.n}</div></div>`).join("");
-  const o = T.find(t => t.id === S.open); $("#detail").classList.toggle("on", !!o); $("#detail").innerHTML = o ? `<b>${o.k}</b>${o.more}` : "";
-}
+function renderTiles() { if (window.renderData) window.renderData(); }
 const escH = t => String(t ?? "").replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
 const me = () => CREW.find(c => c.id === APP.active) || CREW[0];
 const worstOf = st => st.some(x => x.l === "urgent") ? "urgent" : st.some(x => x.l === "watch") ? "watch" : "ok";
@@ -665,10 +667,11 @@ const SIMS = [
   {id: "scanf", l: "watch", t: "Scan needs a follow-up"}, {id: "miss", l: "watch", t: "Missed a required scan"},
   {id: "vital", l: "urgent", t: "Vital sign outside safe limits"}, {id: "scanu", l: "urgent", t: "Scan: doctors want a call now"}];
 function simOff(id) { if (id === "rt" && phase() === "training") return "Reflexes are only compared with your normal after launch."; if (id === "miss" && !missTarget()) return "Only in flight, at least 4 days after a scheduled scan."; return ""; }
-function simulate(id) { const now = Date.now(), b = base();
+function simulate(id) { const now = Date.now(), b = base(); CALV++;
   if (id === "clear") { const l = L(); delete l.daily; delete l.rt; S.scans = S.scans.filter(s => !(s.sim && s.mission === S.mission && s.day <= day())); S.msgs = S.msgs.filter(m => !(m.sim && m.mission === S.mission)); fillScheduled(); ensureDaily(); return; }
   if (simOff(id)) return;
   const d = ensureDaily();
+  if (["sleep", "hr", "vital"].includes(id)) d.sim = true;
   if (id === "sleep") d.sleep = Math.max(3, Math.round((b.sleep - 2.5) * 2) / 2);
   if (id === "hr") d.hr = Math.round(b.hr + 24);
   if (id === "rt") L().rt = Math.round(b.rt * 1.3);
@@ -702,6 +705,19 @@ function refreshAstra() {
     live: {id: "c1"}, activeId: APP.active, dayChip: dayChip(), phase: phase(), mission: S.mission}; }
 function dayMarks() { const L1 = LAND(), mr = mars();
   return [[-30, "Training"], [-7, "Training"], [0, "Launch"], [1, "Arrival"], [30, "Eyes scan"], [50, "Neck scan"], [90, "Heart scan"], [120, "Eyes scan"], [150, "Neck scan"], [L1 - 1, "Last day"], [L1, mr ? "Mars landing" : "Landing"], [L1 + 3, mr ? "On Mars" : "Recovery"]]; }
+let CALV = 0; const CAL = {};
+function calMarks() { const L1 = LAND(), m = {}; m[-30] = "Training"; m[0] = "Launch"; m[1] = "Arrival";
+  Object.entries(SCHED).forEach(([a, xs]) => xs.forEach(x => { if (x < L1 - 1) m[x] = a[0].toUpperCase() + a.slice(1) + " scan"; }));
+  m[L1 - 1] = "Last day"; m[L1] = mars() ? "Mars landing" : "Landing"; m[L1 + 3] = mars() ? "On Mars" : "Recovery"; return m; }
+function calLevels() { const k2 = `${APP.active}:${S.mission}:${S.scans.length}:${S.msgs.length}:${CALV}`;
+  if (CAL[APP.active] && CAL[APP.active].k === k2) return CAL[APP.active].v;
+  const keep = S.travel, v = {};
+  try { for (let x = -30; x <= LAND() + 3; x++) { S.travel = x + S.launch - todayIdx(); v[x] = worstOf(statuses().filter(y => !y.private)); } } finally { S.travel = keep; }
+  CAL[APP.active] = {k: k2, v}; return v; }
+function calCells(lv, d) { const L1 = LAND(), m = calMarks(); let h = "";
+  for (let x = -30; x <= L1 + 3; x++) { const ml = m[x], sh = x < 0 ? String(x).replace("-", "−") : x === 0 ? "L" : x < L1 ? String(x) : x === L1 ? "R" : `+${x - L1}`, ph = x < 0 ? "training" : x < L1 ? "flight" : "return";
+    h += `<button class="daybtn${x === d ? " on" : ""}${ml ? " ms" : ""}${lv[x] && lv[x] !== "ok" ? " " + lv[x] : ""} ph-${ph}" data-day="${x}" title="${dayChip(x)}${ml ? " · " + ml : ""}" aria-label="${dayChip(x)}${ml ? ", " + ml : ""}">${ml ? `<span class="ml">${ml}</span>` : ""}<b>${sh}</b><i></i></button>`; }
+  return h; }
 function renderBars() { const A = window.ASTRA, cmp = APP.view === "compare", lv = APP.view === "live";
   const ini = n => n.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase(), SW = {ok: "OK", watch: "Worth a look", urgent: "Needs attention"};
   const who = c => `<span class="av">${ini(c.name)}</span><span class="who"><span class="nm">${c.name}</span><span class="rl">${c.role} · ${c.sex.toUpperCase()}</span></span>`, cur = A.crew.find(c => c.id === APP.active);
@@ -709,7 +725,7 @@ function renderBars() { const A = window.ASTRA, cmp = APP.view === "compare", lv
   $("#crewMenu").innerHTML = A.crew.map(c => `<button class="crewopt" role="option" data-id="${c.id}" aria-selected="${!cmp && !lv && c.id === APP.active}">${who(c)}<span class="st ${c.status}"><span class="dot ${c.status}"></span>${SW[c.status]}</span></button>`).join("")
     + `<button class="crewopt live" role="option" data-id="live" aria-selected="${lv}"><span class="av">LV</span><span class="who"><span class="nm">Live monitor</span><span class="rl">Maya Ortiz · heart rate now</span></span><span class="st"><span class="dot ok"></span>Live</span></button>`
     + `<button class="crewopt cmp" role="option" data-id="compare" aria-selected="${cmp}"><span class="av">4</span><span class="who"><span class="nm">Compare crew</span><span class="rl">All four side by side</span></span></button>`;
-  const d = day(); $("#days").innerHTML = dayMarks().map(([x, t]) => `<button class="daybtn${x === d ? " on" : ""}" data-day="${x}"><b>${dayChip(x)}</b><span>${t}</span></button>`).join("");
+  const d = day(), cl = calLevels(); $("#days").innerHTML = calCells(cl, d);
   { const box = $("#days"), on = box.querySelector(".daybtn.on"); if (on) box.scrollLeft = on.offsetLeft - box.offsetLeft - (box.clientWidth - on.offsetWidth) / 2; }
   $("#simMenu").innerHTML = SIMS.map(x => { const off = simOff(x.id); return `<button class="simbtn ${x.l}" data-sim="${x.id}"${off ? ` disabled title="${off}"` : ""}><span class="dot ${x.l}"></span>${x.t}</button>`; }).join("")
     + `<button class="simbtn clear" data-sim="clear">Clear today's issues</button><span class="simtag">Simulated</span>`;
@@ -787,7 +803,7 @@ const STEP = {
     return {title: "Your readings", sub: CONN.hr ? "Heart rate is filled in from your strap. Add the rest if you measured them." : "Type in what you measured, or tap Connect on the body to stream it. Pre-filled for the demo.", skip: true,
       html: `<div class="grid2"><div><span class="lab">Heart rate</span><input type="number" id="hr" value="${CONN.hr ? v.hr : dv[0]}"></div><div><span class="lab">Temperature °C</span><input type="number" id="tp" step=".1" value="${dv[3]}"></div><div><span class="lab">Blood pressure (top)</span><input type="number" id="bp" value="${dv[1]}"></div><div><span class="lab">Blood pressure (bottom)</span><input type="number" id="bpd" value="${dv[2]}"></div><div><span class="lab">Blood sugar mg/dL</span><input type="number" id="gl" value="${dv[4]}"></div></div>`,
       save() { Object.assign(scratch, {hr: +$("#hr").value, sbp: +$("#bp").value, dbp: +$("#bpd").value, temp: +$("#tp").value, glu: +$("#gl").value}); },
-      after() { L().daily = Object.assign({}, L().daily || {}, scratch); }}; },
+      after() { L().daily = Object.assign({}, L().daily || {}, scratch, {entered: true}); CALV++; }}; },
   rt: () => ({title: "Reflex game", sub: "Tap the box as soon as it turns blue. 10 taps (the real test runs 3 minutes).", needs: true, html: `<div class="pad" id="pad" tabindex="0">Tap to start</div><div class="box" id="rto" hidden></div>`,
     init() { const pad = $("#pad"); let st = "idle", t0 = 0, ts = [], tm; const nx = () => { st = "wait"; pad.classList.remove("go2"); pad.textContent = "Wait for it…"; tm = setTimeout(() => { st = "go"; pad.classList.add("go2"); pad.textContent = "Tap!"; t0 = performance.now(); }, 800 + Math.random() * 1700); };
       const hit = () => { if (st === "idle") { ts = []; nx(); } else if (st === "wait") { clearTimeout(tm); pad.textContent = "A bit early. Wait for blue"; setTimeout(nx, 700); }
@@ -859,7 +875,6 @@ $("#scanOther").onclick = () => openFlow(["pick"]);
 $("#scanBody").onclick = e => { const t = e.target.closest("[data-a]"); if (t) openFlow([`scan:${t.dataset.a}`]); };
 $("#connBtn").onclick = () => openFlow(["connect"]);
 $("#enterBtn").onclick = () => openFlow(["d4"]);
-$("#tiles").onclick = e => { const t = e.target.closest("[data-t]"); if (t) { S.open = S.open === t.dataset.t ? null : t.dataset.t; render(); } };
 const tour = () => openFlow(["welcome1", "welcome2", "welcome3"]);
 $("#helpBtn").onclick = () => { const g = $("#guideStrip"); g.hidden = !g.hidden; }; $("#tourBtn").onclick = tour; $("#rulesBtn").onclick = () => openFlow(["rules"]);
 $("#mission").onchange = e => { S.mission = e.target.value; S.open = null; render(); };
@@ -878,11 +893,14 @@ $("#daybar").onclick = e => { const b = e.target.closest("[data-day],[data-step]
 $("#simMenu").onclick = e => { const b = e.target.closest("[data-sim]"); if (!b || b.disabled) return; closeMenus(); simulate(b.dataset.sim); render(); };
 $("#dReset").onclick = () => { APP = freshApp(); S = APP.crew.c1; Object.keys(SEEN).forEach(k2 => delete SEEN[k2]); render(); };
 setInterval(() => { if (!document.hidden && APP.view === "crew") renderHolo(false); const now = Date.now(); if ([...S.msgs.map(m => m.at), ...S.scans.map(s => s.repliedAt)].some(t => t > now - 1500) && !$("#sheet").classList.contains("on")) render(); }, 1000);
+window.ASTRA_API = {get APP() { return APP; }, get S() { return S; }, D, CONN, L, day, base, realFill, key, dayChip, setDay, me, save, render};
 render();
 window.addEventListener("load", () => { window.renderGuide && window.renderGuide(document.getElementById("guideStrip")); renderView(); });
 })();
 </script>
 <script src="compare.js"></script>
 <script src="live.js"></script>
+<script src="feeds.js"></script>
+<script src="datacard.js"></script>
 </body>
 </html>

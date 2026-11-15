@@ -14,6 +14,8 @@ It compares a crew member with their own normal, from training on Earth through 
 |---|---|
 | `index.html` | The app: page, styles and logic |
 | `astra.css` | The visual design layer |
+| `datacard.js` | The Data box: tabs, graphs, time range and the table of numbers |
+| `feeds.js` | Live fetches: NASA ISS Live, NASA DONKI, NOAA SWPC GOES, station position |
 | `live.js` | The live monitor page (replays a real heart-rate recording) |
 | `compare.js`, `compare.css` | The "How ASTRA works" strip and the "Compare crew" tab |
 | `data.js` | Demo and reference data loaded by the page |
