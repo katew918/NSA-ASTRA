@@ -121,7 +121,7 @@
       common.label = common.name;
       common.unit = m.unit.trim();
       common.band = m.band(b); common.bandLabel = "usual";
-      common.yMin = st().k === "mood" ? 1 : 0; if (st().k === "mood") common.yMax = 5;
+      common.yMin = st().k === "mood" ? 1 : 0; if (st().k === "mood") { common.yMax = 5; common.yInclude = [1, 5]; common.integer = true; common.tickFmt = m.txt; }
       common.thresholds = m.th(b).map(function (t) { return {v: t.v, cls: t.c, label: t.c === "urgent" ? "red" : "amber"}; });
       common.fmt = m.txt ? function (v) { return m.txt(v); } : function (v) { return num(v, m.n); };
       if (m.txt) common.unit = "";
@@ -135,6 +135,7 @@
       common.thresholds = [{v: 10, cls: "watch", label: "10 pfu"}];
       common.fmt = function (v) { return v < 1 ? v.toFixed(2) : v.toFixed(1); };
       common.tipX = function (i) { return new Date(pts[i].date).toUTCString().slice(5, 22) + " UTC"; };
+      common.xTicks = pts.map(function (p, i) { var d = new Date(p.date); return d.getMinutes() === 0 && d.getHours() % 6 === 0 ? i : -1; }).filter(function (i) { return i >= 0; });
       C.line(el, common);
       return;
     }

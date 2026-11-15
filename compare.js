@@ -28,7 +28,7 @@
 
   var STEPS = [
     ["Training on Earth", "Baseline: sleep, heart rate, mood, reflexes, scans."],
-    ["Every mission day", "90-second check, wearables. One guided scan each day, five areas in rotation."],
+    ["Every mission day", "90-second check, wearables. Daily checks, weekly conference, exams on set flight days."],
     ["Compare with their own normal", "Green, Amber or Red."],
     ["Who sees it", "Mood private. Red goes to flight surgeon."]
   ];
@@ -174,7 +174,7 @@
     var d = Math.max.apply(null, [0].concat(series.map(function (s) { return Math.max.apply(null, s.values.map(function (v) { return v == null ? 0 : Math.abs(v); })); })));
     var dp = d >= 100 ? 0 : d >= 10 ? 1 : 2;
     return slot("line", {series: series, labels: tp, unit: an.units || "", label: "Inspiration4 crew values over time",
-      band: rng, bandLabel: rng ? "reference" : "", marks: ri > 0 ? [{x: ri - 0.5, label: "3 days in orbit"}] : [],
+      band: rng, endLabels: false, marks: ri > 0 ? [{x: ri - 0.5, label: "3 days in orbit"}] : [],
       fmt: function (v) { return fmt(v, dp); }}, "c-chart");
   }
 
@@ -204,6 +204,7 @@
       var zi = t.indexOf(0);
       var svg = slot("line", {values: m.map(num), name: "Mean rise", label: "Heart-rate rise on standing", unit: "bpm",
         labels: t.map(function (x) { return (x > 0 ? "+" : "") + x + " s"; }), yInclude: [0],
+        xTicks: t.map(function (x, i) { return x % 60 === 0 ? i : -1; }).filter(function (i) { return i >= 0; }),
         bandSeries: p25.length === m.length && p75.length === m.length ? {lo: p25, hi: p75} : null,
         marks: zi >= 0 ? [{x: zi, label: "stand up"}] : [], fmt: function (v) { return fmt(v, 1); },
         tipNote: function (i) { return num(p25[i]) != null && num(p75[i]) != null ? "middle half " + fmt(p25[i], 1) + " to " + fmt(p75[i], 1) + " bpm" : ""; }}, "e-chart");
