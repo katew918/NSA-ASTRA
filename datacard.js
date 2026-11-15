@@ -18,13 +18,13 @@
   var MET = {
     sleep: {unit: " h", n: 1, val: function (d) { return d.sleep; }, usual: function (b) { return b.sleep; },
       lvl: function (v, b) { return v < b.sleep - 1.5 ? "watch" : "ok"; },
-      band: function (b) { return [b.sleep - 1.5, b.sleep + 1]; }, th: function (b) { return [{v: b.sleep - 1.5, c: "watch"}]; }, lo: 3, hi: 10},
+      band: function (b) { return [b.sleep - 1.5, b.sleep + 1]; }, th: function (b) { return [{v: b.sleep - 1.5, c: "watch", side: "below", label: "amber · below " + num(b.sleep - 1.5, 1) + " h"}]; }, lo: 3, hi: 10},
     hr: {unit: " bpm", n: null, val: function (d) { return d.hr; }, usual: function (b) { return b.hr; },
       lvl: function (v, b) { return v <= 40 || v >= 131 ? "urgent" : v >= 111 || v <= 50 || Math.abs(v - b.hr) >= 20 ? "watch" : "ok"; },
-      band: function (b) { return [Math.max(51, b.hr - 20), Math.min(110, b.hr + 20)]; },
-      th: function (b) { return [{v: Math.max(51, b.hr - 20), c: "watch"}, {v: Math.min(110, b.hr + 20), c: "watch"}, {v: 50, c: "urgent"}]; }, lo: 40, hi: 100},
+      band: function (b) { return [Math.max(50, b.hr - 20), Math.min(111, b.hr + 20)]; },
+      th: function (b) { var a = Math.max(50, b.hr - 20), z = Math.min(111, b.hr + 20); return [{v: a, c: "watch", side: "below", label: "amber · below " + num(a) + " bpm"}, {v: z, c: "watch", side: "above", label: "amber · above " + num(z) + " bpm"}, {v: 40, c: "urgent", side: "below", label: "red · below 40 bpm"}, {v: 131, c: "urgent", side: "above", label: "red · above 130 bpm"}]; }, lo: 40, hi: 100},
     mood: {unit: "", n: null, val: function (d) { return d.mood; }, usual: function (b) { return b.mood; }, txt: function (v) { return MOOD[Math.round(v) - 1] || "–"; },
-      lvl: function (v) { return v <= 2 ? "watch" : "ok"; }, band: function (b) { return [Math.max(1, b.mood - 1), Math.min(5, b.mood + 1)]; }, th: function () { return [{v: 2, c: "watch"}]; }, lo: 1, hi: 5}
+      lvl: function (v) { return v <= 2 ? "watch" : "ok"; }, band: function (b) { return [Math.max(1, b.mood - 1), Math.min(5, b.mood + 1)]; }, th: function () { return [{v: 2, c: "watch", side: "below", label: "amber · Low (2) or below"}]; }, lo: 1, hi: 5}
   };
 
   function pmdata(k, r) {
@@ -37,48 +37,119 @@
     var dates = pts.filter(function (p) { return p.date; }).map(function (p) { return p.date; }).sort();
     var DD = A().D || {}, vol = (DD.crew && DD.crew[me().idx] && DD.crew[me().idx].source) || "";
     return {pts: pts, sel: pts.length - 1, m: m, b: b,
-      tag: '<span class="realtag">Real data · PMData</span>',
+      tag: '<span class="realtag">PMData</span>',
       src: "PMData volunteer " + esc(vol) + (dates.length ? " · " + fmtDate(dates[0]) + " – " + fmtDate(dates[dates.length - 1]) : "") + (k === "mood" ? " · Only you see this" : "")};
   }
 
+  function kpi(lab, val, note, cls) { return '<div class="dc-kpi' + (cls ? " " + cls : "") + '"><span>' + esc(lab) + "</span><b>" + val + "</b>" + (note ? "<small>" + esc(note) + "</small>" : "") + "</div>"; }
+  function kpis(a) { return '<div class="dc-kpis">' + a.join("") + "</div>"; }
+  function relLab(at, now) { var m = Math.round((now - at) / 60000); return m < 1 ? "now" : "−" + m + " min"; }
+  var MISS = {iss: {rate: 0.5, land: 180}, mars: {rate: 1.8, land: 210}};
+
   function air() {
-    var F = window.FEEDS || {}, i = F.iss || {}, snap = ((window.DATA || {}).samples || {}).isslive_snapshot || {};
-    var live = i.co2 != null, co2 = live ? i.co2 : snap.NODE3000003_ppCO2, p = live ? i.p : snap.USLAB000058_cabin_pressure, t = live ? i.t : snap.USLAB000059_cabin_temp;
-    var age = live ? ageTxt(F.issAgeH(i.co2ts)) : "";
+    var F = window.FEEDS || {}, i = F.iss || {}, snap = ((window.DATA || {}).samples || {}).isslive_snapshot || {}, now = Date.now(), buf = i.buf || {};
+    var live = i.co2 != null, co2 = live ? i.co2 : snap.NODE3000003_ppCO2, p = i.p != null ? i.p : snap.USLAB000058_cabin_pressure, t = i.t != null ? i.t : snap.USLAB000059_cabin_temp;
+    var sd = String(snap.read || "").slice(0, 10), snapNote = "snapshot read " + sd;
+    function age(ts, has) { return has ? ageTxt(F.issAgeH(ts)) : snapNote; }
     var pt = {v: co2, lab: "now", l: co2 > 3 ? "watch" : "ok"};
-    var items = live ? [{label: "Node 3", value: co2, cls: co2 > 3 ? "watch" : ""}] : [["Node 3", snap.NODE3000003_ppCO2], ["US Lab", snap.USLAB000055_ppCO2]].filter(function (x) { return typeof x[1] === "number"; }).map(function (x) { return {label: x[0], value: x[1], cls: x[1] > 3 ? "watch" : ""}; });
-    return {pts: [pt], sel: 0, noRange: true, hbars: {items: items, unit: "mmHg", name: "CO₂", max: 4, label: "Cabin CO₂ partial pressure", threshold: {v: 3, cls: "watch", label: "NASA limit 3 mmHg"}, fmt: function (v) { return num(v, 2); }},
-      tag: live ? '<span class="realtag">Live · NASA ISS Live</span>' : '<span class="simtag">Snapshot</span>',
+    function ser(ch, cur, has) {
+      var b = has ? (buf[ch] || []) : [], vals = b.map(function (x) { return x.v; }), labs = b.map(function (x) { return relLab(x.at, now); });
+      if (!b.length) { vals = [cur, cur]; labs = ["snapshot", "now"]; }
+      else { vals.push(b[b.length - 1].v); labs.push("now"); if (labs[0] === "now") labs[0] = "first reading"; }
+      return {values: vals, labels: labs};
+    }
+    var charts = [
+      {t: "CO₂ (mmHg)", s: ser("co2", co2, live), name: "CO₂", unit: "mmHg", n: 2, th: [{v: 3, cls: "watch", side: "above", label: "NASA limit 3 mmHg"}]},
+      {t: "Pressure (mmHg)", s: ser("p", p, i.p != null), name: "Pressure", unit: "mmHg", n: 1},
+      {t: "Temperature (°C)", s: ser("t", t, i.t != null), name: "Temperature", unit: "°C", n: 1}
+    ];
+    var co2Age = age(i.co2ts, live), pAge = age(i.pts, i.p != null), tAge = age(i.tts, i.t != null);
+    var k = [kpi("CO₂ now", flag(num(co2, 2) + " mmHg", pt.l), (pt.l === "watch" ? "above" : "below") + " the 3 mmHg limit · " + co2Age, pt.l === "watch" ? "watch" : ""),
+      kpi("O₂ partial pressure", num(snap.NODE3000001_ppO2, 1) + " mmHg", "Node 1 · " + snapNote),
+      kpi("Cabin pressure", num(p, 1) + " mmHg", pAge), kpi("Temperature", num(t, 1) + " °C", tAge)];
+    var plain = function (lab, a) { return /old$/.test(a) ? lab + " reading is " + a : a === "just now" ? lab + " reading is fresh" : lab + " from the " + snapNote; };
+    return {pts: [pt], sel: 0, noRange: true, air: charts, kpi: kpis(k),
+      tag: live ? '<span class="realtag">NASA ISS Live</span>' : '<span class="simtag">Snapshot</span>',
       read: "<b>" + flag(num(co2, 2) + " mmHg", pt.l) + " CO₂</b><span>Pressure " + num(p, 1) + " mmHg · " + num(t, 1) + " °C</span>",
-      src: live ? "NASA ISS Live · CO₂ " + age + (i.pts != null ? " · pressure " + ageTxt(F.issAgeH(i.pts)) : "") + (i.tts != null ? " · temperature " + ageTxt(F.issAgeH(i.tts)) : "") : "NASA ISS Live snapshot read " + esc(String(snap.read || "").slice(0, 10)),
+      src: (live ? "NASA ISS Live · " : "NASA ISS Live snapshot read " + esc(sd) + " · ") + [plain("CO₂", co2Age), plain("Pressure", pAge), plain("Temperature", tAge)].join(" · "),
       rows: [["now", "–", num(co2, 2) + " mmHg", "below 3 mmHg", WORD[pt.l], pt.l]]};
   }
 
   function rad() {
-    var F = window.FEEDS || {};
-    if (F.pfu && F.pfu.state === "live" && F.pfu.series.length) {
-      var pts = F.pfu.series.map(function (x) { return {v: x.v, lab: hhmm(x.t), l: x.v >= 10 ? "watch" : "ok", date: x.t}; });
-      return {pts: pts, sel: pts.length - 1, log: true, noRange: true, tag: '<span class="realtag">Live · NOAA SWPC GOES</span>', unit: " pfu",
-        src: "NOAA SWPC GOES · ≥10 MeV protons, last 24 h · fetched " + hhmm(F.pfu.at),
-        readOf: function (p) { return "<b>" + flag((p.v < 1 ? p.v.toFixed(2) : p.v.toFixed(1)) + " pfu", p.l) + "</b><span>" + esc(new Date(p.date).toUTCString().slice(5, 22)) + " UTC</span>"; }};
-    }
-    var m = (F.rad && F.rad.modules) || (((window.DATA || {}).samples || {}).radlab || {}).modules || [];
-    var bp = m.map(function (x) { return {v: x.mean_uGy_h, lab: x.module, l: "ok", inst: x.instrument}; });
-    return {pts: bp, sel: 0, noRange: true, hbars: {items: bp.map(function (p) { return {label: p.lab, sub: p.inst, value: p.v}; }), unit: "µGy/h", name: "Dose rate", label: "Mean dose rate by ISS module", fmt: function (v) { return num(v, 1); }}, tag: '<span class="simtag">Sample · NASA OSDR RadLab, 5 Dec 2019</span>',
-      src: "NASA OSDR RadLab · mean dose rate per module, 5 Dec 2019 00:00–06:00 UTC",
-      readOf: function (p) { return "<b>" + num(p.v, 1) + " µGy/h</b><span>" + esc(p.lab) + " · " + esc(p.inst || "") + "</span>"; }};
+    var F = window.FEEDS || {}, D = window.DATA || {}, live = F.pfu && F.pfu.state === "live" && F.pfu.series.length;
+    var raw = live ? F.pfu.series : (D.protons || []).map(function (x) { return {t: x.t, v: x.flux}; });
+    var pts = raw.map(function (x) { return {v: x.v, lab: hhmm(x.t), l: x.v >= 10 ? "watch" : "ok", date: x.t}; });
+    var m = (F.rad && F.rad.modules && F.rad.modules.length ? F.rad.modules : ((D.samples || {}).radlab || {}).modules) || [];
+    var fv = function (v) { return typeof v !== "number" ? "–" : v < 1 ? v.toFixed(2) : v.toFixed(1); };
+    var last = pts[pts.length - 1], t24 = last ? new Date(last.date).getTime() - 864e5 : 0, pk = null;
+    pts.forEach(function (p) { if (new Date(p.date).getTime() >= t24 && (!pk || p.v > pk.v)) pk = p; });
+    var S = A().S || {}, ms = MISS[S.mission] || MISS.iss, d = day(), dose = 120 + Math.max(0, Math.min(d, ms.land)) * ms.rate, pct = dose / 600 * 100;
+    var k = [kpi("Proton flux now", flag(fv(last && last.v) + " pfu", last && last.l), last ? new Date(last.date).toUTCString().slice(5, 22) + " UTC" : "", last && last.l === "watch" ? "watch" : ""),
+      kpi("24 h peak", fv(pk && pk.v) + " pfu", pk ? new Date(pk.date).toUTCString().slice(5, 22) + " UTC" : "", pk && pk.v >= 10 ? "watch" : ""),
+      kpi("Alert threshold", "10 pfu", "≥10 MeV protons"),
+      kpi("Mission dose so far", num(dose) + " mSv", "Simulated · " + num(pct, 1) + "% of the 600 mSv limit", pct > 80 ? "watch" : "")];
+    return {pts: pts, sel: pts.length - 1, log: true, noRange: true, unit: " pfu", modules: m, kpi: kpis(k),
+      tag: '<span class="realtag">NOAA SWPC GOES</span>',
+      src: live ? "NOAA SWPC GOES · ≥10 MeV protons, last 24 h · fetched " + hhmm(F.pfu.at) : "NOAA SWPC GOES bundled sample · hourly ≥10 MeV protons" + (pts.length ? " · " + fmtDate(pts[0].date) + " – " + fmtDate(last.date) : ""),
+      readOf: function (p) { return "<b>" + flag(fv(p.v) + " pfu", p.l) + "</b><span>" + esc(new Date(p.date).toUTCString().slice(5, 22)) + " UTC</span>"; }};
   }
 
+  var EV = {CME: "CME", FLR: "Solar flare", GST: "Geomagnetic storm", RBE: "Radiation belt enhancement", SEP: "Solar energetic particles", IPS: "Interplanetary shock", MPC: "Magnetopause crossing", HSS: "High speed stream", Report: "Weekly report"};
   function weather() {
     var F = window.FEEDS || {}, w = F.donki || {}, items = w.items || [], days = [], now = Date.now();
     for (var k = 29; k >= 0; k--) { var d = new Date(now - k * 864e5).toISOString().slice(0, 10); days.push({d: d, v: 0}); }
     items.forEach(function (i) { var d = String(i.time || "").slice(0, 10); days.forEach(function (x) { if (x.d === d) x.v++; }); });
     var pts = days.map(function (x) { return {v: x.v, lab: fmtDate(x.d).slice(0, -5), date: x.d, l: "ok"}; });
     var pos = F.pos && F.pos.state === "live" ? " · Station now " + num(F.pos.lat, 1) + "°, " + num(F.pos.lon, 1) + "°, " + Math.round(F.pos.alt) + " km (wheretheiss.at)" : "";
-    return {pts: pts, sel: pts.length - 1, bars: true, noRange: true,
-      tag: w.state === "live" ? '<span class="realtag">Live · NASA DONKI</span>' : '<span class="simtag">Sample · NASA DONKI</span>',
+    var tm = function (i) { var x = new Date(String(i.time || "").replace(/Z?$/, "Z")).getTime(); return isNaN(x) ? 0 : x; };
+    var smp = w.state !== "live" && w.counts, cnt = {};
+    var n7 = items.filter(function (i) { return now - tm(i) <= 7 * 864e5; }).length, n30 = 0;
+    if (smp) Object.keys(w.counts).forEach(function (c) { cnt[c] = w.counts[c]; });
+    else items.forEach(function (i) { if (now - tm(i) <= 30 * 864e5) cnt[i.type] = (cnt[i.type] || 0) + 1; });
+    Object.keys(cnt).forEach(function (c) { n30 += cnt[c]; });
+    var kk = [kpi("Last 7 days", String(n7), n7 === 1 ? "event" : "events"), kpi("Last 30 days", String(n30), n30 === 1 ? "event" : "events")].concat(Object.keys(cnt).sort(function (a, b) { return cnt[b] - cnt[a]; }).map(function (c) { return kpi(EV[c] || c, String(cnt[c]), "in 30 days"); }));
+    var rec = items.slice().sort(function (a, b) { return tm(b) - tm(a); }).slice(0, 6);
+    var list = rec.length ? '<div class="dc-list">' + rec.map(function (i) {
+      var t = tm(i), u = /^https:\/\//.test(i.url || "") ? '<a href="' + esc(i.url) + '" target="_blank" rel="noopener">Open</a>' : "";
+      return '<div class="dc-li"><time datetime="' + esc(i.time) + '">' + (t ? fmtDate(new Date(t).toISOString()) + " " + new Date(t).toISOString().slice(11, 16) + " UTC" : "–") + "</time><b>" + esc(EV[i.type] || i.type || "Event") + "</b><span>" + u + "</span></div>";
+    }).join("") + "</div>" : "";
+    return {pts: pts, sel: pts.length - 1, bars: true, noRange: true, kpi: kpis(kk) + list,
+      tag: '<span class="realtag">NASA DONKI</span>',
       src: (w.state === "live" ? "NASA DONKI notifications · fetched " + hhmm(w.at) : "NASA DONKI bundled sample · " + esc(w.window || "")) + pos,
       readOf: function (p) { return "<b>" + p.v + " event" + (p.v === 1 ? "" : "s") + "</b><span>" + fmtDate(p.date) + "</span>"; }};
+  }
+
+  function pmKpis(o) {
+    var m = o.m, P = o.pts, k = st().k; if (!P.length) return "";
+    var f = function (v) { return m.txt ? m.txt(v) : num(v, m.n) + m.unit; }, lo = P[0], hi = P[0], sum = 0, am = 0, un = 0;
+    P.forEach(function (p) { if (p.v < lo.v) lo = p; if (p.v > hi.v) hi = p; sum += p.v; if (p.l !== "ok") am++; if (p.v < p.usual) un++; });
+    var avg = sum / P.length, L = P[P.length - 1];
+    var a = [kpi("Latest", flag(esc(f(L.v)), L.l), L.day, L.l !== "ok" ? L.l : ""),
+      kpi("Average", esc(m.txt ? num(avg, 1) : num(avg, m.n === 1 ? 1 : 0) + m.unit), (m.txt ? m.txt(avg) + " · " : "") + P.length + " days"),
+      kpi("Lowest", esc(f(lo.v)), lo.day), kpi("Highest", esc(f(hi.v)), hi.day),
+      kpi("Days in amber", String(am), "of " + P.length, am > 0 ? "watch" : "")];
+    if (k === "sleep") a.push(kpi("Nights under usual", String(un), "usual " + num(L.usual, 1) + " h"));
+    return kpis(a);
+  }
+
+  function extraEl() {
+    var c = q("dcChart"), e = q("dcExtra");
+    if (!e && c) { e = document.createElement("div"); e.id = "dcExtra"; c.parentNode.insertBefore(e, c.nextSibling); }
+    return e;
+  }
+
+  function drawExtra(o, C) {
+    var e = extraEl(); if (!e) return;
+    var h = "";
+    if (o.air) h += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px">' + o.air.map(function (c, j) { return '<div><div class="dc-src">' + esc(c.t) + '</div><div id="dcAir' + j + '"></div></div>'; }).join("") + "</div>";
+    if (o.modules && o.modules.length) h += '<div style="margin-top:16px"><div class="dc-src">Dose rate by ISS module · 5 Dec 2019 sample</div><div id="dcMods"></div></div>';
+    e.innerHTML = h + (o.kpi || "");
+    if (!C) return;
+    if (o.air) o.air.forEach(function (c, j) {
+      C.line(q("dcAir" + j), {values: c.s.values, labels: c.s.labels, name: c.name, label: c.t, unit: c.unit, height: 170, thresholds: c.th || [],
+        xTicks: [0, c.s.values.length - 1], fmt: function (v) { return num(v, c.n); }, tickFmt: function (v) { return String(Math.round(v * 100) / 100); }});
+    });
+    if (o.modules && o.modules.length) C.hbars(q("dcMods"), {items: o.modules.map(function (x) { return {label: x.module, sub: x.instrument, value: x.mean_uGy_h}; }), unit: "µGy/h", name: "Dose rate", label: "Mean dose rate by ISS module, 5 Dec 2019", fmt: function (v) { return num(v, 1); }});
   }
 
   function readPm(o, p) { var m = o.m; if (!p) return ""; var val = m.txt ? m.txt(p.v) : num(p.v, m.n) + m.unit;
@@ -111,18 +182,21 @@
     var el = chartEl(), C = window.ASTRAChart, pts = o.pts;
     if (!el) return;
     readOut(-1);
+    if (o.m && !o.kpi) o.kpi = pmKpis(o);
+    el.hidden = !!o.air;
+    drawExtra(o, C);
     if (!C) { el.innerHTML = '<div class="ch-empty">Chart unavailable</div>'; return; }
     var vals = pts.map(function (p) { return p.v; }), flags = pts.map(function (p) { return p.l; }), labs = pts.map(function (p) { return p.lab || p.day; });
     var common = {values: vals, labels: labs, flags: flags, selected: o.sel, onHover: readOut, onPick: pickAt};
-    if (o.hbars) { var h = o.hbars; h.onHover = readOut; C.hbars(el, h); return; }
+    if (o.air) { el.innerHTML = ""; return; }
     if (o.m) {
       var m = o.m, b = o.b, names = {sleep: "Sleep", hr: "Resting heart rate", mood: "Mood"};
       common.name = names[st().k] || "Value";
       common.label = common.name;
       common.unit = m.unit.trim();
-      common.band = m.band(b); common.bandLabel = "usual";
-      common.yMin = st().k === "mood" ? 1 : 0; if (st().k === "mood") { common.yMax = 5; common.yInclude = [1, 5]; common.integer = true; common.tickFmt = m.txt; }
-      common.thresholds = m.th(b).map(function (t) { return {v: t.v, cls: t.c, label: t.c === "urgent" ? "red" : "amber"}; });
+      common.band = m.band(b); common.bandLabel = "usual " + (m.txt ? m.txt(m.usual(b)) : num(m.usual(b), m.n === 1 ? 1 : null) + m.unit);
+      common.yMin = st().k === "mood" ? null : 0; if (st().k === "mood") { common.yInclude = [1, 5]; common.integer = true; common.tickFmt = m.txt; }
+      common.thresholds = m.th(b).map(function (t) { return {v: t.v, cls: t.c, side: t.side, label: t.label}; });
       common.fmt = m.txt ? function (v) { return m.txt(v); } : function (v) { return num(v, m.n); };
       if (m.txt) common.unit = "";
       common.tipX = function (i) { var p = pts[i]; return (p.sim ? "Simulated" : p.entered ? "Entered" : fmtDate(p.date)) + " · " + p.day; };
@@ -131,8 +205,8 @@
       return;
     }
     if (o.log) {
-      common.name = "Protons ≥10 MeV"; common.label = "Proton flux, last 24 h"; common.unit = "pfu"; common.yLog = true;
-      common.thresholds = [{v: 10, cls: "watch", label: "10 pfu"}];
+      common.name = "Protons ≥10 MeV"; common.label = "Proton flux"; common.unit = "pfu"; common.yLog = true;
+      common.thresholds = [{v: 10, cls: "watch", side: "above", label: "amber · above 10 pfu"}];
       common.fmt = function (v) { return v < 1 ? v.toFixed(2) : v.toFixed(1); };
       common.tipX = function (i) { return new Date(pts[i].date).toUTCString().slice(5, 22) + " UTC"; };
       common.xTicks = pts.map(function (p, i) { var d = new Date(p.date); return d.getMinutes() === 0 && d.getHours() % 6 === 0 ? i : -1; }).filter(function (i) { return i >= 0; });

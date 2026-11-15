@@ -47,8 +47,8 @@
   }
 
   function tightTicks(lo, hi, integer, minV, maxV) {
-    if (lo === hi) { var p = Math.abs(lo) * 0.1 || 1; lo -= p; hi += p; }
-    var pad = (hi - lo) * 0.08, pos = lo >= 0;
+    if (Math.abs(hi - lo) <= Math.abs(lo) * 1e-6) { var p = Math.abs(lo) * 0.01 || 1; lo -= p; hi += p; }
+    var pad = (hi - lo) * 0.1, pos = lo >= 0;
     lo -= pad; hi += pad;
     if (pos && lo < 0) lo = 0;
     if (minV != null && lo < minV) lo = minV;
@@ -263,8 +263,18 @@
     if (spark) { var pd = (hi - lo) * 0.1 || 1; sc = { lo: lo - pd, hi: hi + pd, ticks: [] }; }
     else sc = log ? logTicks(lo, hi) : tightTicks(lo, hi, o.integer, nv(o.yMin), nv(o.yMax));
     var tf = o.tickFmt || trim, tlab = sc.ticks.map(function (t) { return String(tf(log ? Math.pow(10, t) : t)); });
+    var inl = !spark && ths.some(function (t) { return t.side === "below" || t.side === "above"; });
+    if (inl) {
+      useEnd = false;
+      var sp0 = sc.hi - sc.lo;
+      ths.forEach(function (t) {
+        var v = tv(t.v);
+        if (t.side === "below" && v - sc.lo < sp0 * 0.14) sc.lo = v - sp0 * 0.14;
+        if (t.side === "above" && sc.hi - v < sp0 * 0.14) sc.hi = v + sp0 * 0.14;
+      });
+    }
     var gl = [];
-    if (!spark && !useEnd) {
+    if (!spark && !useEnd && !inl) {
       if (band && o.bandLabel) gl.push(o.bandLabel);
       if (bs && bs.label) gl.push(bs.label);
       ths.forEach(function (t) { if (t.label) gl.push(t.label); });
@@ -293,10 +303,16 @@
       s += '<rect class="ch-span" x="' + x0.toFixed(1) + '" y="' + M.t + '" width="' + Math.max(1, x1 - x0).toFixed(1) + '" height="' + ph + '"/>';
       if (sp.label && !spark) s += '<text class="ch-note" x="' + ((x0 + x1) / 2).toFixed(1) + '" y="' + (M.t - 6) + '" text-anchor="middle">' + esc(sp.label) + "</text>";
     });
+    if (!spark) ths.forEach(function (t) {
+      if (t.side !== "below" && t.side !== "above") return;
+      var y = Math.max(M.t, Math.min(M.t + ph, Y(t.v))), y0 = t.side === "below" ? y : M.t, y1 = t.side === "below" ? M.t + ph : y;
+      if (y1 - y0 > 0.5) s += '<rect class="ch-zone ' + esc(t.cls || "watch") + '" x="' + M.l + '" y="' + y0.toFixed(1) + '" width="' + pw + '" height="' + (y1 - y0).toFixed(1) + '"/>';
+    });
     if (band) {
       var by1 = Y(band[1]), by2 = Y(band[0]);
       s += '<rect class="ch-band" x="' + M.l + '" y="' + by1.toFixed(1) + '" width="' + pw + '" height="' + Math.max(0, by2 - by1).toFixed(1) + '"/>';
-      if (o.bandLabel && !spark && by2 - by1 >= 14) notes.push({ y: useEnd ? by1 + 12 : (by1 + by2) / 2 + 4, t: o.bandLabel, c: "" });
+      if (o.bandLabel && !spark && !inl && by2 - by1 >= 14) notes.push({ y: useEnd ? by1 + 12 : (by1 + by2) / 2 + 4, t: o.bandLabel, c: "" });
+      else if (o.bandLabel && inl) s += '<text class="ch-note" x="' + (M.l + 6) + '" y="' + Math.max(M.t + 12, Math.min(M.t + ph - 4, by1 + 13)).toFixed(1) + '">' + esc(o.bandLabel) + '</text>';
     }
     if (bs) {
       var top = [], bot = [];
@@ -310,7 +326,7 @@
     ths.forEach(function (t) {
       var y = Y(t.v).toFixed(1), c = t.cls || "watch";
       s += '<line class="ch-th ' + esc(c) + '" x1="' + M.l + '" x2="' + (M.l + pw) + '" y1="' + y + '" y2="' + y + '"/>';
-      if (t.label && !spark) notes.push({ y: useEnd ? +y - 4 : +y + 3.5, t: t.label, c: c });
+      if (t.label && !spark) notes.push({ y: inl ? (t.side === "below" ? +y + 13 : +y - 5) : useEnd ? +y - 4 : +y + 3.5, t: t.label, c: c });
     });
     if (!spark) {
       s += '<line class="ch-axis" x1="' + M.l + '" x2="' + (M.l + pw) + '" y1="' + (M.t + ph) + '" y2="' + (M.t + ph) + '"/>';
@@ -328,8 +344,9 @@
         s += '<text class="ch-note" x="' + (right ? +x - 4 : +x + 4).toFixed(1) + '" y="' + (M.t - 6) + '"' + (right ? ' text-anchor="end"' : "") + ">" + esc(mk.label) + "</text>";
       }
     });
-    spread(notes, useEnd ? 14 : 12, M.t + 9, useEnd ? M.t + ph - 3 : M.t + ph + 3).forEach(function (nt) {
-      s += '<text class="ch-note' + (nt.c ? " " + esc(nt.c) : "") + '" x="' + (useEnd ? M.l + pw - 4 : M.l + pw + 7) + '" y="' + nt.y.toFixed(1) + '" text-anchor="' + (useEnd ? "end" : "start") + '">' + esc(nt.t) + "</text>";
+    spread(notes, useEnd || inl ? 14 : 12, M.t + (inl ? 12 : 9), useEnd || inl ? M.t + ph - 4 : M.t + ph + 3).forEach(function (nt) {
+      var ie = useEnd || inl;
+      s += '<text class="ch-note' + (nt.c ? " " + esc(nt.c) : "") + '" x="' + (ie ? M.l + pw - 4 : M.l + pw + 7) + '" y="' + nt.y.toFixed(1) + '" text-anchor="' + (ie ? "end" : "start") + '">' + esc(nt.t) + "</text>";
     });
     var base = M.t + ph, ends = [];
     ser.forEach(function (sr) {
@@ -338,10 +355,15 @@
         s += '<path class="ch-line2" fill="none" stroke="' + esc(sr.color) + '" d="' + mono(seg) + '"/>';
       });
     });
+    var clip = "";
+    if (band && !spark) {
+      clip = "chClip" + uid;
+      s += '<clipPath id="' + clip + '"><rect x="' + M.l + '" y="' + M.t + '" width="' + pw + '" height="' + ph + '"/></clipPath>';
+    }
     function mainPath(vals, cls) {
       var out = "";
       segments(vals, X, Y).forEach(function (seg) {
-        if (seg.length > 1) out += '<path class="ch-area" fill="url(#' + gid + ')" d="' + mono(seg) + "L" + seg[seg.length - 1].x.toFixed(1) + "," + base + "L" + seg[0].x.toFixed(1) + "," + base + 'Z"/>';
+        if (seg.length > 1) out += '<path class="ch-area"' + (clip ? ' clip-path="url(#' + clip + ')"' : "") + ' fill="url(#' + gid + ')" d="' + mono(seg) + "L" + seg[seg.length - 1].x.toFixed(1) + "," + base + "L" + seg[0].x.toFixed(1) + "," + base + 'Z"/>';
       });
       segments(vals, X, Y).forEach(function (seg) { out += '<path class="' + cls + '" fill="none" d="' + mono(seg) + '"/>'; });
       return out;

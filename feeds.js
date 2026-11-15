@@ -1,9 +1,10 @@
 (function () {
-  var F = window.FEEDS = {iss: {state: "loading"}, donki: {state: "loading"}, pfu: {state: "loading"}, pos: {state: "loading"}, rad: {state: "loading"}};
+  var F = window.FEEDS = {iss: {state: "loading", buf: {co2: [], p: [], t: []}}, donki: {state: "loading"}, pfu: {state: "loading"}, pos: {state: "loading"}, rad: {state: "loading"}};
 
   function SM() { return (window.DATA && window.DATA.samples) || {}; }
-  var pend = null;
-  function changed(k) { if (pend) return; pend = setTimeout(function () { pend = null; try { if (window.renderData) window.renderData(); } catch (e) {} }, 300); }
+  var pend = null, last = 0;
+  function changed(k) { if (pend) return; var w = k === "iss" ? Math.max(300, 1000 - (Date.now() - last)) : 300; pend = setTimeout(function () { pend = null; last = Date.now(); try { if (window.renderData) window.renderData(); } catch (e) {} }, w); }
+  function push(ch, v, ts) { var b = F.iss.buf[ch]; b.push({at: Date.now(), v: v, ts: ts}); if (b.length > 600) b.splice(0, b.length - 600); }
 
   function get(url, text) {
     var ac = window.AbortController ? new AbortController() : null, t = setTimeout(function () { if (ac) ac.abort(); }, 8000);
@@ -23,9 +24,9 @@
           var v = parseFloat(u.getValue("Value")), n = u.getItemName(), ts = parseFloat(u.getValue("TimeStamp"));
           if (isNaN(v)) return;
           got = true; F.iss.state = "live"; F.iss.at = Date.now();
-          if (n === "NODE3000003") { F.iss.co2 = v; F.iss.co2ts = ts; }
-          if (n === "USLAB000058") { F.iss.p = v; F.iss.pts = ts; }
-          if (n === "USLAB000059") { F.iss.t = v; F.iss.tts = ts; }
+          if (n === "NODE3000003") { F.iss.co2 = v; F.iss.co2ts = ts; push("co2", v, ts); }
+          if (n === "USLAB000058") { F.iss.p = v; F.iss.pts = ts; push("p", v, ts); }
+          if (n === "USLAB000059") { F.iss.t = v; F.iss.tts = ts; push("t", v, ts); }
           try { var CONN = window.ASTRA_API && window.ASTRA_API.CONN; if (CONN) { CONN.iss = CONN.iss || {}; if (F.iss.co2 != null) { CONN.iss.co2 = F.iss.co2; CONN.iss.ageH = yearH(F.iss.co2ts); } CONN.iss.p = F.iss.p; CONN.iss.t = F.iss.t; } } catch (e) {}
           changed("iss");
         }});
@@ -40,7 +41,7 @@
   function donki() {
     var end = new Date(), st = new Date(Date.now() - 30 * 864e5), ymd = function (x) { return x.toISOString().slice(0, 10); };
     get("https://ccmc.gsfc.nasa.gov/DONKI-API/get/notifications?startDate=" + ymd(st) + "&endDate=" + ymd(end) + "&type=all").then(function (items) {
-      F.donki = {state: "live", at: Date.now(), items: (Array.isArray(items) ? items : []).map(function (i) { return {time: i.messageIssueTime, type: i.messageType}; })};
+      F.donki = {state: "live", at: Date.now(), items: (Array.isArray(items) ? items : []).map(function (i) { return {time: i.messageIssueTime, type: i.messageType, url: i.messageURL}; })};
       changed("donki");
     }).catch(function () { var sm = SM().donki || {}; F.donki = {state: "sample", items: sm.latest || [], window: sm.window, counts: sm.counts}; changed("donki"); });
   }
@@ -59,7 +60,7 @@
   }
 
   function radlab() {
-    F.rad = {state: "sample", label: "Sample · NASA OSDR RadLab, 5 Dec 2019", modules: (SM().radlab || {}).modules || []}; changed("rad");
+    F.rad = {state: "sample", label: "NASA OSDR RadLab · 5 Dec 2019", modules: (SM().radlab || {}).modules || []}; changed("rad");
   }
 
   function start() {
