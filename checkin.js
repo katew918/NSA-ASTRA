@@ -1,11 +1,13 @@
 (function () {
-  var AI_VOICE_ENABLED = true;
-  var WEBLLM_URL = "https://esm.run/@mlc-ai/web-llm@0.2.87";
-  var MODEL_NAME = "Qwen2.5-0.5B-Instruct";
-  var MODELS = {f16: "Qwen2.5-0.5B-Instruct-q4f16_1-MLC", f32: "Qwen2.5-0.5B-Instruct-q4f32_1-MLC"};
-  var MODEL_MB = 280;
-  var PREF_KEY = "astra-ai-voice";
-  var FIRST_TOKEN_MS = 25000;
+  var AI_VOICE_ENABLED = false;
+  var AI_URL = "https://text.pollinations.ai/openai";
+  var AI_MODEL = "openai-fast";
+  var AI_NAME = "gpt-oss-20b";
+  var AI_MS = 12000;
+  var PREF_AI = "astra-ai-voice";
+  var PREF_SPEAK = "astra-read-aloud";
+  var BUSY_TEXT = "AI voice is busy, using the scripted line for this one.";
+  var ON_TEXT = "Open-source model gpt-oss-20b (Apache-2.0), hosted by Pollinations.";
 
   var ITEMS = [
     {k: "mood", label: "Mood", q: "How is your mood today?", scale: ["Very low", "Low", "OK", "Good", "Very good"]},
@@ -109,6 +111,14 @@
     if (opt.needQ && say.indexOf("?") < 0) return null;
     return say;
   }
+  function buildRequest(t) {
+    return {model: AI_MODEL, messages: buildMessages(t), max_tokens: 500, temperature: 0.6};
+  }
+  function parseResponse(j) {
+    var m = j && j.choices && j.choices[0] && j.choices[0].message;
+    var c = m && typeof m.content === "string" ? m.content : "";
+    return c.trim() || null;
+  }
 
   function greetWord(h) { return h < 12 ? "Morning" : h < 18 ? "Afternoon" : "Evening"; }
   function bucket(v) { return !v ? "none" : v <= 2 ? "low" : v === 3 ? "mid" : "high"; }
@@ -148,23 +158,25 @@
     return "Thanks for checking in" + who + ". Today sounds harder than usual for " + list + ", and it is okay to notice that.";
   }
 
-  var TEST = {ITEMS: ITEMS, SAFE_TEXT: SAFE_TEXT, isCrisis: isCrisis, clampScore: clampScore, stripMarkup: stripMarkup, buildMessages: buildMessages, validateText: validateText, cutText: cutText, scriptedLine: scriptedLine, scriptedSummary: scriptedSummary, SYS: SYS, SYS_SUM: SYS_SUM};
+  var TEST = {ITEMS: ITEMS, SAFE_TEXT: SAFE_TEXT, isCrisis: isCrisis, clampScore: clampScore, stripMarkup: stripMarkup, buildMessages: buildMessages, buildRequest: buildRequest, parseResponse: parseResponse, validateText: validateText, cutText: cutText, scriptedLine: scriptedLine, scriptedSummary: scriptedSummary, SYS: SYS, SYS_SUM: SYS_SUM};
   window.ASTRA_CHECKIN_TEST = TEST;
 
   var A = window.ASTRA_API;
   if (!A || typeof document === "undefined") return;
   function $(s) { return document.querySelector(s); }
   function esc(t) { return String(t == null ? "" : t).replace(/[&<>"']/g, function (c) { return {"&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;"}[c]; }); }
-  function getPref() { try { return localStorage.getItem(PREF_KEY) === "on"; } catch (e) { return false; } }
-  function setPref(on) { try { if (on) localStorage.setItem(PREF_KEY, "on"); else localStorage.removeItem(PREF_KEY); } catch (e) {} }
+  function getPref(k, def) { try { var v = localStorage.getItem(k); return v === null ? def : v === "on"; } catch (e) { return def; } }
+  function setPref(k, on) { try { localStorage.setItem(k, on ? "on" : "off"); } catch (e) {} }
 
-  var ai = {queue: Promise.resolve(), state: "off", engine: null, model: null, loading: null, pct: 0, msg: ""};
+  var ai = {on: AI_VOICE_ENABLED && getPref(PREF_AI, true), msg: "", queue: Promise.resolve(), last: null};
+  var speakOn = getPref(PREF_SPEAK, false);
+  var hasSpeech = typeof window.speechSynthesis !== "undefined" && typeof window.SpeechSynthesisUtterance !== "undefined";
   var st = null, runId = 0;
 
   function todayLog() { return A.L(); }
   function context() {
     var d = A.realFill() || (todayLog().daily || {}), b = A.base();
-    return {slept: typeof d.sleep === "number" ? d.sleep : null, usualSleep: typeof b.sleep === "number" ? Math.round(b.sleep * 10) / 10 : null, usualMood: clampScore(b.mood), missionDay: A.dayChip(), phase: A.phase()};
+    return {slept: typeof d.sleep === "number" ? d.sleep : null, usualSleep: typeof b.sleep === "number" ? Math.round(b.sleep * 10) / 10 : null, usualMood: clampScore(b.mood), missionDay: A.dayChip()};
   }
   function name() { return firstName(A.S && A.S.name); }
 
@@ -176,112 +188,69 @@
   };
 
   function noteHTML() {
-    var on = AI_VOICE_ENABLED && ai.state === "ready";
-    return (on ? "Private to you. The wording is written by an open-source model (" + MODEL_NAME + ", Apache-2.0) running in this browser under fixed rules. Nothing you type leaves this device. It never diagnoses."
-      : "Private to you. Scripted voice. Turn on AI voice to have an open-source model, running on this device, word the questions.") + " <span class=\"simtag\">Demo</span>";
+    return (ai.on ? "Your scores stay on this device. To word ASTRA's replies, your answers are sent to an open-source model (" + AI_NAME + ") hosted by Pollinations. It never diagnoses. On a real mission the model would run on board."
+      : "Private to you. Scripted voice.") + " <span class=\"simtag\">Demo</span>";
   }
   function paintAi() {
-    var btn = $("#mhAiBtn"), s = $("#mhAiSt"), bar = $("#mhBar"), note = $("#mhNote");
+    var btn = $("#mhAiBtn"), s = $("#mhAiSt"), note = $("#mhNote"), sp = $("#mhSpeak");
     if (note) note.innerHTML = noteHTML();
-    if (!btn) return;
-    btn.setAttribute("aria-pressed", ai.state === "ready" ? "true" : "false");
-    btn.disabled = ai.state === "loading" || ai.state === "nogpu";
-    btn.textContent = ai.state === "ready" ? "Turn off AI voice" : ai.state === "confirm" ? "Download and turn on" : ai.state === "loading" ? "Loading AI voice…" : "Turn on AI voice";
-    if (s) s.textContent = ai.msg || "";
-    if (bar) { bar.hidden = ai.state !== "loading"; var i = bar.querySelector("i"); if (i) i.style.width = Math.round(ai.pct) + "%"; }
-  }
-  function sizeText() { return "Downloads an open-source model, about " + MODEL_MB + " MB, once. It then runs on this device."; }
-
-  async function loadAi() {
-    if (ai.state === "ready" || ai.loading) return ai.loading;
-    ai.loading = (async function () {
-      var adapter = null;
-      try { adapter = navigator.gpu ? await navigator.gpu.requestAdapter() : null; } catch (e) { adapter = null; }
-      if (!adapter) { ai.state = "nogpu"; ai.msg = "This browser cannot run the model, so the scripted voice stays on."; setPref(false); paintAi(); return; }
-      ai.model = adapter.features && adapter.features.has("shader-f16") ? MODELS.f16 : MODELS.f32;
-      ai.state = "loading"; ai.pct = 0; ai.msg = sizeText(); paintAi();
-      var t0 = Date.now();
-      try {
-        var wl = await import(WEBLLM_URL);
-        var cb = function (p) { ai.pct = Math.max(0, Math.min(100, (p && p.progress || 0) * 100)); var tx = String(p && p.text || ""); ai.msg = /fetching/i.test(tx) ? "Downloading the model: " + Math.round(ai.pct) + "%. It then runs on this device." : /loading model/i.test(tx) ? "Loading the model on this device: " + Math.round(ai.pct) + "%." : "Preparing the model on this device…"; paintAi(); };
-        var eng = null;
-        try {
-          var w = new Worker(new URL("checkin-worker.js", location.href), {type: "module"});
-          var failed = new Promise(function (res, rej) { w.addEventListener("error", function () { rej(new Error("worker")); }); });
-          eng = await Promise.race([wl.CreateWebWorkerMLCEngine(w, ai.model, {initProgressCallback: cb}), failed]);
-          ai.where = "worker";
-        } catch (e) {
-          eng = await wl.CreateMLCEngine(ai.model, {initProgressCallback: cb});
-          ai.where = "main";
-        }
-        ai.msg = "Warming up…"; ai.pct = 100; paintAi();
-        try { await eng.chat.completions.create({messages: [{role: "user", content: "Say: ready."}], max_tokens: 4, temperature: 0}); } catch (e) {}
-        ai.engine = eng; ai.state = "ready"; ai.loadMs = Date.now() - t0;
-        ai.msg = "AI voice is on · " + MODEL_NAME; setPref(true);
-      } catch (e) {
-        ai.state = "off"; ai.engine = null; ai.msg = "The AI voice could not start here, so the scripted voice stays on."; setPref(false);
-      }
-      paintAi();
-    })();
-    try { await ai.loading; } finally { ai.loading = null; }
-  }
-  async function aiOff() {
-    var e = ai.engine; ai.engine = null; ai.state = "off"; ai.msg = ""; setPref(false); paintAi();
-    if (e && e.unload) { try { await e.unload(); } catch (x) {} }
+    if (btn) { btn.setAttribute("aria-pressed", ai.on ? "true" : "false"); btn.textContent = ai.on ? "AI voice on" : "AI voice off"; }
+    if (s) s.textContent = ai.on ? (ai.msg || ON_TEXT) : "";
+    if (sp) { sp.hidden = !hasSpeech; sp.setAttribute("aria-pressed", speakOn ? "true" : "false"); }
   }
 
-  function generate(t, bubble) {
-    var job = ai.queue.then(function () { return runGen(t, bubble); });
+  function stopSpeech() { if (hasSpeech) { try { window.speechSynthesis.cancel(); } catch (e) {} } }
+  function voice() {
+    try { var vs = window.speechSynthesis.getVoices() || []; return vs.find(function (v) { return /^en(-|_|$)/i.test(v.lang) && v.localService; }) || vs.find(function (v) { return /^en/i.test(v.lang); }) || null; } catch (e) { return null; }
+  }
+  function readAloud(text) {
+    if (!hasSpeech || !speakOn || !text) return;
+    stopSpeech();
+    try { var u = new SpeechSynthesisUtterance(text), v = voice(); if (v) { u.voice = v; u.lang = v.lang; } else u.lang = "en-US"; u.rate = 0.95; window.speechSynthesis.speak(u); } catch (e) {}
+  }
+
+  function generate(t) {
+    var job = ai.queue.then(function () { return callModel(t); });
     ai.queue = job.catch(function () {});
     return job;
   }
-  async function runGen(t, bubble) {
-    if (ai.state !== "ready" || !ai.engine) return null;
-    var eng = ai.engine, t0 = Date.now(), first = false, timedOut = false, stopped = false, text = "";
-    var timer = setTimeout(function () { if (!first) { timedOut = true; try { eng.interruptGenerate(); } catch (e) {} } }, FIRST_TOKEN_MS);
+  async function callModel(t) {
+    var ac = typeof AbortController !== "undefined" ? new AbortController() : null, timer = setTimeout(function () { if (ac) ac.abort(); }, AI_MS), t0 = Date.now();
     try {
-      var stream = await eng.chat.completions.create({messages: buildMessages(t), stream: true, max_tokens: 70, temperature: 0.6});
-      for await (var ch of stream) {
-        if (timedOut || stopped) continue;
-        var d = ch && ch.choices && ch.choices[0] && ch.choices[0].delta && ch.choices[0].delta.content || "";
-        if (!d) continue;
-        if (!first) { first = true; clearTimeout(timer); ai.lastFirstMs = Date.now() - t0; }
-        text += d;
-        var c = cutText(text);
-        if (bubble) { bubble.className = "mh-msg ai"; bubble.textContent = stripMarkup(c.text); }
-        if (c.done) { stopped = true; text = c.text; try { eng.interruptGenerate(); } catch (e) {} }
-      }
-    } catch (e) {
-      if (/disposed|not loaded|device|instance|lost/i.test(String(e))) { ai.engine = null; ai.state = "off"; ai.msg = "The AI voice stopped, so the scripted voice is back on."; paintAi(); }
-      return null;
-    } finally { clearTimeout(timer); }
-    if (timedOut || !first) return null;
-    var v = validateText(text, {needQ: t.ask !== "summary"});
-    if (v) { ai.lastMs = Date.now() - t0; ai.lastSay = v; }
-    return v;
+      var r = await fetch(AI_URL, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(buildRequest(t)), signal: ac ? ac.signal : undefined, credentials: "omit", referrerPolicy: "no-referrer"});
+      if (!r.ok) return null;
+      var j = await r.json();
+      var v = validateText(parseResponse(j), {needQ: t.ask !== "summary"});
+      ai.last = {ms: Date.now() - t0, ok: !!v, say: v};
+      return v;
+    } catch (e) { ai.last = {ms: Date.now() - t0, ok: false, err: String(e && e.name || e)}; return null; }
+    finally { clearTimeout(timer); }
   }
 
   function log() { return $("#mhLog"); }
   function add(cls, text) { var l = log(); if (!l) return null; var d = document.createElement("div"); d.className = "mh-msg " + cls; d.textContent = text; l.appendChild(d); l.scrollTop = l.scrollHeight; return d; }
   function hist(r, t) { st.hist.push({r: r, t: short(t, 160)}); if (st.hist.length > 6) st.hist = st.hist.slice(-6); }
   function busy(on) { st.busy = on; var f = $("#mhForm"); if (!f) return; Array.prototype.forEach.call(f.elements, function (x) { x.disabled = on || st.done; }); Array.prototype.forEach.call(document.querySelectorAll("#mhChips .mh-chip"), function (x) { x.disabled = on; }); }
-  function chips(k, sel) {
+  function chips(k) {
     var c = $("#mhChips"); if (!c) return;
-    if (!k) { c.innerHTML = ""; return; }
-    c.innerHTML = BY[k].scale.map(function (w, i) { var v = i + 1; return "<button class=\"mh-chip\" data-v=\"" + v + "\" type=\"button\"" + (sel === v ? " aria-pressed=\"true\" style=\"border-color:var(--brand);background:var(--brand-soft);color:var(--brand)\"" : "") + ">" + v + " · " + esc(w) + "</button>"; }).join("");
+    c.innerHTML = !k ? "" : BY[k].scale.map(function (w, i) { return "<button class=\"mh-chip\" data-v=\"" + (i + 1) + "\" type=\"button\">" + (i + 1) + " · " + esc(w) + "</button>"; }).join("");
   }
   function cur() { return ITEMS[st.i] ? ITEMS[st.i].k : null; }
   function nextKey() { return ITEMS[st.i + 1] ? ITEMS[st.i + 1].k : null; }
 
   async function speak(t, n) {
     var my = runId, b = add("ai wait", "…");
-    busy(true);
-    t.name = name(); t.context = st.ctx; t.history = st.hist.slice();
-    var v = ai.state === "ready" ? await generate(t, b) : null;
-    if (my !== runId) return null;
+    stopSpeech(); busy(true);
+    t.name = name(); t.context = st.ctx;
+    var v = null;
+    if (ai.on) {
+      v = await generate(t);
+      if (my !== runId) return null;
+      ai.msg = v ? ON_TEXT : BUSY_TEXT; paintAi();
+    }
     if (!v) v = scriptedLine(t, n);
     if (b) { b.className = "mh-msg ai"; b.textContent = v; }
-    hist("ai", v); busy(false);
+    hist("ai", v); busy(false); readAloud(v);
     return v;
   }
 
@@ -305,9 +274,10 @@
     st.i++; chips(cur());
   }
   function crisis() {
-    st.done = true; runId++; chips(null); busy(false);
+    st.done = true; runId++; chips(null); busy(false); stopSpeech();
     var f = $("#mhForm"); if (f) f.hidden = true;
     var box = add("safe", SAFE_TEXT); if (!box) return;
+    readAloud(SAFE_TEXT);
     var b = document.createElement("button"); b.className = "btn sm"; b.type = "button"; b.textContent = "Message my flight surgeon"; b.style.marginTop = "10px"; b.style.display = "block";
     b.onclick = sendSurgeon; box.appendChild(b);
   }
@@ -349,25 +319,24 @@
   A.STEP.mind = function () {
     return {title: "Mood check-in", go: "Done",
       html: "<div class=\"mh\"><div class=\"mh-log\" id=\"mhLog\"></div><div class=\"mh-chips\" id=\"mhChips\"></div><form class=\"mh-form\" id=\"mhForm\"><input id=\"mhInput\" maxlength=\"300\" placeholder=\"Or say it in your own words\" autocomplete=\"off\"><button class=\"btn sm\" type=\"submit\">Send</button></form>" +
-        (AI_VOICE_ENABLED ? "<div class=\"mh-ai\" id=\"mhAi\"><button class=\"hbtn\" id=\"mhAiBtn\" type=\"button\" aria-pressed=\"false\">Turn on AI voice</button><span class=\"mh-ai-st\" id=\"mhAiSt\"></span><div class=\"mh-bar\" id=\"mhBar\" hidden><i></i></div></div>" : "") +
+        (AI_VOICE_ENABLED ? "<div class=\"mh-ai\" id=\"mhAi\"><button class=\"hbtn\" id=\"mhAiBtn\" type=\"button\" aria-pressed=\"true\">AI voice on</button><span class=\"mh-ai-st\" id=\"mhAiSt\"></span><button class=\"hbtn\" id=\"mhSpeak\" type=\"button\" aria-pressed=\"false\">Read aloud</button></div>"
+          : "<div class=\"mh-ai\" id=\"mhAi\"><button class=\"hbtn\" id=\"mhSpeak\" type=\"button\" aria-pressed=\"false\">Read aloud</button></div>") +
         "<div class=\"mh-note\" id=\"mhNote\"></div></div>",
       init: function () {
         var go = $("#goBtn"); if (go) go.hidden = true;
         $("#mhForm").onsubmit = onText;
         $("#mhChips").onclick = function (e) { var b = e.target.closest(".mh-chip"); if (b) onChip(+b.dataset.v); };
-        if ($("#mhAiBtn")) $("#mhAiBtn").onclick = function () {
-          if (ai.state === "ready") return aiOff();
-          if (ai.state === "off") { ai.state = "confirm"; ai.msg = sizeText(); paintAi(); return; }
-          if (ai.state === "confirm") loadAi();
-        };
-        if (ai.state === "confirm") { ai.state = "off"; ai.msg = ""; }
+        if ($("#mhAiBtn")) $("#mhAiBtn").onclick = function () { ai.on = !ai.on; ai.msg = ""; setPref(PREF_AI, ai.on); paintAi(); };
+        $("#mhSpeak").onclick = function () { speakOn = !speakOn; setPref(PREF_SPEAK, speakOn); if (!speakOn) stopSpeech(); paintAi(); };
+        ai.msg = "";
         paintAi();
-        if (AI_VOICE_ENABLED && getPref() && ai.state === "off") loadAi();
         begin();
       }};
   };
 
+  var sheet = $("#sheet");
+  if (sheet && typeof MutationObserver !== "undefined") new MutationObserver(function () { if (!sheet.classList.contains("on")) { stopSpeech(); runId++; } }).observe(sheet, {attributes: true, attributeFilter: ["class"]});
   var mb = $("#mhBtn"); if (mb) mb.onclick = function () { A.openFlow(["mind"]); };
   window.renderMind();
-  window.ASTRA_CHECKIN = {ai: ai, loadAi: loadAi};
+  window.ASTRA_CHECKIN = {ai: ai};
 })();

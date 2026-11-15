@@ -16,7 +16,7 @@ It compares a crew member with their own normal, from training on Earth through 
 | `astra.css` | The visual design layer |
 | `datacard.js` | The Data box: tabs, graphs, time range and the table of numbers |
 | `feeds.js` | Live fetches: NASA ISS Live, NASA DONKI, NOAA SWPC GOES, station position |
-| `checkin.js`, `checkin-worker.js` | The mood check-in: five fixed questions, scripted voice, optional open-source model (Qwen2.5-0.5B, Apache-2.0) run in the browser with WebLLM |
+| `checkin.js` | The mood check-in: five fixed questions in a scripted personal voice, with an optional read-aloud using the browser's built-in speech |
 | `live.js` | The live monitor page (replays a real heart-rate recording) |
 | `compare.js`, `compare.css` | The "How ASTRA works" strip and the "Compare crew" tab |
 | `data.js` | Demo and reference data loaded by the page |
@@ -25,7 +25,7 @@ There is no build step. Vercel serves the files as they are, and every push to `
 
 ## How it stores data
 
-Everything stays in the browser on that device. There is no sign-in and nothing is sent to a server. The optional AI voice in the mood check-in downloads an open-source model and runs it on the device; typed words never leave it. The four crew profiles are simulated; every day of sleep, mood and resting heart rate comes from real PMData rows.
+Everything stays in the browser on that device. There is no sign-in and nothing is sent to a server. The four crew profiles are simulated; every day of sleep, mood and resting heart rate comes from real PMData rows.
 
 ## How to try it
 
