@@ -334,7 +334,7 @@
     var ctrl = typeof AbortController !== "undefined" ? new AbortController() : null, over = false;
     var timer = setTimeout(function () { if (over) return; over = true; if (ctrl) ctrl.abort(); miss(); done(null); }, REPLY_WAIT_MS);
     function miss() { misses++; }
-    function end(text, by) { if (over) return; over = true; clearTimeout(timer); if (text) { misses = 0; var who = by === "Gemini" ? "Google Gemini" : by === "DeepSeek" ? "DeepSeek" : "an AI model"; if (!served || who !== servedBy) { served = true; servedBy = who; paint(); } } else miss(); done(text); }
+    function end(text, by) { if (over) return; over = true; clearTimeout(timer); if (text) { misses = 0; var who = by === "Gemini" ? "Google Gemini" : by === "DeepSeek" ? "DeepSeek" : "an SI model"; if (!served || who !== servedBy) { served = true; servedBy = who; paint(); } } else miss(); done(text); }
     var day = null, ph = "", chip = "", role = "";
     try { day = Math.round(Number(A.day())); } catch (e) {}
     try { ph = String(A.phase() || ""); } catch (e) {}
