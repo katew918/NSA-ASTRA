@@ -8,6 +8,20 @@ It compares a crew member with their own normal, from training on Earth through 
 
 > Prototype only. Not a medical device and not medical advice. All crew data is simulated.
 
+## How to use it
+
+Open **https://nsa-astra.vercel.app**. There is no sign-in and nothing to install.
+
+1. **Pick a crew member** from the dropdown at the top right (four people, or "Compare crew").
+2. **Pick a day** with the calendar in the top bar, from training on Earth to recovery after landing.
+3. **Trigger a condition.** Press "Demo · trigger an alert" at the bottom right and choose one, for example "Kidney stone". The status turns amber or red, a dot appears on the body, and "ASTRA response" lists what ASTRA did: flagged it, compared it with the earlier scan, sent it to the doctor, called Earth, and added follow-up tasks to Today (tagged "New"). "Cancel" clears it.
+4. **Hover or tap a dot** on the body to see the structure, the finding and where it was sent. Front / Back turns the figure.
+5. **Run a guided scan** from a body area or from a scan task in Today. In flight it ends with the comparison screen: the earlier scan next to today's, with a ring on what changed.
+6. **Check in with Mini Astra - Companion.** About five minutes of random questions, a personal one-line reply after each answer, then next steps.
+7. **Look at Today.** The schedule is fixed until the person has an amber or red flag; then a task can be delayed or handed to a crewmate who is well.
+8. **Open the Data box** to switch between sleep, heart rate, mood, cabin air, radiation and space weather.
+9. **"Reset demo"** at the bottom of the page puts everything back.
+
 ## What makes it different
 
 ASTRA does not stop at basic vital signs. It also follows the harder conditions that spaceflight causes and that can go unnoticed: blood flow in the neck veins, changes at the back of the eye, bone density, kidney and bladder findings. Each scan is compared with the last one and the exact structure is marked. It is also a daily companion: a private check-in with random questions, replies that fit the answers, and support options on a hard day. A red finding starts a call to Earth automatically.
@@ -43,12 +57,6 @@ The mind and mood check-in is called Mini Astra - Companion. After each tapped a
 - Every reply is checked before it is shown (one sentence, no questions, no numbers, no medical words). If the provider is slow, fails, or no key is set, Mini Astra uses its built-in scripted replies instead.
 
 **Setting the key:** in Vercel, open the `nsa-astra` project, then Settings → Environment Variables, and add `GEMINI_API_KEY` for Production and Preview (optional: `GEMINI_MODEL`, `GEMINI_BASE_URL`; `DEEPSEEK_API_KEY` is used only when no Gemini key is set). Redeploy for it to take effect. Never put the key in a file in this repository.
-
-## How to try it
-
-1. Pick a crew member from the dropdown at the top right (four people and "Compare crew").
-2. Pick a mission day, from training to recovery.
-3. Press "Demo · trigger an alert" at the bottom right and watch the status turn amber or red.
 
 ## How scan comparison works
 
