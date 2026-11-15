@@ -6,7 +6,7 @@ const RANK = {ok: 0, watch: 1, urgent: 2};
 const TILT = 18 * Math.PI / 180;
 const CENTER = 3.6;
 let T = null, box = null, canvas = null, layer = null, renderer = null, scene = null, camera = null, pivot = null, fig = null;
-let meshes = {}, anchors = {}, sex = "", areas = [], levels = {}, isNew = {}, btns = {}, mounted = null;
+let meshes = {}, anchors = {}, pins = {}, pinOf = {}, sex = "", areas = [], levels = {}, isNew = {}, btns = {}, mounted = null;
 const view = {yaw: -0.28, tilt: 0.05, vy: 0}, anim = {from: null, to: null, t0: 0, dur: 700}, drag = {on: false, id: 0, x: 0, y: 0, lx: 0, lt: 0, moved: 0};
 let raf = 0, inertia = false, pieces = {};
 
@@ -100,7 +100,7 @@ function torsoGeo() {
 const SH = {head: 0.55, hy: 6.6, top: 5.85, th: 2.6, w: 0.75, zs: 0.58, ar: 0.19, al: 2.3, atop: 5.62, agap: 0.13, tilt: 5 * Math.PI / 180, lr: 0.27, lgap: 0.12, ltop: 3.17};
 function build() {
   if (fig) { pivot.remove(fig); fig.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); }); }
-  pieces = {}; anchors = {};
+  pieces = {}; anchors = {}; pins = {};
   fig = new T.Group();
   fig.position.y = -CENTER;
   pivot.add(fig);
@@ -129,6 +129,17 @@ function build() {
   anchors.abdomen = {p: hit("torso", W(0, 3.85, 3), V(0, 0, -1)), n: V(0, 0, 1)};
   const lx = SH.lgap / 2 + SH.lr;
   anchors.legs = {p: hit("legL", W(lx, 0.95, -3), V(0, 0, 1)), n: V(0.1, 0, -1).normalize()};
+  const eye = (x, y) => { const d = V(x, y, 1).normalize(); return {p: sph(d), n: d.clone()}; };
+  pins.eye_r = eye(-0.36, 0.08);
+  pins.eye_l = eye(0.36, 0.08);
+  pins.neck_l = {p: V(0.2, gy, 0.12), n: V(1, 0, 0.8).normalize()};
+  pins.heart = {p: hit("torso", W(0.28, 4.95, 3), V(0, 0, -1)), n: V(0.25, 0.1, 1).normalize()};
+  pins.lung_r_low = {p: hit("torso", W(-0.38, 4.45, -3), V(0, 0, 1)), n: V(-0.3, 0, -1).normalize()};
+  pins.kidney_l = {p: hit("torso", W(0.33, 3.95, -3), V(0, 0, 1)), n: V(0.3, 0, -1).normalize()};
+  pins.bladder = {p: hit("torso", W(0, 3.5, 3), V(0, 0, -1)), n: V(0, -0.1, 1).normalize()};
+  pins.heel_l = {p: hit("legL", W(lx, 0.3, -3), V(0, 0, 1)), n: V(0, -0.2, -1).normalize()};
+  pins.shin_l = {p: hit("legL", W(lx, 0.85, 3), V(0, 0, -1)), n: V(0.1, 0, 1).normalize()};
+  pins.calf_l = {p: hit("legL", W(lx, 1.15, -3), V(0, 0, 1)), n: V(0.1, 0, -1).normalize()};
   tint();
 }
 
@@ -143,14 +154,15 @@ function tint() {
 function update(data) {
   if (!renderer || !data) return;
   const s = data.sex === "m" ? "m" : "f";
-  areas = (data.areas || []).filter(a => LABEL[a.key]).map(a => ({key: a.key, label: a.label || LABEL[a.key], level: RANK[a.level] !== undefined ? a.level : "ok", fresh: !!a.fresh}));
+  areas = (data.areas || []).filter(a => LABEL[a.key]).map(a => ({key: a.key, label: a.label || LABEL[a.key], level: RANK[a.level] !== undefined ? a.level : "ok", fresh: !!a.fresh, pin: a.pin && a.pin.anchor && pins[a.pin.anchor] ? {anchor: a.pin.anchor, label: String(a.pin.label || "")} : null}));
   sex = s;
   tint();
   const turn = [];
   areas.forEach(a => {
-    const prev = levels[a.key];
+    const prev = levels[a.key], pk = a.pin ? a.pin.anchor + "|" + a.pin.label : "", moved = !!pk && pinOf[a.key] !== pk;
+    pinOf[a.key] = pk;
     if (a.level === "ok") isNew[a.key] = false;
-    else if (a.fresh || (prev !== undefined && prev !== a.level)) { isNew[a.key] = true; turn.push(a); }
+    else if (a.fresh || moved || (prev !== undefined && prev !== a.level)) { isNew[a.key] = true; turn.push(a); }
     else if (prev !== a.level) isNew[a.key] = false;
     levels[a.key] = a.level;
   });
@@ -165,14 +177,18 @@ function markers() {
   areas.forEach(a => {
     let b = btns[a.key];
     if (!b) { b = btns[a.key] = document.createElement("button"); b.type = "button"; b.dataset.spot = a.key; b.innerHTML = "<i></i>"; b.addEventListener("click", e => { e.stopPropagation(); const p = project(a.key); if (!p.front) focus(a.key); if (api.onPick) api.onPick(a.key, b.getBoundingClientRect()); }); layer.appendChild(b); }
-    b.setAttribute("aria-label", `${a.label}: ${WORDS[a.level]}`);
+    let lab = b.querySelector(".b3-lab");
+    if (a.pin) { if (!lab) { lab = document.createElement("span"); lab.className = "b3-lab"; b.appendChild(lab); } if (lab.textContent !== a.pin.label) lab.textContent = a.pin.label; }
+    else if (lab) lab.remove();
+    b.setAttribute("aria-label", `${a.label}: ${WORDS[a.level]}${a.pin ? ` · ${a.pin.label}` : ""}`);
     b.dataset.level = a.level;
   });
 }
 
-function facing(key) { const a = anchors[key]; if (!a) return 0; return wrap(Math.atan2(-a.n.x, a.n.z)); }
+function spot(key) { const ar = areas.find(x => x.key === key); return ar && ar.pin ? pins[ar.pin.anchor] : anchors[key]; }
+function facing(key) { const a = spot(key); if (!a) return 0; return wrap(Math.atan2(-a.n.x, a.n.z)); }
 function focus(key) {
-  if (!renderer || !anchors[key]) return;
+  if (!renderer || !spot(key)) return;
   const y = facing(key), tgt = view.yaw + wrap(y - view.yaw), tl = key === "head" ? 0.12 : key === "legs" ? -0.1 : 0.04;
   inertia = false; view.vy = 0;
   anim.from = {yaw: view.yaw, tilt: view.tilt}; anim.to = {yaw: tgt, tilt: clampT(tl)}; anim.t0 = performance.now(); anim.dur = 700;
@@ -198,7 +214,7 @@ function frame(now) {
 
 const tmp = () => new T.Vector3();
 function project(key) {
-  const a = anchors[key];
+  const a = spot(key);
   if (!a || !box || !camera) return {x: 0, y: 0, front: false};
   pivot.updateMatrixWorld(true);
   const p = fig.localToWorld(a.p.clone()), n = a.n.clone().transformDirection(fig.matrixWorld), v = tmp().subVectors(camera.position, p).normalize();
@@ -214,7 +230,7 @@ function draw() {
   renderer.render(scene, camera);
   areas.forEach(a => { const b = btns[a.key]; if (!b) return; const p = project(a.key);
     b.style.left = `${Math.round(p.x)}px`; b.style.top = `${Math.round(p.y)}px`;
-    const c = `b3-mk ${a.level}${p.front ? "" : " back"}${isNew[a.key] ? " new" : ""}`; if (b.className !== c) b.className = c; });
+    const c = `b3-mk ${a.level}${a.pin ? " pin" : ""}${p.front ? "" : " back"}${isNew[a.key] ? " new" : ""}`; if (b.className !== c) b.className = c; });
   if (api.onFrame) api.onFrame();
 }
 

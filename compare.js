@@ -30,7 +30,7 @@
     ["Training on Earth", "Baseline: sleep, heart rate, mood, reflexes, scans."],
     ["Every mission day", "90-second check, wearables. Daily checks, weekly conference, exams on set flight days."],
     ["Compare with their own normal", "Green, Amber or Red."],
-    ["Who sees it", "Mood private. Red goes to flight surgeon."]
+    ["Who sees it", "Mood stays private. The rest goes to the doctor."]
   ];
 
   window.renderGuide = function (el) {

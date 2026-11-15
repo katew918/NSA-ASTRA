@@ -381,7 +381,6 @@ input[type=text]:focus,input[type=number]:focus,input[type=date]:focus,input[typ
       <section class="card rise d1">
         <div class="chead"><div><h2>Messages</h2></div><span class="sig" id="sig"></span></div>
         <div class="chat" id="chat" style="margin-top:12px"></div>
-        <div id="shareWrap"></div>
       </section>
     </div>
     <div class="links"><button class="linkbtn" id="tourBtn">How ASTRA works</button><label class="sub">Doctors' reply to new scans <select id="dReply"><option value="normal">Looks like your baseline</option><option value="followup">Wants a follow-up</option><option value="urgent">Needs a call now</option></select></label><button class="linkbtn" id="dReset">Reset demo</button></div>
@@ -492,6 +491,25 @@ const AREAS = {
 };
 const mins = a => AREAS[a].time.replace(" with setup", "").replace("about ", "~");
 const longTime = a => AREAS[a].time.replace(" min", " minutes");
+const FINDINGS = [
+  {id: "eye_r", area: "eyes", site: "Back of the right eye", change: "Thicker than the pre-flight scan", pin: "eye_r"},
+  {id: "eye_l", area: "eyes", site: "Back of the left eye", change: "Thicker than the pre-flight scan", pin: "eye_l"},
+  {id: "neck_slow", area: "neck", site: "Left neck vein", change: "Blood flow slower than the last scan", pin: "neck_l"},
+  {id: "neck_noflow", area: "neck", site: "Left neck vein", change: "An area with no flow, not seen on the last scan", pin: "neck_l"},
+  {id: "heart_pump", area: "heart", site: "Left side of the heart", change: "Pumping less than the pre-flight scan", pin: "heart"},
+  {id: "lung_lines", area: "lungs", site: "Lower right lung", change: "Bright lines not seen on the last scan", pin: "lung_r_low"},
+  {id: "kidney_spot", area: "bladder", site: "Left kidney", change: "A bright spot not seen on the last scan", pin: "kidney_l"},
+  {id: "bladder_full", area: "bladder", site: "Bladder", change: "Fuller after emptying than the pre-flight scan", pin: "bladder"},
+  {id: "heel_bone", area: "legs", site: "Left heel bone", change: "Less dense than the pre-flight scan", pin: "heel_l"},
+  {id: "shin_bone", area: "legs", site: "Left shin bone", change: "Less dense than the pre-flight scan", pin: "shin_l"},
+  {id: "calf_vein", area: "legs", site: "Left calf vein", change: "Blood flow slower than the last scan", pin: "calf_l"}];
+const findById = id => FINDINGS.find(x => x.id === id) || null;
+const pickFinding = area => { const l = FINDINGS.filter(x => x.area === area); return l[Math.floor(Math.random() * l.length)].id; };
+const refDay = (area, before) => S.scans.reduce((r, s) => s.mission === S.mission && s.area === area && s.day >= 1 && s.day < before && s.day > r ? s.day : r, 0);
+const refName = n => n ? `Day ${n}` : "pre-flight";
+const findText = rec => { const x = rec && findById(rec.find); if (!x) return ""; const ref = `the ${refName(rec.ref || 0)} scan`;
+  return `${x.site}: ${x.change[0].toLowerCase()}${x.change.slice(1).replace("the pre-flight scan", ref).replace("the last scan", ref)}`; };
+const withFinding = (rec, id) => Object.assign(rec, {find: id || pickFinding(rec.area), ref: refDay(rec.area, rec.day)});
 
 const MON = {
   health: {g: "daily", name: "Health check", src: "ASTRA"},
@@ -541,7 +559,8 @@ function scanState(area) {
   const s = [...S.scans].reverse().find(x => x.area === area && x.mission === S.mission && x.day <= day()), k = MON[area] && MON[area].a ? area : null, v = k ? lastOcc(k, Math.min(day() - 1, LAND() - 1)) : 0;
   if (!s || (v && v > s.day && !isMissed(k, v))) return v ? {l: "ok", line: "Doctors: looks like your baseline"} : {l: "none", line: "Not scanned yet"};
   if (s.repliedAt > Date.now()) return {l: "pending", line: `Sent · reply in about ${clock(s.repliedAt - Date.now())}`};
-  return {l: {normal: "ok", followup: "watch", urgent: "urgent"}[s.reply], line: {normal: "Doctors: looks like your baseline", followup: "Doctors: follow-up scan next week", urgent: "Doctors want to talk now"}[s.reply]};
+  if (s.reply !== "normal" && !findById(s.find)) withFinding(s);
+  return {rec: s, l: {normal: "ok", followup: "watch", urgent: "urgent"}[s.reply], line: {normal: "Doctors: looks like your baseline", followup: "Doctors: follow-up scan next week", urgent: "Doctors want to talk now"}[s.reply]};
 }
 
 function plan() {
@@ -567,6 +586,7 @@ function plan() {
   return q;
 }
 
+const DWORD = {watch: "Follow-up scan next week", urgent: "Doctors want to talk now"};
 function statuses() {
   realFill();
   const d = L().daily, b = base(), p = phase(), out = [];
@@ -587,7 +607,7 @@ function statuses() {
   if (L().rt && p !== "training" && L().rt > b.rt * 1.15) out.push({l: "watch", what: "your reflexes are slower than usual", spots: [["head", "watch", `Reaction time ${f(L().rt)} ms · usual ${f(b.rt)} ms`]]});
   const st = L().stand; if (st && p === "landed" && (st.hr >= 30 || st.sbpDrop >= 20)) out.push({l: "watch", what: "standing up is still hard", spots: [["legs", "watch", `Standing: heart rate +${f(st.hr)} bpm${st.sbpDrop ? ` · blood pressure −${f(st.sbpDrop)}` : ""}`]]});
   if (L().meds && L().meds.some(m => m.expired)) out.push({l: "watch", what: "one landing medicine expires before landing", spots: []});
-  Object.keys(AREAS).forEach(a => { const s = scanState(a); if (s.l === "watch" || s.l === "urgent") { const w = `${AREAS[a].label.toLowerCase()} scan: ${s.line.replace("Doctors: ", "").replace("Doctors ", "doctors ")}`; out.push({l: s.l, what: w, result: true, spots: [[SCAN_SPOT[a], s.l, cap(w)]]}); } });
+  Object.keys(AREAS).forEach(a => { const s = scanState(a); if (s.l === "watch" || s.l === "urgent") { const fx = findById(s.rec.find), w = `${findText(s.rec)} · ${DWORD[s.l]}`; out.push({l: s.l, what: w, result: true, find: true, at: s.rec.repliedAt, spots: [[SCAN_SPOT[a], s.l, w, fx ? {anchor: fx.pin, label: fx.site} : null]]}); } });
 
   const missL = missingBase(), miss = missL.length, need = miss + (standBase() ? 0 : 1), bsp = miss ? SCAN_SPOT[missL[0]] : "legs";
   if (p === "training" && need && -day() <= 7) { const w = `${pl(need, "baseline item")} still needed before launch (${pl(-day(), "day")} left)`; out.push({l: "watch", scan: true, what: w, spots: [[bsp, "watch", `Baseline · ${need} missing · ${pl(-day(), "day")} to launch`]]}); }
@@ -595,7 +615,6 @@ function statuses() {
   dueScans().filter(x => day() - x.d > 3).forEach(x => { const n = pl(day() - x.d, "day"), w = `your ${examName(x).toLowerCase()} is ${n} overdue`; out.push({l: "watch", scan: true, what: w, spots: [[x.a ? SCAN_SPOT[x.a] : "head", "watch", `${examName(x)} · Overdue by ${n} · due ${dayChip(x.d)}`]]}); });
   return out.sort((a, b2) => (b2.l === "urgent") - (a.l === "urgent"));
 }
-const shareItems = () => statuses().filter(x => x.l === "watch" && !x.private && !x.scan && !x.what.includes("scan"));
 
 function render() {
   ensureSeeded();
@@ -616,7 +635,7 @@ function render() {
     const rest = q.filter(x => !x.done && x !== next); $("#later").innerHTML = rest.map(x => `<div>Later: <b>${x.what}</b> · ${x.when} · ${x.dur}</div>`).join(""); }
   else if (p === "launch") { setNext("rocket", "Launch day", "Checked in", "Your suit and the vehicle look after you now. Next reading: when you arrive.", false); $("#later").innerHTML = ""; }
   else { setNext("check", "Today", "All done", inFlight() ? "Monitoring keeps running in the background. See you tomorrow morning." : "Nothing else for you today.", false); $("#later").innerHTML = ""; }
-  renderScan(); renderChat(); renderTiles(); renderHolo(false); refreshAstra(); renderBars(); renderAlerts(st); save(); renderView(); if (window.renderToday) window.renderToday(); if (window.renderMind) window.renderMind();
+  autoSend(st); renderScan(); renderChat(); renderTiles(); renderHolo(false); refreshAstra(); renderBars(); renderAlerts(st); save(); renderView(); if (window.renderToday) window.renderToday(); if (window.renderMind) window.renderMind();
 }
 function setNext(ic, when, what, why, btn) { $("#nextIc").innerHTML = I[ic]; $("#nextWhen").innerHTML = when; $("#nextWhat").textContent = what; $("#mainBtn").hidden = !btn; }
 
@@ -690,10 +709,11 @@ function monRows() { const d = day(), today = dueOn(d), due = dueScans(), out = 
   if (today.includes("conf")) { const ok = confDone(d); row("conf", "Every 7th flight day · private", ok ? "done" : "due", ok ? "Done today" : "Due today", ok ? "" : "Done"); }
   else { const [c, t] = later("conf", false); row("conf", "Every 7th flight day · private", c, t, ""); }
   const meta = {cog: "Every 30 flight days · against your own pre-flight baseline", eyes: `Flight days ${[10, ...every(30, 30, mars() ? 180 : 120)].join(", ")} · and Day ${LAND() - 30}, 30 days before return`, neck: `Three times in flight: Days ${occ("neck").join(", ")}`};
+  const fm = k => { const s2 = MON[k].a ? scanState(MON[k].a) : null; return s2 && (s2.l === "watch" || s2.l === "urgent") && findText(s2.rec) ? `${escH(findText(s2.rec))} · ${DWORD[s2.l]} <span class="simtag">Simulated</span>` : meta[k]; };
   ["eyes", "neck", "cog"].forEach(k => { const pend = due.find(x => x.k === k);
-    if (pend) { const late = d - pend.d; row(k, meta[k], late > 3 ? "overdue" : "due", late > 3 ? `Overdue by ${pl(late, "day")}` : "Due today", "Start"); }
-    else if (today.includes(k)) row(k, meta[k], "done", "Done today", "");
-    else { const [c, t] = later(k, true); row(k, meta[k], c, t, ""); } });
+    if (pend) { const late = d - pend.d; row(k, fm(k), late > 3 ? "overdue" : "due", late > 3 ? `Overdue by ${pl(late, "day")}` : "Due today", "Start"); }
+    else if (today.includes(k)) row(k, fm(k), "done", "Done today", "");
+    else { const [c, t] = later(k, true); row(k, fm(k), c, t, ""); } });
   return out; }
 function renderMon() { const rows = monRows();
   $$("#monTabs .mon-tab").forEach(b => { const g = b.dataset.g, on = g === MONTAB, hot = rows.some(r => r.g === g && (r.cls === "due" || r.cls === "overdue"));
@@ -727,13 +747,10 @@ function renderScan() {
   $("#scanBtn").className = "btn" + (scanTarget ? "" : " ghost"); $("#scanOther").style.display = scanTarget || mon ? "" : "none";
 }
 function renderChat() {
-  const now = Date.now(), msgs = S.msgs.filter(m => m.mission === S.mission && (m.me || m.at <= now)), near = nearDoctors();
+  const now = Date.now(), msgs = S.msgs.filter(m => m.mission === S.mission && (m.me || m.at <= now)).map((m, i) => [m, i]).sort((x, y) => x[0].at - y[0].at || x[1] - y[1]).map(x => x[0]), near = nearDoctors();
   $("#sig").innerHTML = `<i style="height:6px"></i><i style="height:10px"></i><i style="height:14px"></i><span>${near ? "On Earth" : mars() ? "20 min each way" : "~1 s delay"}</span>`;
-  $("#chat").innerHTML = msgs.length ? msgs.slice(-5).map(m => `<div class="bubble ${m.me ? "me" : "them"}"><div class="meta">${m.me ? (m.auto ? "Sent automatically" : "You shared") + (m.at > now ? ` · arrives in ${clock(m.at - now)}` : " · delivered") : 'Your flight surgeon <span class="simtag">Simulated</span>'}</div>${m.text}</div>`).join("")
-    : `<div class="bubble them"><div class="meta">ASTRA</div>Nothing here yet. Your scan images and anything you choose to share will appear here, with your doctors' replies.</div>`;
-  const shareable = shareItems().filter(x => !S.msgs.some(m => m.me && m.text.toLowerCase().includes(x.what)));
-  $("#shareWrap").innerHTML = shareable.length ? `<button class="btn ghost" id="shareBtn" style="margin-top:12px;width:100%">Share with my flight surgeon</button>` : "";
-  const shb = $("#shareBtn"); if (shb) shb.onclick = () => openFlow(["share"]);
+  $("#chat").innerHTML = msgs.length ? msgs.slice(-5).map(m => `<div class="bubble ${m.me ? "me" : "them"}${m.astra ? " msg-astra" : ""}"><div class="meta">${m.astra ? 'ASTRA · sample reply <span class="simtag">Sample</span>' : m.me ? (m.auto ? "Sent automatically" : "You shared") + (m.at > now ? ` · arrives in ${clock(m.at - now)}` : " · delivered") : 'Your flight surgeon <span class="simtag">Simulated</span>'}</div>${m.text}</div>`).join("")
+    : `<div class="bubble them"><div class="meta">ASTRA</div>Nothing here yet. Your scan images and anything sent to your doctor will appear here, with their replies.</div>`;
 }
 function spark(vals, lo, hi, band) { const v = vals.filter(x => x !== null && x !== undefined); if (v.length < 2) return ""; const W = 260, H = 50, y = x => H - 4 - (x - lo) / (hi - lo) * (H - 8), xx = i => i / (vals.length - 1) * W;
   return `<svg class="viz" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="height:${H}px;margin:6px 0">${band ? `<rect x="0" y="${y(band[1])}" width="${W}" height="${y(band[0]) - y(band[1])}" style="fill:var(--brand-soft)"/>` : ""}<polyline fill="none" style="stroke:var(--brand)" stroke-width="2" points="${vals.map((x, i) => x === null || x === undefined ? null : `${xx(i)},${y(x)}`).filter(Boolean).join(" ")}"/></svg>`; }
@@ -761,10 +778,13 @@ const missTarget = () => lastExam(4);
 const SIMS = [
   {id: "sleep", l: "watch", t: "Short sleep"}, {id: "hr", l: "watch", t: "Heart rate off normal"}, {id: "rt", l: "watch", t: "Slow reflexes"},
   {id: "scanf", l: "watch", t: "Scan needs a follow-up"}, {id: "miss", l: "watch", t: "Missed a required scan"},
-  {id: "vital", l: "urgent", t: "Vital sign outside safe limits"}, {id: "scanu", l: "urgent", t: "Scan: doctors want a call now"}, {id: "hard", l: "watch", t: "Hard day (low mood, high stress)"}];
+  {id: "vital", l: "urgent", t: "Vital sign outside safe limits"}, {id: "scanu", l: "urgent", t: "Scan: doctors want a call now"}, {id: "bone", l: "watch", t: "Scan spots a bone change"}, {id: "hard", l: "watch", t: "Hard day (low mood, high stress)"}];
 function simOff(id) { if (id === "rt" && phase() === "training") return "Reflexes are only compared with your normal after launch."; if (id === "miss" && !missTarget()) return "Only in flight, at least 4 days after a scheduled eye exam or neck scan."; return ""; }
+function simScan(area, reply, sd, fid) { const now = Date.now(), rec = withFinding({area, at: now, reply, repliedAt: now, mission: S.mission, day: sd, sim: true}, fid), ft = escH(findText(rec)), nm = AREAS[area].label.toLowerCase();
+  S.scans.push(rec);
+  S.msgs.push({me: false, sim: true, mission: S.mission, at: now, text: reply === "followup" ? `Thanks for the ${nm} scan. ${ft}. We'd like a follow-up scan next week.` : `Please call us at the next opportunity about your ${nm} scan. ${ft}.`}); }
 function simulate(id) { const now = Date.now(), b = base(); CALV++;
-  if (id === "clear") { const l = L(); delete l.daily; delete l.rt; S.scans = S.scans.filter(s => !(s.sim && s.mission === S.mission && s.day <= day())); S.msgs = S.msgs.filter(m => !(m.sim && m.mission === S.mission)); if (S.missed) Object.keys(S.missed).forEach(k2 => { if (k2.startsWith(S.mission + ":")) delete S.missed[k2]; }); if (window.clearToday) window.clearToday(); ensureDaily(); return; }
+  if (id === "clear") { const l = L(); delete l.daily; delete l.rt; S.scans = S.scans.filter(s => !(s.sim && s.mission === S.mission && s.day <= day())); S.msgs = S.msgs.filter(m => !(m.sim && m.mission === S.mission) && !(m.issue && m.iday === key())); if (S.missed) Object.keys(S.missed).forEach(k2 => { if (k2.startsWith(S.mission + ":")) delete S.missed[k2]; }); if (window.clearToday) window.clearToday(); ensureDaily(); return; }
   if (simOff(id)) return;
   if (id === "hard") { const hd = ensureDaily(); hd.mood = 2; hd.checkin = {stress: 2, fatigue: 2, sleep: 3, readiness: 2, at: now, sim: true}; hd.sim = true; return; }
   const d = ensureDaily();
@@ -775,17 +795,21 @@ function simulate(id) { const now = Date.now(), b = base(); CALV++;
   if (id === "vital") { d.hr = 136; const n0 = S.msgs.length; autoVitals(); S.msgs.slice(n0).forEach(m => { m.sim = true; }); }
   if (id === "scanf" || id === "scanu") { const reply = id === "scanf" ? "followup" : "urgent"; const t = lastExam(0);
     const area = t ? t.a : id === "scanf" ? "eyes" : "neck", sd = t ? t.d : day();
-    S.scans.push({area, at: now, reply, repliedAt: now, mission: S.mission, day: sd, sim: true});
-    S.msgs.push({me: false, sim: true, mission: S.mission, at: now, text: reply === "followup" ? `Thanks for the ${AREAS[area].label.toLowerCase()} scan. We'd like a follow-up scan next week.` : `Please call us at the next opportunity about your ${AREAS[area].label.toLowerCase()} scan.`}); }
+    simScan(area, reply, sd, null); }
+  if (id === "bone") simScan("legs", "followup", day(), "heel_bone");
   if (id === "miss") { const x = missTarget(), end = occEnd(x.k, x.d); S.missed = S.missed || {}; S.missed[missKey(x.k, x.d)] = true;
     S.scans = S.scans.filter(s => !(s.mission === S.mission && s.area === x.a && s.day >= x.d && s.day < end)); } }
 const issueText = x => x.spots && x.spots.length ? x.spots.map(y => y[2]).join(" · ") : cap(x.what);
 const SEEN = {}; let ALERT = {list: [], fresh: new Set()};
 const akey = x => x.l + "|" + x.what;
-const route = x => x.private ? "Private to you" : x.result ? "Reply from the flight surgeon" : x.scan ? "Visible to the flight surgeon" : (x.auto || x.l === "urgent") ? "Sent to the flight surgeon" : "Shared only if you choose";
+const route = x => x.private ? "Private to you" : x.result ? "Reply from the flight surgeon" : "Sent to doctor";
+function autoSend(st) { const dk = key(), now = Date.now();
+  st.filter(x => !x.private).forEach(x => { const k2 = akey(x); if (S.msgs.some(m => m.issue === k2 && m.iday === dk)) return; const t = issueText(x), at = x.at ? Math.min(now, x.at) - 2 : now;
+    S.msgs.push({me: true, auto: true, issue: k2, iday: dk, mission: S.mission, at, text: escH(t)});
+    S.msgs.push({me: false, astra: true, issue: k2, iday: dk, mission: S.mission, at: at + 1, text: escH(`Sent to your flight surgeon: ${t}. Their reply will appear here.${x.l === "urgent" ? " Marked urgent." : ""}`)}); }); }
 function renderAlerts(st) { const id = APP.active, prev = SEEN[id] || new Set();
   ALERT = {list: st, fresh: new Set(st.map(akey).filter(k2 => !prev.has(k2)))}; SEEN[id] = new Set(st.map(akey));
-  $("#alerts").innerHTML = st.length ? st.map(x => `<div class="alert ${x.l}${ALERT.fresh.has(akey(x)) ? " new" : ""}"><b class="sev">${x.l === "urgent" ? "Red · needs attention" : "Amber · worth a look"}</b><span class="what">${escH(issueText(x))}</span><span class="route">${route(x)}</span></div>`).join("") : "";
+  $("#alerts").innerHTML = st.length ? st.map(x => `<div class="alert ${x.l}${ALERT.fresh.has(akey(x)) ? " new" : ""}"><b class="sev">${x.l === "urgent" ? "Red · needs attention" : "Amber · worth a look"}</b><span class="what">${escH(issueText(x))}${x.find ? ' <span class="simtag">Simulated</span>' : ""}</span><span class="route">${route(x)}</span></div>`).join("") : "";
   renderAreas(); }
 const SCAN_SPOT = {eyes: "eyes", neck: "neck", heart: "heart", lungs: "lungs", bladder: "abdomen", legs: "legs"};
 const SPOT_XY = {head: [100, 30], forehead: [100, 19], eyes: [93, 43], neck: [100, 76], heart: [114, 124], lungs: [84, 116], abdomen: [100, 182], legs: [82, 285]};
@@ -819,7 +843,8 @@ function placeTip(t, h, r) { const hr = h.getBoundingClientRect(), cx = r.left +
   t.classList.toggle("below", below); t.style.left = `${Math.round(left)}px`; t.style.top = `${Math.round(below ? r.bottom - hr.top + gap : above)}px`; t.style.setProperty("--ax", `${Math.round(cx - left)}px`); }
 function renderAreas() { const fig = $("#holoFig"), g = $("#areaG"), keep = TIP.sig;
   SPOTS = {}; let freshKey = "";
-  ALERT.list.forEach(x => (x.spots || []).forEach(([k2, l, txt]) => { const sp = SPOTS[k2] = SPOTS[k2] || {l: "watch", texts: [], routes: [], fresh: false};
+  ALERT.list.forEach(x => (x.spots || []).forEach(([k2, l, txt, pin]) => { const sp = SPOTS[k2] = SPOTS[k2] || {l: "watch", texts: [], routes: [], fresh: false};
+    if (pin && (!sp.pin || l === "urgent")) sp.pin = pin;
     if (l === "urgent") sp.l = "urgent"; if (!sp.texts.includes(txt)) sp.texts.push(txt); const ro = route(x); if (!sp.routes.includes(ro)) sp.routes.push(ro);
     if (ALERT.fresh.has(akey(x))) sp.fresh = true; }));
   const keys = Object.keys(SPOTS), top = keys.find(k2 => SPOTS[k2].l === "urgent") || keys[0] || "";
@@ -827,10 +852,10 @@ function renderAreas() { const fig = $("#holoFig"), g = $("#areaG"), keep = TIP.
   freshKey = keys.find(k2 => SPOTS[k2].fresh && SPOTS[k2].l === "urgent") || keys.find(k2 => SPOTS[k2].fresh) || "";
   AR = {}; AREA_KEYS.forEach(a => { AR[a] = {l: "ok", texts: [], routes: [], fresh: false}; });
   keys.forEach(k2 => { const sp = SPOTS[k2], ar = AR[AREA_OF[k2] || k2]; if (!ar) return; if (RK[sp.l] > RK[ar.l]) ar.l = sp.l;
-    sp.texts.forEach(x => { if (!ar.texts.includes(x)) ar.texts.push(x); }); sp.routes.forEach(x => { if (!ar.routes.includes(x)) ar.routes.push(x); }); if (sp.fresh) ar.fresh = true; });
+    sp.texts.forEach(x => { if (!ar.texts.includes(x)) ar.texts.push(x); }); sp.routes.forEach(x => { if (!ar.routes.includes(x)) ar.routes.push(x); }); if (sp.fresh) ar.fresh = true; if (sp.pin && (!ar.pin || sp.l === "urgent")) ar.pin = sp.pin; });
   hideTip();
   const al = $("#areaList"); if (al) { const html = AREA_KEYS.map(a => `<button class="area-chip ${AR[a].l}" data-spot="${a}" type="button"><i class="dot ${AR[a].l}"></i><span>${AREA_LBL[a]}</span><b>${AWORD[AR[a].l]}</b></button>`).join(""); if (al.innerHTML !== html) al.innerHTML = html; }
-  if (B3.on) window.ASTRABody.update({sex: S.sex === "m" ? "m" : "f", areas: AREA_KEYS.map(a => ({key: a, label: AREA_LBL[a], level: AR[a].l, lines: AR[a].l === "ok" ? [okFact(a)] : AR[a].texts.slice(), route: AR[a].routes.join(" · "), fresh: AR[a].fresh}))});
+  if (B3.on) window.ASTRABody.update({sex: S.sex === "m" ? "m" : "f", areas: AREA_KEYS.map(a => ({key: a, label: AREA_LBL[a], level: AR[a].l, lines: AR[a].l === "ok" ? [okFact(a)] : AR[a].texts.slice(), route: AR[a].routes.join(" · "), fresh: AR[a].fresh, pin: AR[a].l === "ok" ? null : AR[a].pin || null}))});
   if (fig) fig.classList.toggle("is3d", B3.on);
   if (g) g.innerHTML = keys.map(k2 => { const sp = SPOTS[k2], [cx, cy] = SPOT_XY[k2];
     return `<g class="spot ${sp.l}${sp.fresh ? " new" : ""}" data-spot="${k2}" tabindex="0" role="img" aria-label="${escH(`${sp.l === "urgent" ? "Red, needs attention" : "Amber, worth a look"}: ${sp.texts.join(" · ")}`)}"><circle class="spot-hit" cx="${cx}" cy="${cy}" r="26"/><circle class="spot-ring" cx="${cx}" cy="${cy}" r="13"/><circle class="spot-dot" cx="${cx}" cy="${cy}" r="5.5"/></g>`; }).join("");
@@ -848,7 +873,7 @@ function wireSpots() { const fig = $(".holo"); if (!fig || wireSpots.done) retur
   document.addEventListener("click", e => { if (!e.target.closest(".spot, .b3-mk, .area-chip, #bodyReset") && !e.target.closest("#bodyTip")) hideTip(); });
   document.addEventListener("keydown", e => { if (e.key === "Escape") hideTip(); }); }
 function refreshAstra() {
-  window.ASTRA = {crew: CREW.map(c => withMember(c.id, () => { const st = statuses().filter(x => !x.private), w = worstOf(st);
+  window.ASTRA = {crew: CREW.map(c => withMember(c.id, () => { const st = statuses().filter(x => !x.private), w = worstOf(st); autoSend(st);
     return {id: c.id, name: c.name, sex: c.sex, age: c.age, height: c.height, weight: c.weight, role: c.role, source: (D.crew && D.crew[c.idx] && D.crew[c.idx].source) || "",
       base: Object.assign({}, base()), status: w, statusText: st.length ? `${WORD[w]}: ${cap(st[0].what)}${st.length > 1 ? ` (and ${st.length - 1} more)` : ""}` : "Nothing off their normal today", issues: st.map(x => ({l: x.l, what: x.what})),
       today: (dd => dd ? {sleep: dd.sleep, mood: dd.mood, hr: dd.hr, date: dd.date || null} : null)(L().daily)}; })),
@@ -988,12 +1013,12 @@ const STEP = {
   sr: () => ({title: "Recording…", sub: "Hold still. I'm checking the image quality.", needs: true, html: `<div class="box"><div id="qtx">Image quality: adjusting…</div><div class="quality"><i id="qb"></i></div></div>`, go: "Send to my doctors",
     init() { let p = 0; const t = setInterval(() => { p += 20; if ($("#qb")) $("#qb").style.width = p + "%"; if (p >= 60 && $("#qb")) { $("#qb").style.background = "var(--ok)"; $("#qtx").textContent = "Image quality: good ✓"; } if (p >= 100) { clearInterval(t); $("#goBtn").disabled = false; } }, 300); }}),
   ss: area => { const tr = day() <= 0, rest = tr ? missingBase().filter(a => a !== area) : [], nextA = rest[0];
-    return {ill: I.sent, title: "Sent to your doctors", sub: `Your images are on their way${mars() && !nearDoctors() ? " (up to 20 minutes to reach Earth)" : ""}. Radiologists will look at them and reply in Messages.${tr ? ` <b>${6 - rest.length} of 6 baseline scans done.</b>` : ""}`,
+    return {ill: I.sent, title: "Sent to your doctors", sub: `Your images are on their way${mars() && !nearDoctors() ? " (up to 20 minutes to reach Earth)" : ""}. Radiologists will look at them and reply in Messages.${tr ? ` <b>${6 - rest.length} of 6 baseline scans done.</b>` : `<br>Compared with your ${refName(refDay(area, day()))} scan.`}`,
       go: nextA ? `Next: ${AREAS[nextA].label} (${mins(nextA)})` : "Done", skip: !!nextA, skipLabel: "Stop for today", chain: nextA ? () => [`scan:${nextA}`] : null,
       after() { if (cur.sent) return; cur.sent = true; const at = Date.now(), lag = nearDoctors() ? 1000 : delayMs(), reply = tr ? "normal" : S.reply, name = AREAS[area].label.toLowerCase();
-        S.scans.push({area, at, reply, repliedAt: at + 2 * lag + 2500, mission: S.mission, day: day()});
+        const rec = {area, at, reply, repliedAt: at + 2 * lag + 2500, mission: S.mission, day: day()}; if (reply !== "normal") withFinding(rec); S.scans.push(rec); const ft = rec.find ? `${escH(findText(rec))}. ` : "";
         S.msgs.push({me: true, auto: true, mission: S.mission, at: at + lag, text: `${AREAS[area].label} ultrasound images${tr ? " (baseline)" : ""}`});
-        S.msgs.push({me: false, mission: S.mission, at: at + 2 * lag + 2500, text: tr ? `Got your baseline ${name} scan. Good images, saved for comparison during the mission.` : {normal: `We've looked at your ${name} scan. It looks like your baseline, nothing to do. Thanks!`, followup: `Thanks for the ${name} scan. We'd like a follow-up scan next week. Nothing to worry about right now; keep your normal routine.`, urgent: `Please call us at the next opportunity about your ${name} scan. Don't start any medicine until we've talked; we'll walk you through the next steps.`}[reply]}); }}; },
+        S.msgs.push({me: false, mission: S.mission, at: at + 2 * lag + 2500, text: tr ? `Got your baseline ${name} scan. Good images, saved for comparison during the mission.` : {normal: `We've looked at your ${name} scan. It looks like your baseline, nothing to do. Thanks!`, followup: `Thanks for the ${name} scan. ${ft}We'd like a follow-up scan next week. Nothing to worry about right now; keep your normal routine.`, urgent: `Please call us at the next opportunity about your ${name} scan. ${ft}Don't start any medicine until we've talked; we'll walk you through the next steps.`}[reply]}); }}; },
   stand: () => ({title: "Stand-up test", sub: "With someone helping you. Lie still for 2 minutes, then stand. Heart rate and blood pressure are recorded. Shown sped up.", needs: true, html: `<svg class="viz" id="hrv" viewBox="0 0 300 90" style="height:90px"></svg><div class="box" id="sto">Measuring…</div>`,
     init() { const tr = phase() === "training", hr = tr ? D.examples.baseline.hr : D.examples.today.hr, t = D.curve.t, sel = (a, b) => t.map((x, j) => (x >= a && x < b) ? hr[j] : null).filter(v => v !== null && v !== undefined), mean = a => a.reduce((x, y) => x + y, 0) / a.length, b0 = mean(sel(-60, 0)), rise = Math.round(mean(sel(60, 241)) - b0);
       const pts = hr.map((v, j) => v === null ? null : [j, v - b0]).filter(Boolean), xy = ([x, y]) => `${(x / (hr.length - 1) * 300).toFixed(1)},${(90 - (y + 10) / 45 * 90).toFixed(1)}`; let n = 0;
@@ -1007,12 +1032,7 @@ const STEP = {
     html: SOURCES.map(s => `<div class="src"><div class="h"><b>${s.name}</b>${s.btn ? `<button class="btn sm" data-c="${s.id}">${CONN[s.id] ? "Reconnect" : s.btn}</button>` : '<span class="simtag">Simulated</span>'}</div><div class="d">${s.what}</div><div class="r" id="r-${s.id}"></div></div>`).join("") + `<button class="btn ghost" id="manBtn" style="width:100%;margin-top:12px">Or type readings in by hand</button>`,
     init() { $$("[data-c]").forEach(b => b.onclick = () => connect(b.dataset.c)); $("#manBtn").onclick = () => { flow = ["d4"]; k = 0; show(); }; }}),
   fin: () => { const st = statuses(); return {ill: I.done, title: st.length ? (st.length === 1 ? "Saved. One thing to keep an eye on" : `Saved. ${st.length} things to keep an eye on`) : "All saved. Nice!", sub: st.length ? cap(st.map(x => x.what).join("; ")) + "." : phase() === "training" ? `Added to your normal (${pl(baseInfo().n, "training day")} so far).` : "Everything is in line with your normal.", go: "Done"}; },
-  share: () => { const items = shareItems(); return {title: "Share with your flight surgeon?", sub: "Totally your choice.", go: "Send",
-    html: items.map(x => `<div class="check"><span style="background:var(--watch-soft);color:var(--watch)">!</span><span style="all:unset">${cap(x.what)}</span></div>`).join("") + `<label class="consent"><input type="checkbox" id="det"><span>Include my numbers (otherwise just the summary)</span></label>`,
-    after() { const det = $("#det").checked, lag = nearDoctors() ? 1000 : delayMs(), at = Date.now(), d = L().daily || {};
-      S.msgs.push({me: true, mission: S.mission, at: at + lag, text: cap(items.map(x => x.what).join("; ")) + (det && d.hr ? ` · HR ${d.hr}, BP ${d.sbp}/${d.dbp}, sleep ${d.sleep} h` : "")});
-      S.msgs.push({me: false, mission: S.mission, at: at + 2 * lag + 2000, text: "Thanks for letting us know. Nothing urgent from our side. Keep following your plan and tell us if it changes."}); }}; },
-  rules: () => ({title: "How I decide what to tell Earth", go: "Got it", html: `<table class="rules"><tr><th>What</th><th>When</th><th>Who is told</th></tr><tr><td>Any scan</td><td>Always</td><td>Images go to your doctors <b>automatically</b>; they decide what it means</td></tr><tr><td>Required scans</td><td>More than 3 days overdue</td><td>You first; then it shows in your flight surgeon's next report</td></tr><tr><td>Vital signs</td><td>Outside safe limits (e.g. heart rate ≤40 or ≥131, blood sugar &lt;54)</td><td>Flight surgeon, <b>automatically</b></td></tr><tr><td>Vital signs, sleep, reflexes</td><td>Off your normal</td><td>You, and you choose whether to share</td></tr><tr><td>Mood</td><td>Any</td><td><b>Only you</b>, never sent automatically</td></tr><tr><td>Medicines</td><td>Expire before landing</td><td>You, and you use the backup pack</td></tr></table><div class="sub" style="margin-top:8px">Your normal is the middle value of everything you recorded during training. Limits: NASA-STD-3001 where NASA sets a number; otherwise clinical scores (NEWS2, ADA).</div>`}),
+  rules: () => ({title: "How I decide what to tell Earth", go: "Got it", html: `<table class="rules"><tr><th>What</th><th>When</th><th>Who is told</th></tr><tr><td>Any scan</td><td>Always</td><td>Images go to your doctors <b>automatically</b>; they decide what it means</td></tr><tr><td>Required scans</td><td>More than 3 days overdue</td><td>Your doctor, <b>automatically</b></td></tr><tr><td>Vital signs</td><td>Outside safe limits (e.g. heart rate ≤40 or ≥131, blood sugar &lt;54)</td><td>Flight surgeon, <b>automatically</b></td></tr><tr><td>Vital signs, sleep, reflexes</td><td>Off your normal</td><td>Your doctor, <b>automatically</b></td></tr><tr><td>Mood</td><td>Any</td><td><b>Only you</b>, never sent automatically</td></tr><tr><td>Medicines</td><td>Expire before landing</td><td>You, and you use the backup pack</td></tr></table><div class="sub" style="margin-top:8px">Your normal is the middle value of everything you recorded during training. Limits: NASA-STD-3001 where NASA sets a number; otherwise clinical scores (NEWS2, ADA).</div>`}),
 };
 function runStep(id) { const [n, a, b] = id.split(":"); return ["si", "sp", "sr", "ss"].includes(n) ? STEP[n](a, b !== undefined ? +b : undefined) : STEP[id](); }
 function openFlow(list, item) { flow = expand(list); k = 0; scratch = {}; running = item || null; $("#scrim").classList.add("on"); $("#sheet").classList.add("on"); show(); }
@@ -1028,8 +1048,7 @@ function advance(skipped) { if (!skipped) cur.save && cur.save(); const chain = 
   if (running) { const l = L(); l.done = l.done || {}; l.done[running] = true; }
   autoVitals(); closeFlow(); }
 function autoVitals() { if (statuses().some(x => x.auto === "vitals") && !S.msgs.some(m => m.autoV === key())) { const at = Date.now(), lag = nearDoctors() ? 1000 : delayMs(), d = L().daily;
-  S.msgs.push({me: true, auto: true, autoV: key(), mission: S.mission, at: at + lag, text: `Vital signs outside safe limits: HR ${d.hr}, BP ${d.sbp}/${d.dbp}, ${d.temp} °C, blood sugar ${d.glu}`});
-  S.msgs.push({me: false, mission: S.mission, at: at + 2 * lag + 2000, text: "We see your numbers. Please re-measure now and stay with a crewmate; we're on it."}); } }
+  S.msgs.push({me: false, autoV: key(), mission: S.mission, at: at + 2 * lag + 2000, text: "We see your numbers. Please re-measure now and stay with a crewmate; we're on it."}); } }
 $("#goBtn").onclick = () => advance(false); $("#skipBtn").onclick = () => advance(true);
 
 $("#closeBtn").onclick = () => { if (cur && flow[k] && flow[k].startsWith("ss:")) cur.after(); closeFlow(); }; $("#scrim").onclick = () => $("#closeBtn").onclick();
