@@ -1,6 +1,6 @@
 # NSA-ASTRA
 
-Baseline is a prototype health check-in tool for astronauts, built for the NASA Space Apps 2026 challenge "Create Health Monitoring Software for Astronauts on Space Missions".
+ASTRA (Autonomous System for Telemetry, Risk, and Assessment) is a prototype health check-in tool for astronauts, built for the NASA Space Apps 2026 challenge "Create Health Monitoring Software for Astronauts on Space Missions".
 
 It compares a crew member with their own normal, from training on Earth through the mission and back, and helps decide what stays private, what the crew acts on, and what goes to the flight surgeon.
 
@@ -12,17 +12,22 @@ It compares a crew member with their own normal, from training on Earth through 
 
 | File | What it is |
 |---|---|
-| `index.html` | The whole app: page, styles and logic |
+| `index.html` | The app: page, styles and logic |
+| `flat.css` | The visual design layer |
+| `compare.js`, `compare.css` | The "How ASTRA works" strip and the "Compare crew" tab |
 | `data.js` | Demo and reference data loaded by the page |
 
 There is no build step. Vercel serves the files as they are, and every push to `main` redeploys the site.
 
 ## How it stores data
 
-- **Signed out (default):** everything stays in the browser on that device.
-- **Signed in:** check-ins, and anything the crew member sends to their doctors, are copied to a Supabase database. Row-level security means a crew member can read only their own rows, and the flight surgeon role can read only what was sent.
+Everything stays in the browser on that device. There is no sign-in and nothing is sent to a server. The four crew profiles are simulated; their training baselines are seeded from real PMData rows.
 
-The Supabase address and publishable key in `index.html` are public values that are safe to ship in a browser. The secret service key is not in this repository and must never be added to it.
+## How to try it
+
+1. Pick a crew member (four crew tabs, plus "Compare crew").
+2. Pick a mission day, from training to recovery.
+3. Press a "Simulate an issue" button and watch the status turn amber or red.
 
 ## Data and sources
 

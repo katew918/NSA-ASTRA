@@ -3,8 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#050b24">
-<title>Baseline</title>
+<meta name="theme-color" content="#0B1F3A">
+<title>ASTRA — crew health check-in</title>
+<link rel="stylesheet" href="compare.css">
 <style>
 :root{
   --bg:#f3f5fb; --card:#fff; --ink:#131a33; --muted:#69718a; --line:#e4e8f2; --soft:#f1f4fa;
@@ -20,7 +21,6 @@ button{-webkit-tap-highlight-color:transparent}
 :focus-visible{outline:2px solid var(--glow);outline-offset:2px}
 .wrap{max-width:1080px;margin:0 auto;padding:0 22px}
 
-/* ================= hero: deep space ================= */
 .hero{position:relative;color:var(--htxt);overflow:hidden;padding:18px 0 118px;
   background:radial-gradient(900px 560px at 80% 38%,rgba(40,90,220,.55) 0%,transparent 62%),radial-gradient(700px 480px at 4% -6%,rgba(110,70,220,.42) 0%,transparent 60%),linear-gradient(180deg,#040920 0%,#081238 55%,#0c1a52 100%)}
 .stars{position:absolute;inset:0;opacity:.6;pointer-events:none;animation:twinkle 5s ease-in-out infinite alternate;
@@ -38,7 +38,6 @@ button{-webkit-tap-highlight-color:transparent}
 .brand i::after{content:"";position:absolute;inset:4px;border-radius:50%;background:var(--glow)}
 .topr{display:flex;align-items:center;gap:10px}
 .daychip{font-size:13px;font-weight:700;color:#fff;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:5px 12px;backdrop-filter:blur(8px)}
-.daychip.cloud{cursor:pointer;font-family:inherit}.daychip.cloud:hover{background:rgba(255,255,255,.2)}
 .icon-btn{width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);cursor:pointer;font-weight:700;color:#fff;transition:background .15s}
 .icon-btn:hover{background:rgba(255,255,255,.18)}
 .hgrid{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);gap:34px;align-items:center;margin-top:26px}
@@ -54,7 +53,7 @@ button{-webkit-tap-highlight-color:transparent}
 .hero .pill.watch{background:rgba(255,209,102,.13);color:#ffd166;border-color:rgba(255,209,102,.3)}
 .hero .pill.urgent{background:rgba(255,120,140,.15);color:#ff9aa9;border-color:rgba(255,120,140,.35)}
 .hero .pill.none{background:rgba(255,255,255,.1);color:#dbe7ff;border-color:rgba(255,255,255,.2)}
-/* timeline */
+
 .tl{display:grid;grid-template-columns:repeat(6,1fr);margin:26px 0 22px;position:relative}
 .tl::before{content:"";position:absolute;left:8.33%;right:8.33%;top:7px;height:2px;background:rgba(255,255,255,.14);border-radius:2px}
 .tl .bar{position:absolute;left:8.33%;top:7px;height:2px;background:linear-gradient(90deg,#7a5cff,#7cc0ff);box-shadow:0 0 10px rgba(124,192,255,.8);border-radius:2px;transition:width .5s cubic-bezier(.2,.8,.2,1)}
@@ -65,7 +64,7 @@ button{-webkit-tap-highlight-color:transparent}
 .tl div.now i::after{content:"";position:absolute;inset:-7px;border-radius:50%;border:1.5px solid var(--glow);animation:pulse 2s ease-out infinite}
 @keyframes pulse{from{transform:scale(.7);opacity:.9}to{transform:scale(1.7);opacity:0}}
 .tl div.now{color:#fff;font-weight:700}
-/* up next: glass */
+
 .nextcard{background:linear-gradient(135deg,rgba(255,255,255,.12),rgba(255,255,255,.05));border:1px solid rgba(255,255,255,.16);border-radius:24px;padding:18px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 20px 50px rgba(2,6,30,.35)}
 .next{display:flex;gap:14px;align-items:center}
 .next .ic{flex:0 0 54px;height:54px;border-radius:17px;background:linear-gradient(135deg,#4c6bff,#8a6bff);display:grid;place-items:center;color:#fff;box-shadow:0 8px 22px rgba(76,107,255,.5)}
@@ -87,7 +86,6 @@ button{-webkit-tap-highlight-color:transparent}
 .btn.sm{padding:7px 13px;border-radius:10px;font-size:13.5px}
 .linkbtn{background:none;border:0;color:var(--muted);cursor:pointer;font-size:13.5px;text-decoration:underline;text-underline-offset:3px;padding:0}
 
-/* ================= hologram ================= */
 .holo{border-radius:28px;padding:14px;position:relative;
   background:linear-gradient(rgba(140,180,255,.07) 1px,transparent 1px) 0 0/24px 24px,linear-gradient(90deg,rgba(140,180,255,.07) 1px,transparent 1px) 0 0/24px 24px,radial-gradient(90% 70% at 50% 46%,rgba(46,104,230,.55) 0%,rgba(12,30,96,.5) 60%,rgba(6,14,52,.55) 100%);
   border:1px solid var(--hline);box-shadow:inset 0 0 60px rgba(60,120,255,.18),0 24px 60px rgba(2,6,30,.45)}
@@ -135,7 +133,6 @@ button{-webkit-tap-highlight-color:transparent}
 .hbtn.pri{background:rgba(124,192,255,.9);color:#06123f;border-color:transparent}
 .hbtn.pri:hover{background:#a9d6ff}
 
-/* ================= light section ================= */
 main{position:relative;z-index:2;margin-top:-58px;padding-bottom:28px;display:grid;gap:16px}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .card{background:var(--card);border-radius:24px;padding:20px;box-shadow:0 1px 2px rgba(19,26,51,.04),0 12px 32px rgba(19,26,51,.07);min-width:0;border:1px solid rgba(228,232,242,.7)}
@@ -199,7 +196,6 @@ svg.viz{width:100%;display:block}
 .src .r{font-size:13px;margin-top:7px;display:none;background:var(--soft);border-radius:10px;padding:8px 10px}
 .src .r.on{display:block}
 
-/* demo bar */
 .demo{position:sticky;bottom:0;background:rgba(8,16,52,.92);backdrop-filter:blur(10px);color:#dbe7ff;display:none;z-index:20;border-top:1px solid rgba(140,180,255,.25)}
 .demo.on{display:block}
 .demo .wrap{display:flex;gap:12px;flex-wrap:wrap;align-items:center;padding-top:9px;padding-bottom:9px;font-size:13px}
@@ -207,7 +203,6 @@ svg.viz{width:100%;display:block}
 .demo input[type=range]{width:190px;vertical-align:middle;accent-color:var(--glow)}
 .demo .btn.ghost{background:rgba(255,255,255,.1);color:#fff}
 
-/* sheet */
 .scrim{position:fixed;inset:0;background:rgba(5,10,36,.55);backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:opacity .2s;z-index:30}
 .scrim.on{opacity:1;pointer-events:auto}
 .sheet{position:fixed;left:50%;bottom:0;transform:translate(-50%,105%);width:min(540px,100%);max-height:94vh;overflow-y:auto;overflow-x:hidden;background:#fff;border-radius:28px 28px 0 0;padding:20px 22px 24px;z-index:31;visibility:hidden;box-shadow:0 30px 80px rgba(5,10,36,.4);transition:transform .28s cubic-bezier(.2,.8,.2,1),visibility 0s linear .28s}
@@ -276,14 +271,34 @@ input[type=text]:focus,input[type=number]:focus,input[type=date]:focus,input[typ
   .demo.on .wrap{flex-wrap:nowrap;overflow-x:auto;white-space:nowrap;gap:8px;font-size:12px}
 }
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001s!important;animation-iteration-count:1!important;transition-duration:.001s!important}}
+.brand small{display:block;font-weight:400;font-size:11px;opacity:.8;letter-spacing:0}
+.crewtabs,.daybar,.simbar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:10px 0}
+.crewtabs .crewtab{display:flex;gap:6px;align-items:center;cursor:pointer}
+.crewnote{font-size:12px;margin:0 0 8px}
+.daybar .days{display:flex;gap:6px;overflow-x:auto;flex:1 1 200px;min-width:0}
+.daybar .daybtn{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;cursor:pointer}
+#dayNow{flex-basis:100%;font-size:13px}
+.simbar .simbtn{cursor:pointer}
+.simbar .simbtn[disabled]{opacity:.5;cursor:not-allowed}
+.alertbox{display:grid;gap:6px;margin:10px 0}
+.alert{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
+.alert .route{margin-left:auto;font-size:12px}
+.hctl{display:flex;gap:6px;align-items:center}
+.links select{font:inherit;font-size:13px}
 </style>
+<link rel="stylesheet" href="flat.css">
 </head>
 <body>
 <div class="hero">
-  <div class="stars"></div><div class="stars s2"></div><div class="orbit"></div>
   <div class="wrap">
-    <div class="top"><div class="brand"><i></i>Baseline</div><div class="topr"><span class="daychip" id="dayChip"></span><button class="daychip cloud" id="cloudBtn" type="button">Sign in</button><button class="icon-btn" id="helpBtn" aria-label="How Baseline works">?</button></div></div>
-    <div class="hgrid">
+    <div class="top"><div class="brand"><span>ASTRA<small>Autonomous System for Telemetry, Risk, and Assessment</small></span></div><div class="topr hctl"><label class="daychip">Mission <select id="mission" aria-label="Mission"><option value="iss">ISS</option><option value="mars">Mars</option></select></label><span class="daychip" id="dayChip"></span><button class="icon-btn" id="helpBtn" aria-label="How ASTRA works">?</button></div></div>
+    <section id="guideStrip"></section>
+    <div class="crewtabs" role="tablist" id="crewtabs"></div>
+    <p class="crewnote sub">A capsule crew is 4 people; the ISS usually holds 7.</p>
+    <div class="daybar" id="daybar"><button class="daystep" data-step="-1" aria-label="One day back">◀</button><div class="days" id="days"></div><button class="daystep" data-step="1" aria-label="One day forward">▶</button><div id="dayNow"></div></div>
+    <div class="simbar" id="simbar"></div>
+    <div id="alerts" class="alertbox" aria-live="polite"></div>
+    <div class="hgrid" id="crewGrid">
       <div>
         <div class="eyebrow" id="dayTxt"></div>
         <h1 class="hello" id="hello"></h1>
@@ -307,11 +322,11 @@ input[type=text]:focus,input[type=number]:focus,input[type=date]:focus,input[typ
       </section>
     </div>
   </div>
-  <div class="limb"></div>
 </div>
 
 <div class="wrap">
-  <main>
+  <section id="compareView" hidden></section>
+  <main id="crewMain">
     <div class="two">
       <section class="card rise">
         <div class="chead"><div><h2 id="scanTitle">Scans</h2><p class="sub" id="scanTxt"></p></div><div id="scanRing"></div></div>
@@ -330,19 +345,10 @@ input[type=text]:focus,input[type=number]:focus,input[type=date]:focus,input[typ
       <div class="tiles" id="tiles" style="margin-top:14px"></div>
       <div class="detail" id="detail"></div>
     </section>
-    <div class="links"><button class="linkbtn" id="tourBtn">Show the welcome tour again</button><button class="linkbtn" id="rulesBtn">How I decide what to tell Earth</button><button class="linkbtn" id="demoLink">Demo controls</button></div>
+    <div class="links"><button class="linkbtn" id="tourBtn">Show the welcome tour again</button><button class="linkbtn" id="rulesBtn">How I decide what to tell Earth</button><label class="sub">Doctors' reply to new scans <select id="dReply"><option value="normal">Looks like your baseline</option><option value="followup">Wants a follow-up</option><option value="urgent">Needs a call now</option></select></label><button class="linkbtn" id="dReset">Reset demo</button></div>
   </main>
-  <footer>Prototype · not medical advice · made for the crew tablet · NASA ISS Live · NASA OSDR · NASA DONKI · NASA-STD-3001 · PhysioNet CVES · PMData · simulated crew data · optional sync: Supabase</footer>
+  <footer>ASTRA prototype · not medical advice · made for the crew tablet · NASA ISS Live · NASA OSDR · NASA DONKI · NASA-STD-3001 · PhysioNet CVES · PMData (real daily rows for 4 volunteers, relabelled) · crew profiles simulated</footer>
 </div>
-
-<div class="demo" id="demo"><div class="wrap">
-  <b style="font-size:11px;letter-spacing:.08em;color:var(--glow)">DEMO</b>
-  <label>Mission <select id="dMission"><option value="iss">ISS (6 months)</option><option value="mars">Mars</option></select></label>
-  <label>Jump to <input type="range" id="dDay"> <b id="dDayTxt"></b></label>
-  <label>Doctors' reply <select id="dReply"><option value="normal">Looks like your baseline</option><option value="followup">Wants a follow-up</option><option value="urgent">Needs a call now</option></select></label>
-  <button class="btn ghost sm" id="dSeed">Add 30 training days</button>
-  <button class="btn ghost sm" id="dReset">Reset everything</button>
-</div></div>
 
 <div class="scrim" id="scrim"></div>
 <div class="sheet" id="sheet" role="dialog" aria-modal="true">
@@ -353,7 +359,6 @@ input[type=text]:focus,input[type=number]:focus,input[type=date]:focus,input[typ
 </div>
 
 <script src="data.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 (() => {
 const D = window.DATA || {}, SM = D.samples || {}, $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
@@ -379,14 +384,27 @@ const I = {
   done: '<svg viewBox="0 0 64 64" width="110" height="110" fill="none" stroke="#16a56d" stroke-width="3"><circle cx="32" cy="32" r="28" fill="#e2f6ed" stroke="none"/><path d="M21 33l7 7 15-16"/></svg>',
 };
 
-// ---------------- mission clock: the phase follows the date ----------------
 const MISSIONS = {iss: {name: "ISS", delayMin: 1 / 60, doseRate: 0.5, landing: 180}, mars: {name: "Mars mission", delayMin: 20, doseRate: 1.8, landing: 210}};
 const todayIdx = () => Math.floor(Date.now() / DAY);
-const DEF = {onboarded: false, name: "", sex: "f", age: 38, height: 172, weight: 68, mission: "iss", launch: todayIdx() + 30, travel: 0, reply: "followup", log: {}, scans: [], msgs: [], open: null, demoOpen: false};
-let S; try { S = Object.assign(structuredClone(DEF), JSON.parse(localStorage.getItem("baseline-v6") || "{}")); } catch (e) { S = structuredClone(DEF); }
-const save = () => { try { localStorage.setItem("baseline-v6", JSON.stringify(S)); } catch (e) {} };
+const CREW = [
+  {id: "c1", name: "Maya Ortiz", sex: "f", age: 38, height: 168, weight: 61, role: "Commander", idx: 0},
+  {id: "c2", name: "Daniel Reyes", sex: "m", age: 44, height: 181, weight: 79, role: "Pilot", idx: 1},
+  {id: "c3", name: "Aiko Tanaka", sex: "f", age: 35, height: 163, weight: 56, role: "Mission specialist", idx: 2},
+  {id: "c4", name: "Sam Okafor", sex: "m", age: 41, height: 177, weight: 74, role: "Mission specialist", idx: 3},
+];
+const SHARED = ["mission", "launch", "travel", "reply"];
+const DEF = {name: "", sex: "f", age: 38, height: 172, weight: 68, mission: "iss", launch: todayIdx(), travel: 50, reply: "followup", log: {}, scans: [], msgs: [], open: null, seeded: {}};
+const STORE_KEY = "astra-v1";
+let APP = null; try { APP = JSON.parse(localStorage.getItem(STORE_KEY) || "null"); } catch (e) { APP = null; }
+const freshApp = () => { const a = {active: "c1", view: "crew", crew: {}};
+  CREW.forEach(c => { a.crew[c.id] = Object.assign(structuredClone(DEF), {name: c.name, sex: c.sex, age: c.age, height: c.height, weight: c.weight}); }); return a; };
+if (!APP || !APP.crew || !CREW.every(c => APP.crew[c.id])) APP = freshApp();
+let S = APP.crew[APP.active] || APP.crew.c1;
+const syncShared = () => CREW.forEach(c => SHARED.forEach(k2 => { APP.crew[c.id][k2] = S[k2]; }));
+const save = () => { syncShared(); try { localStorage.setItem(STORE_KEY, JSON.stringify(APP)); } catch (e) {} };
+const withMember = (id, fn) => { const keep = S; S = APP.crew[id]; SHARED.forEach(k2 => { S[k2] = keep[k2]; }); try { return fn(); } finally { S = keep; } };
 const M = () => MISSIONS[S.mission];
-const day = () => todayIdx() + S.travel - S.launch;          // 0 = launch day, 1 = first day in space
+const day = () => todayIdx() + S.travel - S.launch;
 const LAND = () => M().landing;
 function phase(d = day()) {
   if (d < 0) return "training"; if (d === 0) return "launch"; if (d === 1) return "arrive";
@@ -402,10 +420,9 @@ const PHASE_LABEL = {training: () => "Training on Earth", launch: () => "Launch 
 const dayChip = (d = day()) => d < 0 ? `L−${-d}` : d === 0 ? "L−0" : d < LAND() ? `Day ${d}` : `R+${d - LAND()}`;
 const key = (d = day()) => `${S.mission}:${d}`;
 const L = (d = day()) => (S.log[key(d)] = S.log[key(d)] || {});
-const delayMs = () => M().delayMin * 1000;   // demo speed: 1 minute of real delay = 1 second
+const delayMs = () => M().delayMin * 1000;
 const clock = ms => { const s = Math.max(0, Math.ceil(ms / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
 
-// your normal = middle value of what you recorded during training (demo values until you have some)
 const DEMO_BASE = {mood: 4, sleep: 7.2, rt: 300, hr: 62, sbp: 118, dbp: 76, temp: 36.6, glu: 90, stand: 7};
 const trainingRows = () => Object.entries(S.log).filter(([k2]) => k2.startsWith(S.mission + ":") && +k2.split(":")[1] < 0).map(([, v]) => v);
 function baseInfo() {
@@ -418,7 +435,6 @@ function baseInfo() {
 }
 const base = () => baseInfo().v;
 
-// ---------------- the six scan areas: one guided ultrasound for all ----------------
 const AREAS = {
   neck: {label: "Neck veins", pt: [86, 80], why: "In space, blood can flow more slowly in the neck veins, usually with no symptoms.", time: "about 30 min with setup",
     steps: [["Add gel", "Put a pea-sized blob of gel on the probe."], ["Place it here", "Side of your neck, just above the collarbone, marker dot pointing to your right."], ["Press gently, then lift", "Watch the screen: a healthy vein squeezes flat."], ["Hold still", "Breathe normally. I'll record 10 seconds."]]},
@@ -435,7 +451,7 @@ const AREAS = {
 };
 const mins = a => AREAS[a].time.replace(" with setup", "").replace("about ", "~");
 const longTime = a => AREAS[a].time.replace(" min", " minutes");
-// required in-flight scans (mission day), like NASA's protocol scans around flight day 50 and 150
+
 const SCHED = {eyes: [30, 120], neck: [50, 150], heart: [90]};
 const scanDone = (a, from, to = Infinity) => S.scans.some(s => s.mission === S.mission && s.area === a && s.day >= from && s.day < to && s.day <= day());
 function schedule() {
@@ -452,7 +468,6 @@ function scanState(area) {
   return {l: {normal: "ok", followup: "watch", urgent: "urgent"}[s.reply], line: {normal: "Doctors: looks like your baseline", followup: "Doctors: follow-up scan next week", urgent: "Doctors want to talk now"}[s.reply]};
 }
 
-// ---------------- today's plan: follows the mission clock ----------------
 function plan() {
   const p = phase(), d = day(), l = L(), dn = l.done || {}, q = [];
   const add = (id, ic, what, dur, when, why, flow, done = !!dn[id], req = false) => q.push({id, ic, what, dur, when, why, flow, done, req});
@@ -474,7 +489,6 @@ function plan() {
   return q;
 }
 
-// ---------------- status: computed from what you logged ----------------
 function statuses() {
   const d = L().daily, b = base(), p = phase(), out = [];
   if (d) {
@@ -488,7 +502,7 @@ function statuses() {
   const st = L().stand; if (st && p === "landed" && (st.hr >= 30 || st.sbpDrop >= 20)) out.push({l: "watch", what: "standing up is still hard"});
   if (L().meds && L().meds.some(m => m.expired)) out.push({l: "watch", what: "one landing medicine expires before landing"});
   Object.keys(AREAS).forEach(a => { const s = scanState(a); if (s.l === "watch" || s.l === "urgent") out.push({l: s.l, what: `${AREAS[a].label.toLowerCase()} scan: ${s.line.replace("Doctors: ", "").replace("Doctors ", "")}`}); });
-  // required scans
+
   const miss = missingBase().length, need = miss + (standBase() ? 0 : 1);
   if (p === "training" && need && -day() <= 7) out.push({l: "watch", scan: true, what: `${pl(need, "baseline item")} still needed before launch (${pl(-day(), "day")} left)`});
   if (p === "launch" && need) out.push({l: "watch", scan: true, what: `your baseline is incomplete (${need} missing): tell your flight surgeon before you board`});
@@ -497,10 +511,10 @@ function statuses() {
 }
 const shareItems = () => statuses().filter(x => x.l === "watch" && !x.private && !x.scan && !x.what.includes("scan"));
 
-// ---------------- render ----------------
 function render() {
+  ensureSeeded();
   const p = phase(), d = day(), h = new Date().getHours(), greet = h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
-  $("#hello").textContent = `${greet}${S.name ? "," : ""} `; const nm = document.createElement("span"); nm.style.whiteSpace = "nowrap"; nm.textContent = `${S.name || ""} 👋`.trim(); $("#hello").appendChild(nm);
+  $("#hello").textContent = `${greet}${S.name ? "," : ""} `; const nm = document.createElement("span"); nm.style.whiteSpace = "nowrap"; nm.textContent = (S.name || "").split(" ")[0]; $("#hello").appendChild(nm);
   const st = statuses(), worst = st.some(x => x.l === "urgent") ? "urgent" : st.some(x => x.l === "watch") ? "watch" : "ok";
   const q = plan(), next = q.find(x => !x.done), dueN = q.filter(x => !x.done).length;
   const fresh = p === "training" && baseInfo().n === 0 && !st.length;
@@ -512,10 +526,10 @@ function render() {
   const frac = p === "orbit" ? 2 + (d - 1) / (LAND() - 2) * 2 : at;
   $("#tl").innerHTML = `<span class="bar" style="width:${Math.min(5, frac) / 5 * 83.34}%"></span>` + steps.map((s, i) => `<div class="${i < at ? "past" : i === at ? "now" : ""}"><i></i>${s}</div>`).join("");
   if (next) { setNext(next.ic, `${next.when} · ${next.dur}${next.req ? '<span class="req">Required</span>' : ""}`, next.what, next.why, true);
-    const rest = q.filter(x => !x.done && x !== next); $("#later").innerHTML = rest.map(x => `<div>Later: <b>${x.what}</b> · ${x.when} · ${x.dur}</div>`).join("") + `<div>🔔 I'll remind you once at the right time. Never during sleep, spacewalks or exercise.</div>`; }
+    const rest = q.filter(x => !x.done && x !== next); $("#later").innerHTML = rest.map(x => `<div>Later: <b>${x.what}</b> · ${x.when} · ${x.dur}</div>`).join("") + `<div>I'll remind you once at the right time. Never during sleep, spacewalks or exercise.</div>`; }
   else if (p === "launch") { setNext("rocket", "Launch day", "Checked in. Enjoy the ride!", "Your suit and the vehicle look after you now. Next reading: when you arrive.", false); $("#later").innerHTML = ""; }
   else { setNext("check", "Today", "All done. Nice work!", inFlight() ? "Monitoring keeps running in the background. See you tomorrow morning." : "Nothing else for you today.", false); $("#later").innerHTML = ""; }
-  renderScan(); renderChat(); renderTiles(); renderHolo(false); renderDemo(); save();
+  renderScan(); renderChat(); renderTiles(); renderHolo(false); refreshAstra(); renderBars(); renderAlerts(st); save(); renderView();
 }
 function setNext(ic, when, what, why, btn) { $("#nextIc").innerHTML = I[ic]; $("#nextWhen").innerHTML = when; $("#nextWhat").textContent = what; $("#nextWhy").textContent = why; $("#mainBtn").hidden = !btn; }
 
@@ -530,8 +544,7 @@ function bodyParts() {
 }
 const outline = extra => `<svg viewBox="0 0 200 420" aria-label="Body outline"><g class="sil">${bodyParts()}</g>${extra}</svg>`;
 
-// ---------------- the hologram: your body, live ----------------
-const CONN = {};   // live connections: hr (Bluetooth strap), iss (ISS Live), donki
+const CONN = {};
 const sim = {rr: 14, spo2: 98, t: 0};
 function vitalsNow() {
   const b = base(), d = L().daily, p = phase(), off = {training: 0, launch: 8, arrive: 4, orbit: 2, prereturn: 2, landed: 16, after: 6}[p];
@@ -547,14 +560,10 @@ const lvlClass = (v, lo, hi, rlo, rhi) => (v <= rlo || v >= rhi) ? "urgent" : (v
 function renderHolo(full) {
   const v = vitalsNow(), b = base();
   if (full || !$("#holoFig svg") || renderHolo.sex !== S.sex) { renderHolo.sex = S.sex; const parts = bodyParts();
-    $("#holoFig").innerHTML = `<svg class="hsvg" viewBox="-10 0 220 440" aria-hidden="true"><defs><clipPath id="bclip">${parts}</clipPath><linearGradient id="sg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7cc0ff" stop-opacity="0"/><stop offset=".5" stop-color="#bfe2ff" stop-opacity=".55"/><stop offset="1" stop-color="#7cc0ff" stop-opacity="0"/></linearGradient></defs>
-      <ellipse class="ring" cx="100" cy="410" rx="72" ry="13"/><ellipse class="ring2" cx="100" cy="410" rx="54" ry="8"/>
-      <g class="hs">${parts}</g>
-      <g clip-path="url(#bclip)"><ellipse class="lung" cx="86" cy="124" rx="12" ry="24"/><ellipse class="lung" cx="114" cy="124" rx="12" ry="24"/><rect class="scanband" x="0" y="0" width="200" height="34" fill="url(#sg)"/></g>
-      <path class="heart" d="M108,124 c-4,-6 -12,-2 -8,5 l8,8 l8,-8 c4,-7 -4,-11 -8,-5z"/>
-      <circle cx="122" cy="102" r="3" fill="#5ff0a0" style="filter:drop-shadow(0 0 4px #5ff0a0)"><title>Dosimeter</title></circle></svg>`; }
-  const hEl = $(".heart"); if (hEl) hEl.style.setProperty("--bt", (60 / Math.max(30, v.hr)).toFixed(2) + "s");
-  $$(".lung").forEach(e => e.style.setProperty("--br", (60 / v.rr).toFixed(1) + "s"));
+    $("#holoFig").innerHTML = `<svg class="hsvg" viewBox="-10 0 220 440" aria-hidden="true">
+      <g class="hs" id="bodyAll">${parts}</g>
+      <g id="areaG"></g>
+      <circle cx="122" cy="102" r="3" fill="#1E7F4F"><title>Dosimeter</title></circle></svg>`; renderAreas(); }
   $("#hbHR").className = "hbox " + lvlClass(v.hr, Math.min(51, b.hr - 20), Math.max(110, b.hr + 20), 40, 131); $("#hbHR").innerHTML = `Heart rate<b>${v.hr} <small>bpm</small></b>`;
   $("#hbBP").className = "hbox " + lvlClass(v.sbp, 101, 179, 90, 220); $("#hbBP").innerHTML = `Blood pressure<b>${v.sbp}/${v.dbp}</b>`;
   $("#hcL").innerHTML = `<div class="co ${lvlClass(v.temp, 35.5, 38, 35, 39.1)}">Temperature<b>${f(v.temp, 1)} <small>°C</small></b></div><div class="co">Breathing<b>${v.rr} <small>/min</small></b></div>`;
@@ -567,7 +576,6 @@ function renderHolo(full) {
   $("#liveTxt").textContent = v.src + (v.entered ? " · BP & temp from today's check" : " · BP & temp: your normal until you enter them");
 }
 
-// ---------------- scans: required, with progress ----------------
 let scanTarget = null;
 function ringSvg(n, t, col) { const c = 2 * Math.PI * 24, p = t ? n / t : 0; return `<svg class="ringp" viewBox="0 0 60 60"><circle cx="30" cy="30" r="24" fill="none" stroke="#e4e8f2" stroke-width="6"/><circle cx="30" cy="30" r="24" fill="none" stroke="${col}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${(c * (1 - p)).toFixed(1)}" transform="rotate(-90 30 30)"/><text x="30" y="35" text-anchor="middle" font-size="15" font-weight="700" fill="#131a33">${n}/${t}</text></svg>`; }
 function renderScan() {
@@ -603,34 +611,106 @@ function renderChat() {
   $("#earthSub").textContent = near ? "Your flight surgeon, on Earth with you." : mars() ? "Replies take a while from this far out." : "Your doctors on Earth, a moment away.";
   $("#sig").innerHTML = `<i style="height:6px"></i><i style="height:10px"></i><i style="height:14px"></i><span>${near ? "On Earth" : mars() ? "20 min each way" : "~1 s delay"}</span>`;
   $("#chat").innerHTML = msgs.length ? msgs.slice(-5).map(m => `<div class="bubble ${m.me ? "me" : "them"}"><div class="meta">${m.me ? (m.auto ? "Sent automatically" : "You shared") + (m.at > now ? ` · arrives in ${clock(m.at - now)}` : " · delivered") : 'Your flight surgeon <span class="tag">simulated</span>'}</div>${m.text}</div>`).join("")
-    : `<div class="bubble them"><div class="meta">Baseline</div>Nothing here yet. Your scan images and anything you choose to share will appear here, with your doctors' replies.</div>`;
+    : `<div class="bubble them"><div class="meta">ASTRA</div>Nothing here yet. Your scan images and anything you choose to share will appear here, with your doctors' replies.</div>`;
   const shareable = shareItems().filter(x => !S.msgs.some(m => m.me && m.text.toLowerCase().includes(x.what)));
   $("#shareWrap").innerHTML = shareable.length ? `<button class="btn ghost" id="shareBtn" style="margin-top:12px;width:100%">Share with my flight surgeon</button>` : "";
-  const sb = $("#shareBtn"); if (sb) sb.onclick = () => openFlow(["share"]);
+  const shb = $("#shareBtn"); if (shb) shb.onclick = () => openFlow(["share"]);
 }
 function spark(vals, lo, hi, band) { const v = vals.filter(x => x !== null && x !== undefined); if (v.length < 2) return ""; const W = 260, H = 50, y = x => H - 4 - (x - lo) / (hi - lo) * (H - 8), xx = i => i / (vals.length - 1) * W;
   return `<svg class="viz" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="height:${H}px;margin:6px 0">${band ? `<rect x="0" y="${y(band[1])}" width="${W}" height="${y(band[0]) - y(band[1])}" fill="#e9edff"/>` : ""}<polyline fill="none" stroke="#3f5bff" stroke-width="2" points="${vals.map((x, i) => x === null || x === undefined ? null : `${xx(i)},${y(x)}`).filter(Boolean).join(" ")}"/></svg>`; }
 function renderTiles() {
   const d = L().daily, b = base(), bi = baseInfo(), cur = day();
   const mine = Array.from({length: 14}, (_, i) => { const r = S.log[key(cur - 13 + i)]; return r && r.daily ? r.daily.sleep : null; });
-  const useMine = mine.filter(x => x !== null).length >= 2, hist = useMine ? mine : [...((D.crew && D.crew[0] && D.crew[0].days) || []).slice(40, 53).map(r => r.sleep_min ? r.sleep_min / 60 : null), d ? d.sleep : null];
+  const useMine = mine.filter(x => x !== null).length >= 2, hist = useMine ? mine : [...((D.crew && D.crew[me().idx] && D.crew[me().idx].days) || []).slice(40, 53).map(r => r.sleep_min ? r.sleep_min / 60 : null), d ? d.sleep : null];
   const iss = CONN.iss, snap = SM.isslive_snapshot || {}, co2 = iss && iss.co2 !== undefined ? iss.co2 : snap.NODE3000003_ppCO2;
   const air = onGround() ? {id: "air", k: "Cabin air", v: "–", n: "starts once you're in space", more: `<div class="sub">In space I show the station's cabin CO₂ here, from NASA's ISS Live feed (or your ship's sensors on a Mars mission).</div>`}
     : mars() ? {id: "air", k: "Cabin air", v: "Ship", n: "from your ship's sensors", more: `<div class="sub">On a Mars ship, the cabin CO₂ comes from the ship's own sensors. ISS readings don't apply.</div>`}
     : {id: "air", k: "Cabin air", v: `${f(co2, 1)} mmHg`, n: iss && iss.co2 !== undefined ? "CO₂ · NASA ISS Live" : "CO₂ · ISS snapshot", more: `<div class="sub">Station CO₂ from NASA's ISS Live feed ${iss && iss.co2 !== undefined ? `<span class="tag live">live</span>${iss.ageH > 1 ? ` · this reading is ${f(iss.ageH / 24, 1)} days old` : ""}` : '<span class="tag">snapshot</span> (tap Connect for live)'}. NASA's limit is a 3 mmHg <b>1-hour average</b>, so one reading isn't an alarm. Context only: the station's own alarms and Mission Control own the air. If you wake with a headache, mention it in your daily check.</div>`};
   const T = [
     {id: "sleep", k: "Sleep", v: d && d.sleep ? `${f(d.sleep, 1)} h` : "–", n: `usually ${f(b.sleep, 1)} h`, more: `${spark(hist, 3, 10, [b.sleep - 1.5, b.sleep + 1])}<div class="sub">Last two weeks ${useMine ? "" : '<span class="tag">demo history</span>'}. NASA plans 8.5 h for sleep; in space most people get 6–6.5 h. I only flag big drops from <i>your</i> usual.</div>`},
-    {id: "mood", k: "Mood", v: d && d.mood ? ["😞", "🙁", "😐", "🙂", "😄"][d.mood - 1] : "–", n: "only you see this", more: `<div class="sub">Your mood is private and never sent anywhere automatically. If it stays low, talking to a crewmate or calling home can help.</div>`},
+    {id: "mood", k: "Mood", v: d && d.mood ? ["Very low", "Low", "Okay", "Good", "Great"][d.mood - 1] : "–", n: "only you see this", more: `<div class="sub">Your mood is private and never sent anywhere automatically. If it stays low, talking to a crewmate or calling home can help.</div>`},
     {id: "rt", k: "Reflexes", v: L().rt ? `${L().rt} ms` : "–", n: `usually ${f(b.rt)} ms`, more: `<div class="sub">From the reflex game. ${phase() === "training" ? "Every training game builds your normal." : "I flag it if you're more than 15% slower than your normal."} Your normal comes from ${bi.n ? pl(bi.n, "training day") : 'demo values <span class="tag">demo</span>'}.</div>`},
     air,
   ];
   $("#tiles").innerHTML = T.map(t => `<div class="tile ${t.id === S.open ? "on" : ""}" data-t="${t.id}"><div class="k"><i></i>${t.k}</div><div class="v">${t.v}</div><div class="n">${t.n}</div></div>`).join("");
   const o = T.find(t => t.id === S.open); $("#detail").classList.toggle("on", !!o); $("#detail").innerHTML = o ? `<b>${o.k}</b>${o.more}` : "";
 }
-function renderDemo() { $("#demo").classList.toggle("on", !!S.demoOpen); $("#dMission").value = S.mission; $("#dReply").value = S.reply;
-  const r = $("#dDay"); r.min = -60; r.max = LAND() + 3; r.value = day(); $("#dDayTxt").textContent = `${dayChip()} · ${PHASE_LABEL[phase()]()}`; }
+const escH = t => String(t ?? "").replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
+const me = () => CREW.find(c => c.id === APP.active) || CREW[0];
+const worstOf = st => st.some(x => x.l === "urgent") ? "urgent" : st.some(x => x.l === "watch") ? "watch" : "ok";
+const WORD = {ok: "Doing well", watch: "Worth a look", urgent: "Needs attention"};
+function slotEnd(a, i) { return SCHED[a][i + 1] ?? Infinity; }
+function fillScheduled() { const now = Date.now();
+  for (const a in SCHED) SCHED[a].forEach((x, i) => { if (x >= LAND() - 1) return;
+    if (!S.scans.some(s => s.mission === S.mission && s.area === a && s.day >= x && s.day < slotEnd(a, i))) S.scans.push({area: a, at: now, reply: "normal", repliedAt: now, mission: S.mission, day: x, seed: true}); }); }
+function seedFor(c) { const m = S.mission; S.seeded = S.seeded || {}; if (S.seeded[m]) return; S.seeded[m] = true;
+  const rows = ((D.crew && D.crew[c.idx] && D.crew[c.idx].days) || []).slice(20, 50), now = Date.now();
+  for (let i = 1; i <= 30; i++) { const r = rows[i - 1] || {}, l = S.log[`${m}:${-i}`] = S.log[`${m}:${-i}`] || {};
+    l.daily = {sleep: r.sleep_min ? Math.round(r.sleep_min / 30) / 2 : 7, mood: r.mood ? Math.max(1, Math.min(5, Math.round(r.mood))) : 3, hr: r.rhr ? Math.round(r.rhr) + 4 : 60,
+      sbp: 112 + c.idx * 3 + (i * 5) % 8, dbp: 72 + c.idx + (i * 3) % 5, temp: Math.round(365 + i % 3) / 10, glu: 86 + c.idx * 2 + (i * 11) % 9};
+    l.rt = 270 + c.idx * 15 + (i * 13) % 30; l.done = {train: true}; if (i === 10) l.stand = {hr: 6 + c.idx * 2, sbpDrop: 4}; }
+  Object.keys(AREAS).forEach((a, i) => S.scans.push({area: a, at: now, reply: "normal", repliedAt: now, mission: m, day: -(20 - i * 2), seed: true}));
+  fillScheduled();
+  const b = base(), l50 = S.log[`${m}:50`] = S.log[`${m}:50`] || {};
+  l50.daily = {sleep: b.sleep, mood: 4, hr: b.hr, sbp: b.sbp, dbp: b.dbp, temp: b.temp, glu: b.glu};
+  if (c.id === "c2") l50.daily.sleep = Math.max(3, Math.round((b.sleep - 2.5) * 2) / 2); }
+const ensureSeeded = () => CREW.forEach(c => withMember(c.id, () => seedFor(c)));
+function ensureDaily() { const b = base(); if (!L().daily) L().daily = {sleep: b.sleep, mood: 4, hr: b.hr, sbp: b.sbp, dbp: b.dbp, temp: b.temp, glu: b.glu}; return L().daily; }
+function missTarget() { if (!inFlight()) return null; const c = schedule().filter(x => x.d <= day() - 4 && x.done); return c.length ? c[c.length - 1] : null; }
+const SIMS = [
+  {id: "sleep", l: "watch", t: "Short sleep"}, {id: "hr", l: "watch", t: "Heart rate off normal"}, {id: "rt", l: "watch", t: "Slow reflexes"},
+  {id: "scanf", l: "watch", t: "Scan needs a follow-up"}, {id: "miss", l: "watch", t: "Missed a required scan"},
+  {id: "vital", l: "urgent", t: "Vital sign outside safe limits"}, {id: "scanu", l: "urgent", t: "Scan: doctors want a call now"}];
+function simOff(id) { if (id === "rt" && phase() === "training") return "Reflexes are only compared with your normal after launch."; if (id === "miss" && !missTarget()) return "Only in flight, at least 4 days after a scheduled scan."; return ""; }
+function simulate(id) { const now = Date.now(), b = base();
+  if (id === "clear") { const l = L(); delete l.daily; delete l.rt; S.scans = S.scans.filter(s => !(s.sim && s.mission === S.mission && s.day === day())); fillScheduled(); ensureDaily(); return; }
+  if (simOff(id)) return;
+  const d = ensureDaily();
+  if (id === "sleep") d.sleep = Math.max(3, Math.round((b.sleep - 2.5) * 2) / 2);
+  if (id === "hr") d.hr = Math.round(b.hr + 24);
+  if (id === "rt") L().rt = Math.round(b.rt * 1.3);
+  if (id === "vital") { d.hr = 136; autoVitals(); }
+  if (id === "scanf" || id === "scanu") { const area = id === "scanf" ? "eyes" : "neck", reply = id === "scanf" ? "followup" : "urgent";
+    S.scans.push({area, at: now, reply, repliedAt: now, mission: S.mission, day: day(), sim: true});
+    S.msgs.push({me: false, mission: S.mission, at: now, text: reply === "followup" ? `Thanks for the ${AREAS[area].label.toLowerCase()} scan. We'd like a follow-up scan next week.` : `Please call us at the next opportunity about your ${AREAS[area].label.toLowerCase()} scan.`}); }
+  if (id === "miss") { const x = missTarget(), i = SCHED[x.a].indexOf(x.d), end = slotEnd(x.a, i);
+    S.scans = S.scans.filter(s => !(s.mission === S.mission && s.area === x.a && s.day >= x.d && s.day < end)); } }
+const SEEN = {}; let ALERT = {list: [], fresh: new Set()};
+const akey = x => x.l + "|" + x.what;
+const route = x => x.private ? "Stays with you" : (x.auto || x.l === "urgent") ? "Sent to the flight surgeon automatically" : "Shared with crew if you choose";
+const areaOf = x => /eye|reflex/.test(x.what) ? "head" : /neck/.test(x.what) ? "neck" : /heart|lung/.test(x.what) ? "chest" : /leg|standing|bladder/.test(x.what) ? "legs" : "whole";
+const AREA_SHAPE = {head: ['<ellipse cx="100" cy="44" rx="27" ry="31"/>', 100, 44], neck: ['<rect x="84" y="64" width="32" height="24" rx="6"/>', 100, 76],
+  chest: ['<ellipse cx="100" cy="128" rx="40" ry="36"/>', 100, 128], legs: ['<rect x="58" y="252" width="84" height="160" rx="20"/>', 100, 330], whole: ['', 100, 200]};
+function renderAlerts(st) { const id = APP.active, prev = SEEN[id] || new Set();
+  ALERT = {list: st, fresh: new Set(st.map(akey).filter(k2 => !prev.has(k2)))}; SEEN[id] = new Set(st.map(akey));
+  $("#alerts").innerHTML = st.length ? st.map(x => `<div class="alert ${x.l}${ALERT.fresh.has(akey(x)) ? " new" : ""}"><b class="sev">${x.l === "urgent" ? "Red · needs attention" : "Amber · worth a look"}</b><span class="what">${escH(cap(x.what))}</span><span class="route">${route(x)}</span></div>`).join("")
+    : `<div class="alert ok"><span class="what">Nothing off your normal today.</span></div>`;
+  renderAreas(); }
+function renderAreas() { const g = $("#areaG"), all = $("#bodyAll"); if (!g || !all) return; const by = {}, fresh = {};
+  ALERT.list.forEach(x => { const a = areaOf(x); if (by[a] !== "urgent") by[a] = x.l; if (ALERT.fresh.has(akey(x))) fresh[a] = by[a]; });
+  all.setAttribute("class", "hs" + (by.whole ? ` area ${by.whole}` : ""));
+  g.innerHTML = Object.entries(by).filter(([a]) => a !== "whole").map(([a, l]) => AREA_SHAPE[a][0].replace(/^<(\w+)/, `<$1 class="area ${l}"`)).join("")
+    + Object.entries(fresh).map(([a, l]) => `<circle class="ping ${l}" cx="${AREA_SHAPE[a][1]}" cy="${AREA_SHAPE[a][2]}" r="16"/>`).join(""); }
+function refreshAstra() {
+  window.ASTRA = {crew: CREW.map(c => withMember(c.id, () => { const st = statuses(), w = worstOf(st);
+    return {id: c.id, name: c.name, sex: c.sex, age: c.age, height: c.height, weight: c.weight, role: c.role, source: (D.crew && D.crew[c.idx] && D.crew[c.idx].source) || "",
+      base: Object.assign({}, base()), status: w, statusText: st.length ? `${WORD[w]}: ${cap(st[0].what)}${st.length > 1 ? ` (and ${st.length - 1} more)` : ""}` : "Nothing off their normal today", issues: st.map(x => ({l: x.l, what: x.what}))}; })),
+    activeId: APP.active, dayChip: dayChip(), phase: phase(), mission: S.mission}; }
+function dayMarks() { const L1 = LAND(), mr = mars();
+  return [[-30, "Training"], [-7, "Training"], [0, "Launch"], [1, "Arrival"], [30, "Eyes scan"], [50, "Neck scan"], [90, "Heart scan"], [120, "Eyes scan"], [150, "Neck scan"], [L1 - 1, "Last day"], [L1, mr ? "Mars landing" : "Landing"], [L1 + 3, mr ? "On Mars" : "Recovery"]]; }
+function renderBars() { const A = window.ASTRA, cmp = APP.view === "compare";
+  $("#crewtabs").innerHTML = A.crew.map(c => `<button class="crewtab" role="tab" data-id="${c.id}" aria-selected="${!cmp && c.id === APP.active}"><span class="dot ${c.status}" title="${WORD[c.status]}"></span><span class="nm">${c.name}</span><span class="sx">${c.sex.toUpperCase()}</span><span class="rl">${c.role}</span></button>`).join("")
+    + `<button class="crewtab" role="tab" data-id="compare" aria-selected="${cmp}">Compare crew</button>`;
+  const d = day(); $("#days").innerHTML = dayMarks().map(([x, t]) => `<button class="daybtn${x === d ? " on" : ""}" data-day="${x}"><b>${dayChip(x)}</b><span>${t}</span></button>`).join("");
+  $("#dayNow").textContent = `${dayChip()} · ${PHASE_LABEL[phase()]()} · ${M().name}`;
+  $("#simbar").innerHTML = `<span class="lbl">Simulate an issue for ${me().name.split(" ")[0]}</span>` + SIMS.map(x => { const off = simOff(x.id); return `<button class="simbtn ${x.l}" data-sim="${x.id}"${off ? ` disabled title="${off}"` : ""}>${x.t}</button>`; }).join("")
+    + `<button class="simbtn clear" data-sim="clear">Clear today's issues</button><span class="simtag">Simulated</span>`;
+  $("#mission").value = S.mission; $("#dReply").value = S.reply; }
+function renderView() { const cmp = APP.view === "compare";
+  ["#crewGrid", "#crewMain", "#simbar", "#alerts"].forEach(s => { $(s).style.display = cmp ? "none" : ""; });
+  $("#compareView").hidden = !cmp; if (cmp && window.renderCompare) window.renderCompare($("#compareView"), window.ASTRA); }
+const setDay = x => { S.travel = Math.max(-60, Math.min(LAND() + 30, x)) + S.launch - todayIdx(); S.open = null; render(); };
 
-// ---------------- connect: real NASA and device APIs ----------------
 const SOURCES = [
   {id: "hr", name: "Heart-rate chest strap", what: "Bluetooth Heart Rate standard. NASA tested Bluetooth chest straps for ISS exercise, and the station's Flight Ergometer (FERGO) takes heart rate over Bluetooth.", btn: "Connect"},
   {id: "iss", name: "NASA ISS Live", what: "Station cabin air: CO₂, pressure and temperature, streamed from NASA's public ISS telemetry (Lightstreamer).", btn: "Connect"},
@@ -678,23 +758,18 @@ async function connect(id) {
   } catch (e) { setRes(id, `Not connected: ${e.message || e}.`); }
 }
 
-// ---------------- guided flows: one thing per screen ----------------
 let flow = [], k = 0, cur, scratch = {}, running = null;
 const scanSteps = area => [`si:${area}`, ...AREAS[area].steps.map((_, i) => `sp:${area}:${i}`), `sr:${area}`, `ss:${area}`];
 const expand = list => list.flatMap(s => s === "daily" ? ["d1", "d2", "d3", "d4"] : s.startsWith("scan:") ? scanSteps(s.split(":")[1]) : [s]);
 const pointer = (area, ring) => { const a = AREAS[area]; return outline(`<circle cx="${a.pt[0]}" cy="${a.pt[1]}" r="10" fill="#3f5bff"/>${ring ? `<circle class="halo" cx="${a.pt[0]}" cy="${a.pt[1]}" r="10"/>` : ""}`); };
 const PH_DEF = {training: [7.5, 62, 118, 76, 36.6, 90], launch: [6, 70, 124, 80, 36.7, 92], arrive: [5, 68, 120, 78, 36.8, 92], orbit: [5.5, 64, 116, 74, 36.7, 88], prereturn: [6, 66, 114, 72, 36.7, 90], landed: [6.5, 82, 108, 70, 36.9, 94], after: [7, 70, 114, 74, 36.7, 90]};
 const STEP = {
-  welcome1: () => ({ill: I.hand, title: "Hi, I'm Baseline", sub: "I help you notice changes in your body, from your first training day to the day you're home. I compare you with you, not with anyone else."}),
+  welcome1: () => ({ill: I.hand, title: "Hi, I'm ASTRA", sub: "I help you notice changes in your body, from your first training day to the day you're home. I compare you with you, not with anyone else."}),
   welcome2: () => ({ill: I.lock, title: "Your data is yours", sub: "Your check-ins stay with you. Scan images and anything that could affect your safety go to your flight surgeon, and you'll always see exactly what was sent."}),
   welcome3: () => ({ill: I.list, title: "How it works", html: `<div class="check"><span>1</span>During training: a short check every day builds your normal, plus 6 baseline scans.</div><div class="check"><span>2</span>One last check before you board, one when you arrive.</div><div class="check"><span>3</span>In space: 90 seconds a day, monitoring runs on its own, and I guide every scan.</div><div class="check"><span>4</span>One check before you go home, and one when you land.</div>`}),
-  welcome4: () => ({title: "A bit about you", html: `<span class="lab">First name</span><input type="text" id="nm" placeholder="Your first name" value="${S.name || ""}"><div class="grid3"><div><span class="lab">Age</span><input type="number" id="ag" value="${S.age}"></div><div><span class="lab">Height cm</span><input type="number" id="ht" value="${S.height}"></div><div><span class="lab">Weight kg</span><input type="number" id="wt" value="${S.weight}"></div></div><span class="lab">Body outline</span><div class="chips" id="sx"><button class="chip ${S.sex === "f" ? "on" : ""}" data-v="f">Female</button><button class="chip ${S.sex === "m" ? "on" : ""}" data-v="m">Male</button></div><span class="lab">Launch date (I count the days from here)</span><input type="date" id="ld" value="${new Date(S.launch * DAY).toISOString().slice(0, 10)}">`,
-    init() { $$("#sx .chip").forEach(c => c.onclick = () => $$("#sx .chip").forEach(x => x.classList.toggle("on", x === c))); },
-    save() { S.name = $("#nm").value.trim(); S.sex = $("#sx .chip.on").dataset.v; S.age = +$("#ag").value || S.age; S.height = +$("#ht").value || S.height; S.weight = +$("#wt").value || S.weight;
-      const ld = Date.parse($("#ld").value); if (!isNaN(ld)) { S.launch = Math.floor(ld / DAY); S.travel = 0; } }, go: "Let's start"}),
   d1: () => { const v = (PH_DEF[phase()] || PH_DEF.training)[0];
     return {title: "How long did you sleep?", html: `<div class="bigval"><span id="slv">${v}</span> h</div><input type="range" id="sl" min="3" max="10" step=".5" value="${v}">`, init() { $("#sl").oninput = e => $("#slv").textContent = e.target.value; }, save() { scratch.sleep = +$("#sl").value; }}; },
-  d2: () => ({title: "How are you feeling?", sub: "Only you see this.", needs: !scratch.mood, html: `<div class="faces" id="fc">${["😞", "🙁", "😐", "🙂", "😄"].map((e, i) => `<button data-v="${i + 1}" class="${scratch.mood === i + 1 ? "on" : ""}" aria-label="${["Very low", "Low", "Okay", "Good", "Great"][i]}">${e}</button>`).join("")}</div>`,
+  d2: () => ({title: "How are you feeling?", sub: "Only you see this.", needs: !scratch.mood, html: `<div class="faces" id="fc">${["Very low", "Low", "Okay", "Good", "Great"].map((e, i) => `<button data-v="${i + 1}" class="${scratch.mood === i + 1 ? "on" : ""}" aria-label="${["Very low", "Low", "Okay", "Good", "Great"][i]}">${e}</button>`).join("")}</div>`,
     init() { $$("#fc button").forEach(b => b.onclick = () => { $$("#fc button").forEach(x => x.classList.toggle("on", x === b)); scratch.mood = +b.dataset.v; $("#goBtn").disabled = false; }); }}),
   d3: () => ({title: "Anything bothering you?", sub: "Tap any that apply, or just continue.", html: `<div class="chips" id="sy">${["Headache", "Stuffy nose", "Back pain", "Feeling sick", "Dizzy"].map(s => `<button class="chip">${s}</button>`).join("")}</div>`,
     init() { $$("#sy .chip").forEach(c => c.onclick = () => c.classList.toggle("on")); }, save() { scratch.symptoms = $$("#sy .chip.on").map(c => c.textContent); }}),
@@ -707,7 +782,7 @@ const STEP = {
     init() { const pad = $("#pad"); let st = "idle", t0 = 0, ts = [], tm; const nx = () => { st = "wait"; pad.classList.remove("go2"); pad.textContent = "Wait for it…"; tm = setTimeout(() => { st = "go"; pad.classList.add("go2"); pad.textContent = "Tap!"; t0 = performance.now(); }, 800 + Math.random() * 1700); };
       const hit = () => { if (st === "idle") { ts = []; nx(); } else if (st === "wait") { clearTimeout(tm); pad.textContent = "A bit early. Wait for blue"; setTimeout(nx, 700); }
         else if (st === "go") { ts.push(performance.now() - t0); if (ts.length >= 10) { st = "done"; pad.classList.remove("go2"); const m = Math.round(ts.sort((a, b) => a - b)[5]); L().rt = m;
-          pad.textContent = "Done 🎉"; $("#rto").hidden = false; $("#rto").innerHTML = `Your speed: <b>${m} ms</b>${phase() === "training" ? " · added to your normal" : ` · your normal ${f(base().rt)} ms`}`; $("#goBtn").disabled = false; } else nx(); } };
+          pad.textContent = "Done"; $("#rto").hidden = false; $("#rto").innerHTML = `Your speed: <b>${m} ms</b>${phase() === "training" ? " · added to your normal" : ` · your normal ${f(base().rt)} ms`}`; $("#goBtn").disabled = false; } else nx(); } };
       pad.onclick = hit; pad.onkeydown = e => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); hit(); } }; }}),
   pick: () => { const due = dueScans(), tr = day() <= 0, a = due.length ? due[0].a : tr ? missingBase()[0] : null, ts = trainingScans();
     return {title: "Which area?", sub: tr ? "All 6 are needed before launch. Tap a spot or a name." : "Tap a spot on the body or a name below.", needs: true,
@@ -749,7 +824,7 @@ const STEP = {
 };
 function runStep(id) { const [n, a, b] = id.split(":"); return ["si", "sp", "sr", "ss"].includes(n) ? STEP[n](a, b !== undefined ? +b : undefined) : STEP[id](); }
 function openFlow(list, item) { flow = expand(list); k = 0; scratch = {}; running = item || null; $("#scrim").classList.add("on"); $("#sheet").classList.add("on"); show(); }
-function closeFlow() { $("#scrim").classList.remove("on"); $("#sheet").classList.remove("on"); render(); cloudSync(); }
+function closeFlow() { $("#scrim").classList.remove("on"); $("#sheet").classList.remove("on"); render(); }
 function show() { cur = runStep(flow[k]);
   $("#prog").style.visibility = flow.length > 1 ? "visible" : "hidden"; $("#prog i").style.width = `${(k + 1) / flow.length * 100}%`;
   $("#stepBody").innerHTML = `${cur.ill ? `<div class="illu">${cur.ill}</div>` : ""}<p class="st">${cur.title}</p>${cur.sub ? `<p class="ss">${cur.sub}</p>` : ""}${cur.html || ""}`;
@@ -758,15 +833,14 @@ function show() { cur = runStep(flow[k]);
 function advance(skipped) { if (!skipped) cur.save && cur.save(); const chain = !skipped && cur.chain ? cur.chain : null; cur.after && cur.after();
   if (chain) flow.push(...expand(chain()));
   if (k < flow.length - 1) { k++; show(); return; }
-  if (flow[0] === "welcome1") S.onboarded = true;
   if (running) { const l = L(); l.done = l.done || {}; l.done[running] = true; }
   autoVitals(); closeFlow(); }
 function autoVitals() { if (statuses().some(x => x.auto === "vitals") && !S.msgs.some(m => m.autoV === key())) { const at = Date.now(), lag = nearDoctors() ? 1000 : delayMs(), d = L().daily;
   S.msgs.push({me: true, auto: true, autoV: key(), mission: S.mission, at: at + lag, text: `Vital signs outside safe limits: HR ${d.hr}, BP ${d.sbp}/${d.dbp}, ${d.temp} °C, blood sugar ${d.glu}`});
   S.msgs.push({me: false, mission: S.mission, at: at + 2 * lag + 2000, text: "We see your numbers. Please re-measure now and stay with a crewmate; we're on it."}); } }
 $("#goBtn").onclick = () => advance(false); $("#skipBtn").onclick = () => advance(true);
-// closing on the "sent" screen still records the scan that was just sent
-$("#closeBtn").onclick = () => { if (flow[0] === "welcome1") S.onboarded = true; if (cur && flow[k] && flow[k].startsWith("ss:")) cur.after(); closeFlow(); }; $("#scrim").onclick = () => $("#closeBtn").onclick();
+
+$("#closeBtn").onclick = () => { if (cur && flow[k] && flow[k].startsWith("ss:")) cur.after(); closeFlow(); }; $("#scrim").onclick = () => $("#closeBtn").onclick();
 document.addEventListener("keydown", e => { if (e.key === "Escape" && $("#sheet").classList.contains("on")) $("#closeBtn").onclick(); });
 
 $("#mainBtn").onclick = () => { const n = plan().find(x => !x.done); if (n) openFlow(n.flow, n.flow[0].startsWith("scan:") ? null : n.id); };
@@ -776,84 +850,22 @@ $("#scanBody").onclick = e => { const t = e.target.closest("[data-a]"); if (t) o
 $("#connBtn").onclick = () => openFlow(["connect"]);
 $("#enterBtn").onclick = () => openFlow(["d4"]);
 $("#tiles").onclick = e => { const t = e.target.closest("[data-t]"); if (t) { S.open = S.open === t.dataset.t ? null : t.dataset.t; render(); } };
-const tour = () => openFlow(["welcome1", "welcome2", "welcome3", "welcome4"]);
+const tour = () => openFlow(["welcome1", "welcome2", "welcome3"]);
 $("#helpBtn").onclick = tour; $("#tourBtn").onclick = tour; $("#rulesBtn").onclick = () => openFlow(["rules"]);
-$("#demoLink").onclick = () => { S.demoOpen = !S.demoOpen; render(); };
-$("#dMission").onchange = e => { S.mission = e.target.value; S.open = null; render(); };
-$("#dDay").oninput = e => { S.travel = +e.target.value + S.launch - todayIdx(); S.open = null; render(); };
+$("#mission").onchange = e => { S.mission = e.target.value; S.open = null; render(); };
 $("#dReply").onchange = e => { S.reply = e.target.value; render(); };
-$("#dSeed").onclick = () => { const days = ((D.crew && D.crew[0] && D.crew[0].days) || []).slice(20, 50), now = Date.now();
-  for (let i = 1; i <= 30; i++) { const r = days[i - 1] || {}, l = S.log[`${S.mission}:${-i}`] = S.log[`${S.mission}:${-i}`] || {};
-    l.daily = {sleep: r.sleep_min ? Math.round(r.sleep_min / 30) / 2 : 7, mood: 3 + (i % 3 ? 1 : 0), hr: 58 + (i * 7) % 7, sbp: 114 + (i * 5) % 8, dbp: 74 + (i * 3) % 5, temp: 36.5 + (i % 3) / 10, glu: 86 + (i * 11) % 9};
-    l.rt = 285 + (i * 13) % 30; l.done = {train: true}; if (i === 10) l.stand = {hr: 8, sbpDrop: 4}; }
-  const have = new Set(S.scans.filter(s => s.mission === S.mission && s.day < 0).map(s => s.area));
-  Object.keys(AREAS).forEach((a, i) => { if (!have.has(a)) S.scans.push({area: a, at: now, reply: "normal", repliedAt: now, mission: S.mission, day: -(20 - i * 2)}); });
+$("#crewtabs").onclick = e => { const t = e.target.closest("[data-id]"); if (!t) return; const id = t.dataset.id;
+  if (id === "compare") APP.view = "compare";
+  else { const n = APP.crew[id]; SHARED.forEach(k2 => { n[k2] = S[k2]; }); S = n; APP.active = id; APP.view = "crew"; S.open = null; }
   render(); };
-$("#dReset").onclick = () => { S = Object.assign(structuredClone(DEF), {demoOpen: true}); render(); tour(); };
-// ---------------- cloud: optional sync to the mission database (Supabase) ----------------
-// Signed out, everything stays on this device. Signed in, check-ins and anything you send to
-// your doctors are copied to the database, where row-level security keeps them private to you.
-const SB_URL = "https://eyfkcygyrjwyebykhrjr.supabase.co", SB_KEY = "sb_publishable_Yy9P-e52LN-NDCwer8frsA_4qvjtNOH";   // public values, safe in a browser
-let sb = null; try { sb = window.supabase ? window.supabase.createClient(SB_URL, SB_KEY) : null; } catch (e) { sb = null; }
-const CLOUD = {user: null, crew: null, stored: null, last: null, err: null, busy: false, sig: ""};
-const PHASE_DB = {training: "preflight", launch: "preflight", arrive: "early_orbit", orbit: "long_stay", prereturn: "pre_landing", landed: "recovery", after: "recovery"};
-const esc = t => String(t ?? "").replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
-const num = (x, lo, hi) => (typeof x === "number" && isFinite(x) && x >= lo && x <= hi) ? x : null;
-function renderCloud() { const b = $("#cloudBtn"); if (!b) return;
-  b.textContent = !sb ? "This device only" : CLOUD.crew ? `Synced · ${CLOUD.crew.callsign}` : CLOUD.user ? "Signed in · not linked" : "Sign in";
-  b.title = !sb ? "The sync service could not be loaded. Everything is saved on this device." : CLOUD.crew ? "Your check-ins are copied to the mission database." : "Optional: sign in to copy your check-ins to the mission database."; }
-async function cloudLoad() { if (!sb) return renderCloud();
-  try { const {data} = await sb.auth.getSession(); CLOUD.user = data && data.session ? data.session.user : null; CLOUD.crew = null; CLOUD.stored = null; CLOUD.err = null;
-    if (CLOUD.user) { const r = await sb.from("crew").select("id,callsign,role").eq("user_id", CLOUD.user.id).maybeSingle();
-      if (r.error) CLOUD.err = r.error.message; CLOUD.crew = r.data || null; }
-  } catch (e) { CLOUD.err = e.message || String(e); }
-  renderCloud(); if (CLOUD.crew) cloudSync(true); }
-function cloudRows() { const out = [];
-  for (const [k2, v] of Object.entries(S.log)) { const [m, ds] = k2.split(":"), d = +ds, x = v.daily || {}; if (m !== S.mission || (!v.daily && !v.rt)) continue;
-    out.push({crew_id: CLOUD.crew.id, mission_day: d, phase: PHASE_DB[phase(d)], mood: num(x.mood, 1, 5), sleep_min: num(x.sleep, 0, 24) === null ? null : Math.round(x.sleep * 60),
-      resting_hr: num(x.hr, 20, 250), systolic: num(x.sbp, 40, 300), diastolic: num(x.dbp, 20, 200), temp_c: num(x.temp, 30, 45), glucose_mgdl: num(x.glu, 10, 800), reaction_ms: num(v.rt, 50, 5000),
-      headache: x.symptoms ? x.symptoms.includes("Headache") : null, slept_badly: null,
-      notes: `Mission: ${MISSIONS[m].name}${x.symptoms && x.symptoms.length ? ` · reported: ${x.symptoms.join(", ")}` : ""}`}); }
-  return out; }
-async function cloudSync(force) { if (!sb || !CLOUD.crew || CLOUD.busy) return; CLOUD.busy = true;
-  try { const rows = cloudRows(), sig = JSON.stringify(rows);
-    if (rows.length && (force || sig !== CLOUD.sig)) { const r = await sb.from("checkins").upsert(rows, {onConflict: "crew_id,mission_day"}); if (r.error) throw r.error; CLOUD.sig = sig; }
-    // messages you sent to your doctors: scans and shares you pressed Send on, plus the automatic safety-limit message
-    const pend = S.msgs.filter(m => m.me && !m.cloud);
-    if (pend.length) { const now = Date.now(), pk = pend.map(m => { const dl = MISSIONS[m.mission] ? MISSIONS[m.mission].delayMin : 0;
-        return {crew_id: CLOUD.crew.id, consented: !m.autoV, auto_safety: !!m.autoV, sent_at: new Date(now).toISOString(), one_way_delay_min: +dl.toFixed(3), earliest_reply_at: new Date(now + 2 * dl * 6e4).toISOString(),
-          summary: {kind: m.autoV ? "vitals_outside_safe_limits" : m.auto ? "scan_images" : "shared_by_crew", text: m.text, mission: m.mission}}; });
-      const r = await sb.from("ground_packets").insert(pk); if (r.error) throw r.error; pend.forEach(m => m.cloud = true); save(); }
-    const c = await sb.from("checkins").select("id", {count: "exact", head: true}); if (!c.error) CLOUD.stored = c.count;
-    CLOUD.last = new Date(); CLOUD.err = null;
-  } catch (e) { CLOUD.err = e.message || String(e); }
-  CLOUD.busy = false; renderCloud(); const box = $("#cloudBox"); if (box) box.innerHTML = cloudStatusHtml(); }
-function cloudStatusHtml() {
-  if (!CLOUD.user) return "";
-  if (!CLOUD.crew) return `<b>Signed in, but not linked to a crew member yet.</b><div class="sub">Ask the mission admin to link this account. Until then, everything stays on this device.</div>${CLOUD.err ? `<div class="sub">Details: ${esc(CLOUD.err)}</div>` : ""}`;
-  return `<div class="check"><span>✓</span>Linked to <b style="margin-left:4px">${esc(CLOUD.crew.callsign)}</b></div>`
-    + `<div class="check"><span>✓</span>${CLOUD.stored === null ? "Checking the database…" : `${pl(CLOUD.stored, "check-in")} stored for you <span class="tag" style="margin-left:6px">simulated history included</span>`}</div>`
-    + (CLOUD.err ? `<div class="note watch" style="margin:8px 0 0">Last sync did not go through: ${esc(CLOUD.err)}. Your data is still saved on this device.</div>` : `<div class="sub" style="margin-top:6px">${CLOUD.last ? `Last synced at ${CLOUD.last.toLocaleTimeString()}.` : "Not synced yet in this session."} Only you can read your check-ins. Your flight surgeon sees only what you send.</div>`); }
-STEP.signin = () => !sb ? ({title: "Saved on this device", sub: "The sync service could not be loaded, so nothing leaves this device. Everything else works as usual.", go: "OK"})
-  : CLOUD.user ? ({title: "Mission database", sub: "", go: "Done",
-      html: `<div class="sub" id="cloudWho"></div><div class="box" id="cloudBox">${cloudStatusHtml()}</div><div class="grid2" style="margin-top:12px"><button class="btn ghost" id="cloudNow">Sync now</button><button class="btn ghost" id="cloudOut">Sign out</button></div>`,
-      init() { $("#cloudWho").textContent = `Signed in as ${CLOUD.user.email || "your account"}`; $("#cloudNow").onclick = () => cloudSync(true);
-        $("#cloudOut").onclick = async () => { await sb.auth.signOut(); CLOUD.user = CLOUD.crew = null; CLOUD.sig = ""; renderCloud(); show(); }; }})
-  : ({title: "Sign in to sync", sub: "Optional. Without signing in, everything stays on this device. Use the demo account your mission admin gave you.",
-      html: `<span class="lab">Email</span><input type="email" id="cEm" autocomplete="username"><span class="lab">Password</span><input type="password" id="cPw" autocomplete="current-password"><div class="note watch" id="cMsg" style="margin:12px 0 0" hidden></div><button class="btn go" id="cGo">Sign in</button>`,
-      init() { $("#goBtn").hidden = true; const go = async () => { const b = $("#cGo"), msg = $("#cMsg"); b.disabled = true; b.textContent = "Signing in…"; msg.hidden = true;
-          let err = null; try { const r = await sb.auth.signInWithPassword({email: $("#cEm").value.trim(), password: $("#cPw").value}); err = r.error; } catch (e) { err = e; }
-          if (err) { b.disabled = false; b.textContent = "Sign in"; msg.hidden = false; msg.textContent = `Could not sign in: ${err.message || err}`; return; }
-          await cloudLoad(); if ($("#sheet").classList.contains("on") && flow[k] === "signin") show(); };
-        $("#cGo").onclick = go; $("#cPw").onkeydown = e => { if (e.key === "Enter") go(); }; }});
-$("#cloudBtn").onclick = () => openFlow(["signin"]);
-if (sb) sb.auth.onAuthStateChange(ev => { if (ev === "SIGNED_OUT" || ev === "TOKEN_REFRESHED") setTimeout(() => { if (ev === "SIGNED_OUT") { CLOUD.user = CLOUD.crew = null; renderCloud(); } }, 0); });
-
-if (/[?&]demo/.test(location.search)) S.demoOpen = true;
-setInterval(() => { if (!document.hidden) renderHolo(false); const now = Date.now(); if ([...S.msgs.map(m => m.at), ...S.scans.map(s => s.repliedAt)].some(t => t > now - 1500) && !$("#sheet").classList.contains("on")) render(); }, 1000);
-render(); renderCloud(); cloudLoad();
-if (!S.onboarded) tour();
+$("#daybar").onclick = e => { const b = e.target.closest("[data-day],[data-step]"); if (!b) return; setDay(b.dataset.day !== undefined ? +b.dataset.day : day() + +b.dataset.step); };
+$("#simbar").onclick = e => { const b = e.target.closest("[data-sim]"); if (!b || b.disabled) return; simulate(b.dataset.sim); render(); };
+$("#dReset").onclick = () => { APP = freshApp(); S = APP.crew.c1; Object.keys(SEEN).forEach(k2 => delete SEEN[k2]); render(); };
+setInterval(() => { if (!document.hidden && APP.view !== "compare") renderHolo(false); const now = Date.now(); if ([...S.msgs.map(m => m.at), ...S.scans.map(s => s.repliedAt)].some(t => t > now - 1500) && !$("#sheet").classList.contains("on")) render(); }, 1000);
+render();
+window.addEventListener("load", () => { window.renderGuide && window.renderGuide(document.getElementById("guideStrip")); renderView(); });
 })();
 </script>
+<script src="compare.js"></script>
 </body>
 </html>
