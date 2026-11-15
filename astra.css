@@ -1080,3 +1080,13 @@ rect.ch-cursor{fill:var(--navy);stroke:none;opacity:.06}
 #sheet .mh:has(.mh-next) .mh-log{max-height:min(132px,18vh)}
 @media (max-width:640px){.mon-tabs{flex-wrap:wrap;border-radius:18px}.mon-tab{flex:1 1 auto;padding:0 10px;font-size:12.5px}}
 #mhSpeak{display:none!important}
+.sheet:has(.mh){height:min(640px,88vh);max-height:88vh;display:flex;flex-direction:column;overflow:hidden}
+.sheet:has(.mh) #stepBody{flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
+.sheet:has(.mh) .mh{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:12px}
+.sheet:has(.mh) .mh>*{flex:0 0 auto}
+.sheet:has(.mh) .mh-log{flex:1 1 auto;min-height:0;max-height:none;overflow-y:auto;align-content:start;overscroll-behavior:contain}
+.sheet:has(.mh-next) .mh-log{flex:0 1 auto;max-height:120px}
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:60;display:inline-flex;align-items:center;gap:10px;max-width:calc(100vw - 32px);padding:11px 18px;border-radius:999px;background:var(--navy);color:#fff;font-size:13.5px;font-weight:500;box-shadow:var(--pop);animation:toastIn .2s ease-out both}
+.toast::before{content:"";width:8px;height:8px;border-radius:50%;background:#3CC58F;flex:0 0 auto}
+.toast.out{opacity:0;transition:opacity .25s}
+@keyframes toastIn{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}
