@@ -270,6 +270,7 @@
   var speakOn = getPref(PREF_SPEAK, false);
   var hasSpeech = typeof window.speechSynthesis !== "undefined" && typeof window.SpeechSynthesisUtterance !== "undefined";
   var st = null, runId = 0, durMs = DURATION_MS;
+  var REPLY_URL = "/api/reply", REPLY_WAIT_MS = 4500, served = false, misses = 0;
 
   function todayLog() { return A.L(); }
   function name() { return firstName(A.S && A.S.name); }
@@ -282,7 +283,7 @@
 
   function paint() {
     var note = $("#mhNote"), sp = $("#mhSpeak");
-    if (note) note.innerHTML = "Private to you. Your answers stay on this device. <span class=\"simtag\">Demo</span>";
+    if (note) note.innerHTML = served ? "Private to you. Replies are written by a small open-source model on ASTRA's server from the question and the option you tapped; nothing is stored." : "Private to you. Your answers stay on this device. <span class=\"simtag\">Demo</span>";
     if (sp) { sp.hidden = !hasSpeech; sp.setAttribute("aria-pressed", speakOn ? "true" : "false"); }
   }
 
@@ -333,18 +334,45 @@
     chips(cur());
     st.clock.start(); startTick(); prog();
   }
+  function modelReply(q, label, band, done) {
+    if (misses >= 2 || typeof fetch !== "function") return done(null);
+    var ctrl = typeof AbortController !== "undefined" ? new AbortController() : null, over = false;
+    var timer = setTimeout(function () { if (over) return; over = true; if (ctrl) ctrl.abort(); miss(); done(null); }, REPLY_WAIT_MS);
+    function miss() { misses++; }
+    function end(text) { if (over) return; over = true; clearTimeout(timer); if (text) { misses = 0; if (!served) { served = true; paint(); } } else miss(); done(text); }
+    var day = null; try { day = Math.round(Number(A.day())); } catch (e) {}
+    var body = {name: name(), question: short(q.q, 140), answer: short(label, 40), band: band, partOfDay: timeOfDay(new Date().getHours()), missionDay: isFinite(day) ? day : null};
+    try {
+      fetch(REPLY_URL, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body), cache: "no-store", credentials: "same-origin", signal: ctrl ? ctrl.signal : undefined})
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (j) { end(j && typeof j.say === "string" && j.say.trim() ? short(j.say.trim(), 110) : null); }, function () { end(null); });
+    } catch (e) { end(null); }
+  }
   function onChip(idx) {
-    if (!st || st.done) return;
+    if (!st || st.done || st.busy) return;
     var q = cur(), v = scoreOf(q, idx); if (!q || !v) return;
     add("me", q.o[idx]);
     st.got.push({k: q.k, v: v});
-    var reply = pickReply(q.k, bandOf(v), st.used);
-    if (afterAnswer(st.got.length, st.clock.elapsed(), st.clock.dur()) === "end") return finish(reply);
-    var nq = nextQ();
-    if (!nq) return finish(reply);
-    st.i++;
-    say(reply, nq.q);
-    chips(nq); prog();
+    var band = bandOf(v), reply = pickReply(q.k, band, st.used);
+    var ending = afterAnswer(st.got.length, st.clock.elapsed(), st.clock.dur()) === "end";
+    var nq = ending ? null : nextQ();
+    function go(text) {
+      var r = text || reply;
+      if (!nq) return finish(r);
+      st.i++;
+      say(r, nq.q);
+      chips(nq); prog();
+    }
+    if (misses >= 2) return go(null);
+    var my = runId, me = st, w = add("ai wait", "…");
+    st.busy = true; chips(null);
+    modelReply(q, q.o[idx], band, function (text) {
+      if (w && w.parentNode) w.parentNode.removeChild(w);
+      if (my !== runId || st !== me) return;
+      me.busy = false;
+      if (me.done) return;
+      go(text);
+    });
   }
   function crisis() {
     st.done = true; runId++; st.clock.pause(); chips(null); prog(); stopSpeech();
@@ -373,6 +401,7 @@
     inp.value = "";
     add("me", text);
     if (isCrisis(text)) return crisis();
+    if (st.busy) return;
     say(RETRY);
     chips(cur());
   }
