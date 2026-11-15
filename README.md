@@ -17,6 +17,7 @@ It compares a crew member with their own normal, from training on Earth through 
 | `datacard.js` | The Data box: tabs, graphs, time range and the table of numbers |
 | `feeds.js` | Live fetches: NASA ISS Live, NASA DONKI, NOAA SWPC GOES, station position |
 | `checkin.js` | The mood check-in: five fixed questions in a scripted personal voice, with an optional read-aloud using the browser's built-in speech |
+| `body3d.js` | The rotatable 3D body figure with a marker for every area (three.js, loaded on demand) |
 | `today.js` | The Today to-do list with wellbeing permissions (delay or hand over, within team-set limits) and the Mind card |
 | `chart.js` | The shared chart module |
 | `compare.js`, `compare.css` | The "How ASTRA works" strip and the "Compare crew" tab |

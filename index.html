@@ -305,7 +305,7 @@ input[type=text]:focus,input[type=number]:focus,input[type=date]:focus,input[typ
           </div>
         </div>
         <label class="daychip mis"><span class="sr">Mission</span><select id="mission" aria-label="Mission"><option value="iss">ISS</option><option value="mars">Mars</option></select></label>
-        <div class="simpick" id="simPick"><button id="simBtn" class="simtoggle" type="button" aria-expanded="false">Demo · trigger an alert<span class="chev" aria-hidden="true"></span></button><div id="simMenu" class="simmenu" hidden></div></div>
+        <div class="simpick" id="simPick"><button id="simBtn" class="simtoggle" type="button" aria-expanded="false"><span class="lbl-long">Demo · trigger an alert</span><span class="lbl-short">Demo</span><span class="chev" aria-hidden="true"></span></button><div id="simMenu" class="simmenu" hidden></div></div>
         <div class="crewpick"><button id="crewBtn" class="crewbtn" type="button" aria-haspopup="listbox" aria-expanded="false"></button><div id="crewMenu" class="crewmenu" role="listbox" hidden></div></div>
         <button class="icon-btn" id="helpBtn" aria-label="How ASTRA works">?</button>
       </div>
@@ -332,6 +332,7 @@ input[type=text]:focus,input[type=number]:focus,input[type=date]:focus,input[typ
           <div class="hcol r" id="hcR"></div>
           <div class="lvl" id="lvl"></div>
         </div>
+        <div class="areas" id="areaList"></div>
         <div class="hstats" id="hstats"></div>
         <div class="hsrc"><span class="live" id="liveTxt"></span><span style="display:flex;gap:6px"><button class="hbtn" id="enterBtn">Enter readings</button><button class="hbtn pri" id="connBtn">Connect</button></span></div>
       </section>
@@ -366,10 +367,16 @@ input[type=text]:focus,input[type=number]:focus,input[type=date]:focus,input[typ
     </section>
     <div class="two">
       <section class="card rise">
-        <div class="chead"><div><h2 id="scanTitle">Scans</h2><p class="sub" id="scanTxt" hidden></p></div><div id="scanRing"></div></div>
+        <div class="chead"><div class="th"><h2 id="scanTitle">Monitoring</h2><p class="sub" id="scanTxt" hidden></p></div><div id="scanRing"></div></div>
+        <div class="mon-tabs" id="monTabs" role="tablist">
+          <button class="mon-tab" role="tab" aria-selected="true" data-g="daily" type="button">Daily</button>
+          <button class="mon-tab" role="tab" aria-selected="false" data-g="weekly" type="button">Weekly</button>
+          <button class="mon-tab" role="tab" aria-selected="false" data-g="periodic" type="button">Monthly and flight days</button>
+        </div>
+        <div class="mon-list" id="monList"></div>
         <div id="scanBody"></div>
         <button class="btn" id="scanBtn" style="width:100%">Start a scan</button>
-        <div style="text-align:center;margin-top:10px"><button class="linkbtn" id="scanOther">Scan a different area</button></div>
+        <button class="linkbtn" id="scanOther" type="button">Scan an area now</button>
       </section>
       <section class="card rise d1">
         <div class="chead"><div><h2>Messages</h2></div><span class="sig" id="sig"></span></div>
@@ -391,6 +398,7 @@ input[type=text]:focus,input[type=number]:focus,input[type=date]:focus,input[typ
 </div>
 
 <script src="data.js"></script>
+<script src="body3d.js"></script>
 <script>
 (() => {
 const D = window.DATA || {}, SM = D.samples || {}, $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
@@ -485,25 +493,53 @@ const AREAS = {
 const mins = a => AREAS[a].time.replace(" with setup", "").replace("about ", "~");
 const longTime = a => AREAS[a].time.replace(" min", " minutes");
 
-const SCAN_ROT = ["eyes", "neck", "heart", "lungs", "bladder"];
-const scanFor = x => x >= 1 && x <= LAND() - 1 ? SCAN_ROT[(x - 1) % SCAN_ROT.length] : null;
-const lastSlot = (a, upto) => { const i = SCAN_ROT.indexOf(a); if (i < 0) return 0; const top = Math.min(upto, LAND() - 1), x = top - (((top - 1 - i) % 5) + 5) % 5; return x >= 1 ? x : 0; };
-const missKey = x => `${S.mission}:${x}`;
-const isMissed = x => !!(S.missed && S.missed[missKey(x)]);
+const MON = {
+  health: {g: "daily", name: "Health check", src: "ASTRA"},
+  sleep: {g: "daily", name: "Sleep period", src: "NASA-STD-3001 [V1 6001]"},
+  exercise: {g: "daily", name: "Exercise", src: "NASA exercise plan"},
+  conf: {g: "weekly", name: "Private medical conference", short: "Medical conference", src: "Reported by flight surgeons"},
+  cog: {g: "periodic", name: "Cognitive test", short: "Cognitive test", src: "OCHMO-TB-016"},
+  eyes: {g: "periodic", name: "Eye exam", short: "Eye exam", src: "NASA Ocular Health study", a: "eyes"},
+  neck: {g: "periodic", name: "Neck-vein ultrasound", short: "Neck scan", src: "NASA surveillance · days set by ASTRA", a: "neck"},
+};
+const EXAMS = ["eyes", "neck", "cog"];
+const flightDay = x => x >= 1 && x <= LAND() - 1;
+const crewIdx = () => (CREW.find(c => APP.crew[c.id] === S) || me()).idx;
+const restDay = (x, idx = crewIdx()) => phase(x) === "orbit" && ((x + idx * 2) % 7 + 7) % 7 === 3;
+const every = (from, step, top) => { const o = []; for (let x = from; x <= top; x += step) o.push(x); return o; };
+function occ(k) { const top = LAND() - 1;
+  if (k === "conf") return every(7, 7, top);
+  if (k === "cog") return every(30, 30, top);
+  if (k === "eyes") return [...new Set([10, ...every(30, 30, mars() ? 180 : 120), LAND() - 30])].filter(flightDay).sort((p, q) => p - q);
+  if (k === "neck") return mars() ? [52, 105, 157] : [45, 90, 135];
+  return []; }
+function dueOn(x) { if (!flightDay(x)) return []; const o = ["health", "sleep"]; if (phase(x) === "orbit" && !restDay(x)) o.push("exercise");
+  ["conf", ...EXAMS].forEach(k => { if (occ(k).includes(x)) o.push(k); }); return o; }
+const lastOcc = (k, upto) => { let r = 0; occ(k).forEach(y => { if (y <= upto) r = y; }); return r; };
+const nextOcc = (k, from) => occ(k).find(y => y >= from);
+const occEnd = (k, x) => { const n = nextOcc(k, x + 1); return n === undefined ? LAND() : n; };
+const missKey = (k, x) => `${S.mission}:${k}:${x}`;
+const isMissed = (k, x) => !!(S.missed && S.missed[missKey(k, x)]);
 const scanDone = (a, from, to = Infinity) => S.scans.some(s => s.mission === S.mission && s.area === a && s.day >= from && s.day < to && s.day <= day());
-const slotRec = x => { const a = scanFor(x), d = day(); let r = null; S.scans.forEach(s => { if (s.mission === S.mission && s.area === a && s.day >= x && s.day < x + 5 && s.day <= d) r = s; }); return r; };
-const slotDone = x => !!slotRec(x) || (x < day() && !isMissed(x)) || (x + 5 < day() && !isMissed(x + 5));
-const slot = x => ({a: scanFor(x), d: x, done: slotDone(x)});
+function examRec(k, x) { const end = Math.min(occEnd(k, x), day() + 1); let r = null;
+  if (k === "cog") { for (let y = end - 1; y >= x && !r; y--) { const l = S.log[key(y)]; if (l && l.rt) r = {day: y}; } return r; }
+  S.scans.forEach(s => { if (s.mission === S.mission && s.area === MON[k].a && s.day >= x && s.day < end) r = s; }); return r; }
+const examDone = (k, x) => !!examRec(k, x) || (x < day() && !isMissed(k, x));
+const confDone = (x = day()) => x < day() || !!((S.log[key(x)] || {}).done || {}).conf;
+const exDone = (x = day()) => { const c = CREW.find(c2 => APP.crew[c2.id] === S), t = S.todo && S.todo[key(x)]; return x < day() || !!(c && t && t.done && t.done[`${c.id}:${S.mission}:${x}:ex`]); };
+const markConf = () => { const l = L(); l.done = l.done || {}; if (l.done.conf) delete l.done.conf; else l.done.conf = true; CALV++; render(); };
 function dueScans() { const d = day();
-  if (inFlight()) { const out = Object.keys(S.missed || {}).filter(k2 => k2.startsWith(S.mission + ":")).map(k2 => +k2.split(":")[1]).filter(x => x < d && scanFor(x)).sort((p, q) => p - q).map(slot).filter(x => !x.done);
-    const t = slot(d); if (!t.done) out.push(t); return out; }
-  return phase() === "landed" && !scanDone("legs", LAND()) ? [{a: "legs", d: LAND(), done: false}] : []; }
+  if (inFlight()) { const out = []; ["cog", "eyes", "neck"].forEach(k => occ(k).forEach(x => { if (x <= d && !examDone(k, x)) out.push({k, a: MON[k].a || null, d: x, done: false}); })); return out.sort((p, q) => p.d - q.d); }
+  return phase() === "landed" && !scanDone("legs", LAND()) ? [{k: "legs", a: "legs", d: LAND(), done: false}] : []; }
+const examName = x => x.k === "legs" ? "Leg veins scan" : MON[x.k].name;
+function lastExam(gap) { if (!inFlight()) return null; let best = null;
+  ["eyes", "neck"].forEach(k => occ(k).forEach(x => { if (x <= day() - gap && examDone(k, x) && (!best || x > best.d)) best = {k, a: MON[k].a, d: x}; })); return best; }
 const trainingScans = () => new Set(S.scans.filter(s => s.mission === S.mission && s.day <= 0).map(s => s.area));
 const missingBase = () => { const ts = trainingScans(); return Object.keys(AREAS).filter(a => !ts.has(a)); };
 const standBase = () => Object.entries(S.log).some(([k2, v]) => k2.startsWith(S.mission + ":") && +k2.split(":")[1] < 0 && v.stand);
 function scanState(area) {
-  const s = [...S.scans].reverse().find(x => x.area === area && x.mission === S.mission && x.day <= day()), v = lastSlot(area, day() - 1);
-  if (!s || (v && v > s.day && !isMissed(v))) return v ? {l: "ok", line: "Doctors: looks like your baseline"} : {l: "none", line: "Not scanned yet"};
+  const s = [...S.scans].reverse().find(x => x.area === area && x.mission === S.mission && x.day <= day()), k = MON[area] && MON[area].a ? area : null, v = k ? lastOcc(k, Math.min(day() - 1, LAND() - 1)) : 0;
+  if (!s || (v && v > s.day && !isMissed(k, v))) return v ? {l: "ok", line: "Doctors: looks like your baseline"} : {l: "none", line: "Not scanned yet"};
   if (s.repliedAt > Date.now()) return {l: "pending", line: `Sent · reply in about ${clock(s.repliedAt - Date.now())}`};
   return {l: {normal: "ok", followup: "watch", urgent: "urgent"}[s.reply], line: {normal: "Doctors: looks like your baseline", followup: "Doctors: follow-up scan next week", urgent: "Doctors want to talk now"}[s.reply]};
 }
@@ -520,11 +556,13 @@ function plan() {
   if (p === "arrive") add("arrive", "sun", "Arrival check", "about 5 minutes", mars() ? "Once you've settled in" : "After docking", "Your first reading in weightlessness. Then I check in every day.", ["daily", "rt", "fin"], !!dn.arrive, true);
   if (p === "orbit") {
     add("daily", "sun", "Daily check", "90 seconds", "After waking", "How you slept and how you feel. Monitoring runs on its own the rest of the day.", ["daily", "fin"]);
-    if (d % 7 === 0) add("rt", "bolt", "Reflex game", "3 minutes", "This morning", "Your weekly alertness check.", ["rt", "fin"]);
   }
   if (p === "prereturn") add("pre", "pill", mars() ? "Before-landing check" : "Before-you-go-home check", "about 10 minutes", "After waking", `Daily check, reflex game and your landing medicines. Before ${mars() ? "landing" : "deorbit"} you'll drink 24–48 oz of salty water.`, ["daily", "rt", "meds", "fin"], !!dn.pre, true);
   if (p === "landed") add("home", "home", mars() ? "First check on Mars" : "Welcome-home check", "about 20 minutes, with someone helping", "As soon as you can", "How your body handles gravity again.", ["daily", "stand", "fin"], !!dn.home, true);
-  dueScans().forEach((x, i) => add("scan" + i, "probe", `${AREAS[x.a].label} scan`, longTime(x.a), x.d === d ? (p === "landed" ? "Later today" : "15:00") : `Overdue by ${pl(d - x.d, "day")}`, x.a === "legs" ? "A clot check after the trip." : "Scheduled. I'll guide you, then send the images to your doctors.", [`scan:${x.a}`], false, true));
+  dueScans().forEach((x, i) => { const when = x.d === d ? (p === "landed" ? "Later today" : {cog: "14:30", neck: "15:30"}[x.k] || "15:00") : `Overdue by ${pl(d - x.d, "day")}`;
+    if (x.k === "cog") add("cog", "bolt", "Cognitive test", "3 minutes", when, "Your reaction time, compared with your own pre-flight baseline.", ["rt", "fin"], false, true);
+    else add("scan" + i, "probe", examName(x), longTime(x.a), when, x.a === "legs" ? "A clot check after the trip." : "Scheduled. I'll guide you, then send the images to your doctors.", [`scan:${x.a}`], false, true); });
+  if (dueOn(d).includes("conf")) add("conf", "check", "Private medical conference", "about 15 minutes", "17:30", "A private call with your flight surgeon. Mark it done when you've talked.", ["conf"], confDone(d));
   if (p === "after") add("rec", "sun", "Recovery check", "90 seconds", "After waking", "Tracking how you get back to your normal.", ["daily", "fin"]);
   return q;
 }
@@ -554,7 +592,7 @@ function statuses() {
   const missL = missingBase(), miss = missL.length, need = miss + (standBase() ? 0 : 1), bsp = miss ? SCAN_SPOT[missL[0]] : "legs";
   if (p === "training" && need && -day() <= 7) { const w = `${pl(need, "baseline item")} still needed before launch (${pl(-day(), "day")} left)`; out.push({l: "watch", scan: true, what: w, spots: [[bsp, "watch", `Baseline · ${need} missing · ${pl(-day(), "day")} to launch`]]}); }
   if (p === "launch" && need) { const w = `your baseline is incomplete (${need} missing): tell your flight surgeon before you board`; out.push({l: "watch", scan: true, what: w, spots: [[bsp, "watch", `Baseline · ${need} missing · launch day`]]}); }
-  dueScans().filter(x => day() - x.d > 3).forEach(x => { const w = `your ${AREAS[x.a].label.toLowerCase()} scan is ${pl(day() - x.d, "day")} overdue`; out.push({l: "watch", scan: true, what: w, spots: [[SCAN_SPOT[x.a], "watch", `${AREAS[x.a].label} scan · ${pl(day() - x.d, "day")} overdue · due ${dayChip(x.d)}`]]}); });
+  dueScans().filter(x => day() - x.d > 3).forEach(x => { const n = pl(day() - x.d, "day"), w = `your ${examName(x).toLowerCase()} is ${n} overdue`; out.push({l: "watch", scan: true, what: w, spots: [[x.a ? SCAN_SPOT[x.a] : "head", "watch", `${examName(x)} · Overdue by ${n} · due ${dayChip(x.d)}`]]}); });
   return out.sort((a, b2) => (b2.l === "urgent") - (a.l === "urgent"));
 }
 const shareItems = () => statuses().filter(x => x.l === "watch" && !x.private && !x.scan && !x.what.includes("scan"));
@@ -608,11 +646,18 @@ function vitalsNow() {
 const lvlClass = (v, lo, hi, rlo, rhi) => (v <= rlo || v >= rhi) ? "urgent" : (v < lo || v > hi) ? "watch" : "";
 function renderHolo(full) {
   const v = vitalsNow(), b = base();
-  if (full || !$("#holoFig svg") || renderHolo.sex !== S.sex) { renderHolo.sex = S.sex; const parts = bodyParts();
-    $("#holoFig").innerHTML = `<svg class="hsvg" viewBox="-10 0 220 440" role="group" aria-label="Body figure">
+  if (!B3.tried && window.ASTRABody && $("#holoFig")) { B3.tried = true; window.ASTRABody.mount($("#holoFig")).then(ok => { if (!ok) return; B3.on = true; const fg = $("#holoFig"); fg.classList.add("is3d");
+    if (!$("#bodyReset")) fg.insertAdjacentHTML("beforeend", '<button class="b3-reset" id="bodyReset" type="button" aria-label="Front view"></button>');
+    $("#bodyReset").onclick = e => { e.stopPropagation(); hideTip(); window.ASTRABody.reset(); };
+    window.ASTRABody.onPick = k2 => { TIP.hover = false; clearTimeout(TIP.hideT); showTip(k2); };
+    window.ASTRABody.onFrame = () => { const t = $("#bodyTip"); if (t && !t.hidden && TIP.key) anchorTip(t, TIP.key); };
+    renderAreas(); }).catch(() => {}); }
+  if (full || !$("#holoFig svg") || renderHolo.sex !== S.sex) { renderHolo.sex = S.sex; const parts = bodyParts(), old = $("#holoFig .hsvg");
+    if (old) old.remove();
+    $("#holoFig").insertAdjacentHTML("afterbegin", `<svg class="hsvg" viewBox="-10 0 220 440" role="group" aria-label="Body figure">
       <g class="hs" id="bodyAll" aria-hidden="true">${parts}</g>
       <g id="areaG"></g>
-      <circle cx="122" cy="102" r="3" fill="#1E7F4F" aria-hidden="true"><title>Dosimeter</title></circle></svg>`; renderAreas(); }
+      <circle cx="122" cy="102" r="3" fill="#1E7F4F" aria-hidden="true"><title>Dosimeter</title></circle></svg>`); renderAreas(); }
   $("#hbHR").className = "hbox " + lvlClass(v.hr, Math.max(51, b.hr - 20), Math.min(110, b.hr + 20), 40, 131); $("#hbHR").innerHTML = `Heart rate<b>${v.hr} <small>bpm</small></b>`;
   $("#hbBP").className = "hbox " + lvlClass(v.sbp, 101, 179, 90, 220); $("#hbBP").innerHTML = `Blood pressure<b>${v.sbp}/${v.dbp}</b>`;
   $("#hcL").innerHTML = `<div class="co ${lvlClass(v.temp, 35.5, 38, 35, 39.1)}">Temperature<b>${f(v.temp, 1)} <small>°C</small></b></div><div class="co">Breathing<b>${v.rr} <small>/min</small></b></div>`;
@@ -627,38 +672,59 @@ function renderHolo(full) {
 
 let scanTarget = null;
 function ringSvg(n, t, col) { const c = 2 * Math.PI * 24, p = t ? n / t : 0; return `<svg class="ringp" viewBox="0 0 60 60"><circle cx="30" cy="30" r="24" fill="none" style="stroke:var(--line)" stroke-width="6"/><circle cx="30" cy="30" r="24" fill="none" style="stroke:var(${col})" stroke-width="6" stroke-linecap="round" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${(c * (1 - p)).toFixed(1)}" transform="rotate(-90 30 30)"/><text x="30" y="35" text-anchor="middle" font-size="15" font-weight="500" style="fill:var(--ink)">${n}/${t}</text></svg>`; }
-function slotPill(x) { const r = slotRec(x); if (!r || r.reply === "normal" && !(r.repliedAt > Date.now())) return `<span class="pill ok">Done · OK</span>`;
-  if (r.repliedAt > Date.now()) return `<span class="pill none">Done · Sent</span>`;
-  return `<span class="pill ${r.reply === "urgent" ? "urgent" : "watch"}">Done · ${r.reply === "urgent" ? "Call" : "Follow-up"}</span>`; }
+const MON_TABS = {daily: "Daily", weekly: "Weekly", periodic: "Monthly and flight days"};
+let MONTAB = "daily"; try { MONTAB = sessionStorage.getItem("astra-mon-tab") || "daily"; } catch (e) { MONTAB = "daily"; }
+function monRows() { const d = day(), today = dueOn(d), due = dueScans(), out = [];
+  const row = (k, meta, cls, state, go) => out.push({k, g: MON[k].g, meta, cls, state, go});
+  const later = (k, recent) => { let n, l = 0;
+    if (k === "exercise") { for (let y = d + 1; y <= LAND() - 1 && n === undefined; y++) if (dueOn(y).includes(k)) n = y; for (let y = d - 1; y >= 1 && !l; y--) if (dueOn(y).includes(k)) l = y; }
+    else { n = nextOcc(k, d + 1); l = lastOcc(k, d - 1); }
+    if (l && ((recent && d - l <= 7) || n === undefined)) return ["done", `Done on Day ${l}`];
+    return n === undefined ? ["", ""] : [n - d <= 7 ? "soon" : "", `in ${pl(n - d, "day")}`]; };
+  const h = plan().find(x => x.flow && x.flow[0] === "daily"), hd = !h || h.done;
+  row("health", "2 minutes, every day", hd ? "done" : "due", hd ? "Done today" : "Due today", hd ? "" : "Start");
+  const sl = realFill(d) || L(d).daily;
+  row("sleep", `8.5 h scheduled · last night ${sl && sl.sleep != null ? f(sl.sleep, 1) + " h" : "not recorded"}`, sl ? "done" : "due", sl ? "Done today" : "Due today", "");
+  if (today.includes("exercise")) { const ok = exDone(d); row("exercise", "2.5 h, six days a week", ok ? "done" : "due", ok ? "Done today" : "Due today", ""); }
+  else { const [c, t] = later("exercise", false); row("exercise", `2.5 h, six days a week${restDay(d) ? " · rest day today" : ""}`, c, t, ""); }
+  if (today.includes("conf")) { const ok = confDone(d); row("conf", "Every 7th flight day · private", ok ? "done" : "due", ok ? "Done today" : "Due today", ok ? "" : "Done"); }
+  else { const [c, t] = later("conf", false); row("conf", "Every 7th flight day · private", c, t, ""); }
+  const meta = {cog: "Every 30 flight days · against your own pre-flight baseline", eyes: `Flight days ${[10, ...every(30, 30, mars() ? 180 : 120)].join(", ")} · and Day ${LAND() - 30}, 30 days before return`, neck: `Three times in flight: Days ${occ("neck").join(", ")}`};
+  ["eyes", "neck", "cog"].forEach(k => { const pend = due.find(x => x.k === k);
+    if (pend) { const late = d - pend.d; row(k, meta[k], late > 3 ? "overdue" : "due", late > 3 ? `Overdue by ${pl(late, "day")}` : "Due today", "Start"); }
+    else if (today.includes(k)) row(k, meta[k], "done", "Done today", "");
+    else { const [c, t] = later(k, true); row(k, meta[k], c, t, ""); } });
+  return out; }
+function renderMon() { const rows = monRows();
+  $$("#monTabs .mon-tab").forEach(b => { const g = b.dataset.g, on = g === MONTAB, hot = rows.some(r => r.g === g && (r.cls === "due" || r.cls === "overdue"));
+    b.setAttribute("aria-selected", String(on)); b.tabIndex = on ? 0 : -1; b.innerHTML = MON_TABS[g] + (hot ? '<i class="dot watch"></i>' : ""); });
+  $("#monList").innerHTML = rows.filter(r => r.g === MONTAB).map(r => `<div class="mon-row${r.cls ? " " + r.cls : ""}"><div class="mon-main"><b class="mon-name">${MON[r.k].name}</b><span class="mon-meta">${r.meta}</span></div><span class="mon-src">${MON[r.k].src}</span><span class="mon-state">${r.state}</span>${r.go ? `<button class="btn sm mon-go" type="button" data-go="${r.k}">${r.go}</button>` : ""}</div>`).join(""); }
 function renderScan() {
-  const p = phase(), d = day(), ts = trainingScans(), miss = missingBase(), due = dueScans();
+  const p = phase(), d = day(), ts = trainingScans(), miss = missingBase(), mon = inFlight();
   const pillFor = a => { const s = scanState(a); return s.l === "none" ? `<span class="pill ok">Done</span>` : `<span class="pill ${s.l === "pending" ? "none" : s.l}" title="${s.line}">${{pending: "Sent", ok: "OK", watch: "Follow-up", urgent: "Call"}[s.l]}</span>`; };
-  let title = "Scans", txt = "", ring = "", body = "", btn = "Scan an area"; scanTarget = null;
+  let title = "Monitoring", txt = "", ring = "", body = "", btn = "Scan an area"; scanTarget = null;
   if (p === "training" || (p === "launch" && miss.length)) {
     const left = -d, all = !miss.length && standBase(), andStand = standBase() ? "" : " and the stand-up test";
-    title = `Baseline scans <span class="req">Required before launch</span>`;
+    title = `Monitoring <span class="req">Required before launch</span>`;
     txt = `${ts.size} of 6 baseline scans done`;
     ring = ringSvg(ts.size, 6, "--sky");
     body = `<div class="agrid">${Object.keys(AREAS).map(a => `<button data-a="${a}" class="${ts.has(a) ? "done" : a === miss[0] ? "nx" : ""}"><i>${ts.has(a) ? "✓" : ""}</i><span><b>${AREAS[a].label}</b><small>${ts.has(a) ? "Baseline saved" : mins(a)}</small></span></button>`).join("")}</div>`
       + (all ? `<div class="note ok">✓ Baseline complete</div>` : !miss.length ? `<div class="note watch">6 of 6 scans · stand-up test missing</div>` : p === "launch" ? `<div class="note watch">Launch day: ${pl(miss.length, "baseline scan")}${andStand} missing</div>` : left <= 7 ? `<div class="note watch">${pl(left, "day")} to launch · ${pl(miss.length, "scan")}${andStand} missing</div>` : "");
     scanTarget = miss[0] || null; btn = miss.length ? `${ts.size ? "Continue" : "Start"}: ${AREAS[miss[0]].label} (${mins(miss[0])})` : "Scan an area again";
-  } else if (inFlight() || p === "landed") {
-    const win = []; for (let x = d - 6; x <= d; x++) if (scanFor(x)) win.push(slotDone(x));
-    const late = p === "landed" ? [] : due.filter(x => x.d < d), rows = p === "landed" ? [{a: "legs", d: LAND(), done: scanDone("legs", LAND())}] : late.concat(Array.from({length: 7}, (_, i) => d - 3 + i).filter(x => scanFor(x) && !late.some(o => o.d === x)).map(slot)).slice(0, 8);
-    const nd = p === "landed" ? rows.filter(r => r.done).length : win.filter(Boolean).length, tot = p === "landed" ? rows.length : win.length;
-    title = `Scans <span class="req">Daily</span>`;
-    txt = `${nd} of ${tot} scans done${p === "landed" ? "" : " · last 7 days"}${due.length ? ` · ${due.length} due` : ""}`;
-    ring = ringSvg(nd, tot, late.length ? "--amber" : "--sky");
-    body = `<div class="srows">${rows.map(r => { const over = !r.done && r.d < d, now = !r.done && r.d === d;
-      return `<div class="srow ${now ? "duenow" : over ? "over" : ""}"><span class="dy">${dayChip(r.d)}</span><b>${AREAS[r.a].label}</b>${r.done ? (p === "landed" ? pillFor(r.a) : slotPill(r.d)) : now ? `<span class="pill due">Due today</span>` : over ? `<span class="pill watch">Overdue by ${pl(d - r.d, "day")}</span>` : `<span class="when">${r.d - d === 1 ? "tomorrow" : `in ${pl(r.d - d, "day")}`}</span>`}</div>`; }).join("")}</div>`;
-    scanTarget = due.length ? due[0].a : null; if (due.length) btn = `Start: ${AREAS[due[0].a].label} scan (${mins(due[0].a)})`;
-  } else {
+  } else if (p === "landed") {
+    const done = scanDone("legs", LAND());
+    txt = `${done ? 1 : 0} of 1 scans done${done ? "" : " · 1 due"}`; ring = ringSvg(done ? 1 : 0, 1, "--sky");
+    body = `<div class="srows"><div class="srow ${done ? "" : "duenow"}"><span class="dy">${dayChip(LAND())}</span><b>${AREAS.legs.label}</b>${done ? pillFor("legs") : `<span class="pill due">Due today</span>`}</div></div>`;
+    if (!done) { scanTarget = "legs"; btn = `Start: ${AREAS.legs.label} scan (${mins("legs")})`; }
+  } else if (!mon) {
     txt = p === "launch" ? "6 of 6 baseline scans done" : "";
     const seen = Object.keys(AREAS).filter(a => scanState(a).l !== "none");
     body = seen.length ? `<div class="srows">${seen.map(a => `<div class="srow"><b>${AREAS[a].label}</b>${pillFor(a)}</div>`).join("")}</div>` : `<div style="height:14px"></div>`;
   }
+  $("#monTabs").style.display = mon ? "" : "none"; $("#monList").style.display = mon ? "" : "none"; if (mon) renderMon();
+  $("#scanBody").style.display = mon ? "none" : ""; $("#scanBtn").style.display = mon ? "none" : "";
   $("#scanTitle").innerHTML = title; $("#scanTxt").textContent = txt; $("#scanTxt").hidden = !txt; $("#scanRing").innerHTML = ring; $("#scanBody").innerHTML = body; $("#scanBtn").textContent = btn;
-  $("#scanBtn").className = "btn" + (scanTarget ? "" : " ghost"); $("#scanOther").parentElement.style.display = scanTarget ? "" : "none";
+  $("#scanBtn").className = "btn" + (scanTarget ? "" : " ghost"); $("#scanOther").style.display = scanTarget || mon ? "" : "none";
 }
 function renderChat() {
   const now = Date.now(), msgs = S.msgs.filter(m => m.mission === S.mission && (m.me || m.at <= now)), near = nearDoctors();
@@ -691,12 +757,12 @@ function realFill(d = day()) { const l = L(d); if (l.daily) return l.daily; cons
   l.daily = {sleep: Math.round(r.sleep_min / 60 * 10) / 10, mood: r.mood ? Math.max(1, Math.min(5, Math.round(r.mood))) : Math.round(b.mood), hr: r.rhr ? Math.round(r.rhr) + 4 : b.hr, sbp: b.sbp, dbp: b.dbp, temp: b.temp, glu: b.glu, date: r.date, real: true};
   return l.daily; }
 function ensureDaily() { realFill(); const b = base(); if (!L().daily) L().daily = {sleep: b.sleep, mood: 4, hr: b.hr, sbp: b.sbp, dbp: b.dbp, temp: b.temp, glu: b.glu}; return L().daily; }
-function missTarget() { if (!inFlight()) return null; for (let x = day() - 4; x >= 1; x--) { const t = slot(x); if (t.done) return t; } return null; }
+const missTarget = () => lastExam(4);
 const SIMS = [
   {id: "sleep", l: "watch", t: "Short sleep"}, {id: "hr", l: "watch", t: "Heart rate off normal"}, {id: "rt", l: "watch", t: "Slow reflexes"},
   {id: "scanf", l: "watch", t: "Scan needs a follow-up"}, {id: "miss", l: "watch", t: "Missed a required scan"},
   {id: "vital", l: "urgent", t: "Vital sign outside safe limits"}, {id: "scanu", l: "urgent", t: "Scan: doctors want a call now"}, {id: "hard", l: "watch", t: "Hard day (low mood, high stress)"}];
-function simOff(id) { if (id === "rt" && phase() === "training") return "Reflexes are only compared with your normal after launch."; if (id === "miss" && !missTarget()) return "Only in flight, at least 4 days after a scheduled scan."; return ""; }
+function simOff(id) { if (id === "rt" && phase() === "training") return "Reflexes are only compared with your normal after launch."; if (id === "miss" && !missTarget()) return "Only in flight, at least 4 days after a scheduled eye exam or neck scan."; return ""; }
 function simulate(id) { const now = Date.now(), b = base(); CALV++;
   if (id === "clear") { const l = L(); delete l.daily; delete l.rt; S.scans = S.scans.filter(s => !(s.sim && s.mission === S.mission && s.day <= day())); S.msgs = S.msgs.filter(m => !(m.sim && m.mission === S.mission)); if (S.missed) Object.keys(S.missed).forEach(k2 => { if (k2.startsWith(S.mission + ":")) delete S.missed[k2]; }); if (window.clearToday) window.clearToday(); ensureDaily(); return; }
   if (simOff(id)) return;
@@ -707,16 +773,16 @@ function simulate(id) { const now = Date.now(), b = base(); CALV++;
   if (id === "hr") d.hr = Math.round(b.hr + 24);
   if (id === "rt") L().rt = Math.round(b.rt * 1.3);
   if (id === "vital") { d.hr = 136; const n0 = S.msgs.length; autoVitals(); S.msgs.slice(n0).forEach(m => { m.sim = true; }); }
-  if (id === "scanf" || id === "scanu") { const reply = id === "scanf" ? "followup" : "urgent"; let x = day(); while (x >= 1 && !slotDone(x)) x--;
-    const area = x >= 1 ? scanFor(x) : id === "scanf" ? "eyes" : "neck", sd = x >= 1 ? x : day();
+  if (id === "scanf" || id === "scanu") { const reply = id === "scanf" ? "followup" : "urgent"; const t = lastExam(0);
+    const area = t ? t.a : id === "scanf" ? "eyes" : "neck", sd = t ? t.d : day();
     S.scans.push({area, at: now, reply, repliedAt: now, mission: S.mission, day: sd, sim: true});
     S.msgs.push({me: false, sim: true, mission: S.mission, at: now, text: reply === "followup" ? `Thanks for the ${AREAS[area].label.toLowerCase()} scan. We'd like a follow-up scan next week.` : `Please call us at the next opportunity about your ${AREAS[area].label.toLowerCase()} scan.`}); }
-  if (id === "miss") { const x = missTarget(); S.missed = S.missed || {}; S.missed[missKey(x.d)] = true;
-    S.scans = S.scans.filter(s => !(s.mission === S.mission && s.area === x.a && s.day >= x.d && s.day < x.d + 5)); } }
+  if (id === "miss") { const x = missTarget(), end = occEnd(x.k, x.d); S.missed = S.missed || {}; S.missed[missKey(x.k, x.d)] = true;
+    S.scans = S.scans.filter(s => !(s.mission === S.mission && s.area === x.a && s.day >= x.d && s.day < end)); } }
 const issueText = x => x.spots && x.spots.length ? x.spots.map(y => y[2]).join(" · ") : cap(x.what);
 const SEEN = {}; let ALERT = {list: [], fresh: new Set()};
 const akey = x => x.l + "|" + x.what;
-const route = x => x.private ? "Stays with you" : x.result ? "Your doctors already know" : x.scan ? "On your schedule; your flight surgeon sees required scans" : (x.auto || x.l === "urgent") ? "Sent to the flight surgeon automatically" : "Shared with crew if you choose";
+const route = x => x.private ? "Private to you" : x.result ? "Reply from the flight surgeon" : x.scan ? "Visible to the flight surgeon" : (x.auto || x.l === "urgent") ? "Sent to the flight surgeon" : "Shared only if you choose";
 function renderAlerts(st) { const id = APP.active, prev = SEEN[id] || new Set();
   ALERT = {list: st, fresh: new Set(st.map(akey).filter(k2 => !prev.has(k2)))}; SEEN[id] = new Set(st.map(akey));
   $("#alerts").innerHTML = st.length ? st.map(x => `<div class="alert ${x.l}${ALERT.fresh.has(akey(x)) ? " new" : ""}"><b class="sev">${x.l === "urgent" ? "Red · needs attention" : "Amber · worth a look"}</b><span class="what">${escH(issueText(x))}</span><span class="route">${route(x)}</span></div>`).join("") : "";
@@ -725,16 +791,30 @@ const SCAN_SPOT = {eyes: "eyes", neck: "neck", heart: "heart", lungs: "lungs", b
 const SPOT_XY = {head: [100, 30], forehead: [100, 19], eyes: [93, 43], neck: [100, 76], heart: [114, 124], lungs: [84, 116], abdomen: [100, 182], legs: [82, 285]};
 const SPOT_FOCUS = {forehead: "head"};
 const SEV = {watch: "Amber · worth a look", urgent: "Red · needs attention"};
-let SPOTS = {}, TIP = {sig: "", hover: false, hideT: 0, autoT: 0};
-const spotSig = k2 => SPOTS[k2] ? `${APP.active}|${k2}|${SPOTS[k2].l}|${SPOTS[k2].texts.join("|")}` : "";
+let SPOTS = {}, AR = {}, B3 = {on: false, tried: false}, TIP = {sig: "", key: "", hover: false, hideT: 0, autoT: 0};
+const AREA_KEYS = ["head", "eyes", "neck", "heart", "lungs", "abdomen", "legs"], AREA_LBL = {head: "Head", eyes: "Eyes", neck: "Neck", heart: "Heart", lungs: "Lungs", abdomen: "Abdomen", legs: "Legs"};
+const AREA_OF = {forehead: "head"}, AREA_SCAN = {eyes: "eyes", neck: "neck", heart: "heart", lungs: "lungs", abdomen: "bladder", legs: "legs"}, RK = {ok: 0, watch: 1, urgent: 2}, AWORD = {ok: "OK", watch: "Worth a look", urgent: "Needs attention"};
+const areaSig = a => AR[a] ? `${APP.active}|${a}|${AR[a].l}|${AR[a].texts.join("|")}` : "";
+function okFact(a) { const d = L().daily, b = base(), sc = AREA_SCAN[a], s = sc && AREAS[sc] ? scanState(sc) : null;
+  if (a === "heart" && d && d.hr) return `Heart rate ${d.hr} bpm · usual ${f(b.hr)}`;
+  if (a === "head" && d && d.temp) return `Temperature ${f(d.temp, 1)} °C · usual ${f(b.temp, 1)}`;
+  if (a === "head" && d && d.sleep) return `Slept ${f(d.sleep, 1)} h · usual ${f(b.sleep, 1)} h`;
+  if (a === "abdomen" && d && d.glu) return `Blood sugar ${d.glu} mg/dL · normal 70–180`;
+  if (s && s.l === "ok") return `${AREAS[sc].label} scan · ${s.line}`;
+  return AREA_LBL[a]; }
 function tipEl() { let t = $("#bodyTip"); if (t) return t; const h = $(".holo"); if (!h) return null;
   t = document.createElement("div"); t.className = "tip"; t.id = "bodyTip"; t.setAttribute("role", "tooltip"); t.hidden = true;
   t.innerHTML = '<b class="tip-sev"></b><span class="tip-what"></span><span class="tip-route"></span><i class="tip-arrow"></i>'; h.appendChild(t); return t; }
-function hideTip() { const t = $("#bodyTip"); clearTimeout(TIP.hideT); TIP.sig = ""; TIP.hover = false; if (t) t.hidden = true; }
-function showTip(k2) { const sp = SPOTS[k2], t = tipEl(), h = $(".holo"), g = $(`#areaG .spot[data-spot="${k2}"]`); if (!sp || !t || !h || !g || !g.getBoundingClientRect().width) return;
-  t.querySelector(".tip-sev").textContent = SEV[sp.l]; t.querySelector(".tip-what").textContent = sp.texts.join(" · "); t.querySelector(".tip-route").textContent = sp.routes.join(" · ");
-  t.className = "tip " + sp.l; t.hidden = false; TIP.sig = spotSig(k2); placeTip(t, h, g); }
-function placeTip(t, h, g) { const hr = h.getBoundingClientRect(), r = g.getBoundingClientRect(), cx = r.left + r.width / 2 - hr.left, tw = t.offsetWidth, th = t.offsetHeight, gap = 7, rw = h.querySelector(".hrow"), wr = rw && rw.getBoundingClientRect();
+function hideTip() { const t = $("#bodyTip"); clearTimeout(TIP.hideT); TIP.sig = ""; TIP.key = ""; TIP.hover = false; if (t) t.hidden = true; }
+function showTip(k2) { const a = AREA_OF[k2] || k2, ar = AR[a], t = tipEl(); if (!ar || !t) return; const ok = ar.l === "ok", ro = ok ? "" : ar.routes.join(" · ");
+  t.querySelector(".tip-sev").textContent = ok ? "OK" : SEV[ar.l]; t.querySelector(".tip-what").textContent = ok ? okFact(a) : ar.texts.join(" · ");
+  const re = t.querySelector(".tip-route"); re.textContent = ro; re.hidden = !ro;
+  t.className = "tip " + ar.l; t.hidden = false; TIP.sig = areaSig(a); TIP.key = a; if (!anchorTip(t, a)) hideTip(); }
+function anchorTip(t, a) { const h = $(".holo"), fig = $("#holoFig"); if (!h || !fig) return false; let r = null;
+  if (B3.on) { const p = window.ASTRABody.project(a), fr = fig.getBoundingClientRect(), x = fr.left + p.x, y = fr.top + p.y; r = {left: x - 7, right: x + 7, top: y - 7, bottom: y + 7, width: 14}; }
+  else { const g = [...document.querySelectorAll("#areaG .spot")].find(s => (AREA_OF[s.dataset.spot] || s.dataset.spot) === a) || $(`#areaList .area-chip[data-spot="${a}"]`); r = g && g.getBoundingClientRect(); }
+  if (!r || !r.width) return false; placeTip(t, h, r); return true; }
+function placeTip(t, h, r) { const hr = h.getBoundingClientRect(), cx = r.left + r.width / 2 - hr.left, tw = t.offsetWidth, th = t.offsetHeight, gap = 7, rw = h.querySelector(".hrow"), wr = rw && rw.getBoundingClientRect();
   const left = Math.max(4, Math.min(h.clientWidth - tw - 4, cx - tw / 2)), above = r.top - hr.top - th - gap, hit = wr && r.top - th - gap < wr.bottom && r.top - gap > wr.top && hr.left + left < wr.right && hr.left + left + tw > wr.left, below = above < 0 || r.top - th - gap < 0 || !!hit;
   t.classList.toggle("below", below); t.style.left = `${Math.round(left)}px`; t.style.top = `${Math.round(below ? r.bottom - hr.top + gap : above)}px`; t.style.setProperty("--ax", `${Math.round(cx - left)}px`); }
 function renderAreas() { const fig = $("#holoFig"), g = $("#areaG"), keep = TIP.sig;
@@ -745,20 +825,27 @@ function renderAreas() { const fig = $("#holoFig"), g = $("#areaG"), keep = TIP.
   const keys = Object.keys(SPOTS), top = keys.find(k2 => SPOTS[k2].l === "urgent") || keys[0] || "";
   if (fig) { fig.setAttribute("data-focus", top ? (SPOT_FOCUS[top] || top) : ""); fig.setAttribute("data-level", top ? SPOTS[top].l : ""); }
   freshKey = keys.find(k2 => SPOTS[k2].fresh && SPOTS[k2].l === "urgent") || keys.find(k2 => SPOTS[k2].fresh) || "";
+  AR = {}; AREA_KEYS.forEach(a => { AR[a] = {l: "ok", texts: [], routes: [], fresh: false}; });
+  keys.forEach(k2 => { const sp = SPOTS[k2], ar = AR[AREA_OF[k2] || k2]; if (!ar) return; if (RK[sp.l] > RK[ar.l]) ar.l = sp.l;
+    sp.texts.forEach(x => { if (!ar.texts.includes(x)) ar.texts.push(x); }); sp.routes.forEach(x => { if (!ar.routes.includes(x)) ar.routes.push(x); }); if (sp.fresh) ar.fresh = true; });
   hideTip();
-  if (!g) return;
-  g.innerHTML = keys.map(k2 => { const sp = SPOTS[k2], [cx, cy] = SPOT_XY[k2];
-    return `<g class="spot ${sp.l}${sp.fresh ? " new" : ""}" data-spot="${k2}" tabindex="0" role="img" aria-label="${escH(`${sp.l === "urgent" ? "Red, needs attention" : "Amber, worth a look"}: ${sp.texts.join(" · ")}`)}"><circle class="spot-ring" cx="${cx}" cy="${cy}" r="13"/><circle class="spot-dot" cx="${cx}" cy="${cy}" r="5.5"/></g>`; }).join("");
-  const again = keys.find(k2 => spotSig(k2) === keep); if (again) showTip(again);
-  if (freshKey) { clearTimeout(TIP.autoT); const sig = spotSig(freshKey);
-    TIP.autoT = setTimeout(() => { const k2 = Object.keys(SPOTS).find(x => spotSig(x) === sig); if (!k2) return; showTip(k2);
+  const al = $("#areaList"); if (al) { const html = AREA_KEYS.map(a => `<button class="area-chip ${AR[a].l}" data-spot="${a}" type="button"><i class="dot ${AR[a].l}"></i><span>${AREA_LBL[a]}</span><b>${AWORD[AR[a].l]}</b></button>`).join(""); if (al.innerHTML !== html) al.innerHTML = html; }
+  if (B3.on) window.ASTRABody.update({sex: S.sex === "m" ? "m" : "f", areas: AREA_KEYS.map(a => ({key: a, label: AREA_LBL[a], level: AR[a].l, lines: AR[a].l === "ok" ? [okFact(a)] : AR[a].texts.slice(), route: AR[a].routes.join(" · "), fresh: AR[a].fresh}))});
+  if (fig) fig.classList.toggle("is3d", B3.on);
+  if (g) g.innerHTML = keys.map(k2 => { const sp = SPOTS[k2], [cx, cy] = SPOT_XY[k2];
+    return `<g class="spot ${sp.l}${sp.fresh ? " new" : ""}" data-spot="${k2}" tabindex="0" role="img" aria-label="${escH(`${sp.l === "urgent" ? "Red, needs attention" : "Amber, worth a look"}: ${sp.texts.join(" · ")}`)}"><circle class="spot-hit" cx="${cx}" cy="${cy}" r="26"/><circle class="spot-ring" cx="${cx}" cy="${cy}" r="13"/><circle class="spot-dot" cx="${cx}" cy="${cy}" r="5.5"/></g>`; }).join("");
+  const again = AREA_KEYS.find(a => areaSig(a) === keep); if (again) showTip(again);
+  if (freshKey) { clearTimeout(TIP.autoT); const sig = areaSig(AREA_OF[freshKey] || freshKey);
+    TIP.autoT = setTimeout(() => { const k2 = AREA_KEYS.find(x => areaSig(x) === sig); if (!k2) return; showTip(k2);
       clearTimeout(TIP.hideT); TIP.hideT = setTimeout(() => { if (!TIP.hover) hideTip(); }, 4000); }, 800); } }
-function wireSpots() { const fig = $("#holoFig"); if (!fig || wireSpots.done) return; wireSpots.done = true;
-  const on = e => { const s = e.target.closest && e.target.closest(".spot"); if (s) { TIP.hover = true; clearTimeout(TIP.hideT); showTip(s.dataset.spot); } };
-  const off = e => { const s = e.target.closest && e.target.closest(".spot"); if (!s || (e.relatedTarget && s.contains(e.relatedTarget))) return; hideTip(); };
-  fig.addEventListener("mouseover", on); fig.addEventListener("focusin", on); fig.addEventListener("click", on);
+function wireSpots() { const fig = $(".holo"); if (!fig || wireSpots.done) return; wireSpots.done = true;
+  const SEL = ".spot, .b3-mk";
+  const on = e => { const s = e.target.closest && e.target.closest(SEL); if (s) { TIP.hover = true; clearTimeout(TIP.hideT); showTip(s.dataset.spot); } };
+  const off = e => { const s = e.target.closest && e.target.closest(SEL); if (!s || (e.relatedTarget && s.contains(e.relatedTarget))) return; hideTip(); };
+  const chip = e => { const c = e.target.closest && e.target.closest(".area-chip"); if (!c) return on(e); const a = c.dataset.spot; TIP.hover = false; clearTimeout(TIP.hideT); if (B3.on) window.ASTRABody.focus(a); showTip(a); };
+  fig.addEventListener("mouseover", on); fig.addEventListener("focusin", on); fig.addEventListener("click", chip);
   fig.addEventListener("mouseout", off); fig.addEventListener("focusout", off);
-  document.addEventListener("click", e => { if (!e.target.closest(".spot") && !e.target.closest("#bodyTip")) hideTip(); });
+  document.addEventListener("click", e => { if (!e.target.closest(".spot, .b3-mk, .area-chip, #bodyReset") && !e.target.closest("#bodyTip")) hideTip(); });
   document.addEventListener("keydown", e => { if (e.key === "Escape") hideTip(); }); }
 function refreshAstra() {
   window.ASTRA = {crew: CREW.map(c => withMember(c.id, () => { const st = statuses().filter(x => !x.private), w = worstOf(st);
@@ -782,8 +869,9 @@ const shortChip = x => x < 0 ? `L−${-x}` : x === 0 ? "L−0" : x < LAND() ? `D
 const calRange = () => [ymOf(dateOf(-30)), ymOf(dateOf(LAND() + 3))];
 let CALYM = 0;
 function renderCalBtn() { const d = day(), ml = calMarks()[d];
-  const sa = scanFor(d); $("#calPick .cb-day").textContent = dayChip(d); $("#calPick .cb-sub").textContent = (ml ? ml + " · " : sa ? AREAS[sa].label + " scan · " : "") + fmtDay(dateOf(d)); $("#calPick .cb-short").textContent = `${dateOf(d).getUTCDate()} ${MONTHS[dateOf(d).getUTCMonth()].slice(0, 3)}`; }
-const calDesc = x => { const ml = calMarks()[x], sa = scanFor(x); return [ml, sa ? AREAS[sa].label + " scan" : ""].filter(Boolean); };
+  const it = dayItems(d).concat(dueOn(d).includes("conf") ? ["conf"] : []).map(k => MON[k].short); $("#calPick .cb-day").textContent = dayChip(d); $("#calPick .cb-sub").textContent = (ml ? ml + " · " : it.length ? it.join(", ") + " · " : "") + fmtDay(dateOf(d)); $("#calPick .cb-short").textContent = `${dateOf(d).getUTCDate()} ${MONTHS[dateOf(d).getUTCMonth()].slice(0, 3)}`; }
+const dayItems = x => flightDay(x) ? EXAMS.filter(k => occ(k).includes(x)) : [];
+const calDesc = x => [calMarks()[x], ...dayItems(x).map(k => MON[k].short)].filter(Boolean);
 function renderCal() { const [lo, hi] = calRange(); CALYM = Math.max(lo, Math.min(hi, CALYM));
   const y = Math.floor(CALYM / 12), mo = CALYM % 12, L1 = LAND(), d = day(), m = calMarks(), lv = calLevels();
   const first = Date.UTC(y, mo, 1) / DAY, n = new Date(Date.UTC(y, mo + 1, 0)).getUTCDate(), lead = (new Date(first * DAY).getUTCDay() + 6) % 7;
@@ -793,10 +881,11 @@ function renderCal() { const [lo, hi] = calRange(); CALYM = Math.max(lo, Math.mi
   for (let i = 1; i <= n; i++) { const x = first + i - 1 - S.launch, inR = x >= -30 && x <= L1 + 3;
     if (!inR) { h += `<button class="cal-day out" data-day="${x}" type="button" disabled aria-label="${i} ${MONTHS[mo]} ${y}"><b>${i}</b><small></small><i></i></button>`; continue; }
     const ml = m[x], ph = x < 0 ? "training" : x < L1 ? "flight" : "return", l = lv[x] && lv[x] !== "ok" ? " " + lv[x] : "";
-    h += `<button class="cal-day${x === d ? " on" : ""}${ml ? " ms" : ""}${l} ph-${ph}" data-day="${x}" type="button" title="${[dayChip(x), ...calDesc(x)].join(" · ")}" aria-label="${[`${i} ${MONTHS[mo]} ${y}`, dayChip(x), ...calDesc(x)].join(", ")}"${x === d ? ' aria-current="date"' : ""}><b>${i}</b><small>${shortChip(x)}</small><i></i></button>`; }
+    h += `<button class="cal-day${x === d ? " on" : ""}${ml || dayItems(x).length || (flightDay(x) && x % 7 === 0) ? " ms" : ""}${l} ph-${ph}" data-day="${x}" type="button" title="${[dayChip(x), ...calDesc(x)].join(" · ")}" aria-label="${[`${i} ${MONTHS[mo]} ${y}`, dayChip(x), ...calDesc(x)].join(", ")}"${x === d ? ' aria-current="date"' : ""}><b>${i}</b><small>${shortChip(x)}</small><i></i></button>`; }
   h += '<span class="cal-blank"></span>'.repeat((7 - (lead + n) % 7) % 7);
   $("#calGrid").innerHTML = h;
-  $("#calMs").innerHTML = Object.keys(m).map(Number).sort((a, b) => a - b).map(x => `<button class="cal-chip" data-day="${x}" type="button">${/ scan$/.test(m[x]) ? `${m[x]} · D${x}` : m[x]}</button>`).join(""); }
+  const chips = Object.keys(m).map(Number).map(x => [x, m[x]]); ["eyes", "neck"].forEach(k => { const n = nextOcc(k, Math.max(1, d)); if (n !== undefined) chips.push([n, `${MON[k].short} · D${n}`]); });
+  $("#calMs").innerHTML = chips.sort((a, b) => a[0] - b[0]).map(([x, t]) => `<button class="cal-chip" data-day="${x}" type="button">${t}</button>`).join(""); }
 function openCal() { CALYM = ymOf(dateOf(day())); renderCal(); $("#calPop").hidden = false; $("#calBtn").setAttribute("aria-expanded", "true");
   const f = $("#calGrid .cal-day.on") || $("#calGrid .cal-day:not([disabled])"); if (f) f.focus(); }
 function closeCal(focus) { const p = $("#calPop"); if (!p || p.hidden) return; p.hidden = true; $("#calBtn").setAttribute("aria-expanded", "false"); if (focus) $("#calBtn").focus(); }
@@ -868,7 +957,7 @@ const PH_DEF = {training: [7.5, 62, 118, 76, 36.6, 90], launch: [6, 70, 124, 80,
 const STEP = {
   welcome1: () => ({ill: I.hand, title: "Hi, I'm ASTRA", sub: "I help you notice changes in your body, from your first training day to the day you're home. I compare you with you, not with anyone else."}),
   welcome2: () => ({ill: I.lock, title: "Your data is yours", sub: "Your check-ins stay with you. Scan images and anything that could affect your safety go to your flight surgeon, and you'll always see exactly what was sent."}),
-  welcome3: () => ({ill: I.list, title: "How it works", html: `<div class="check"><span>1</span>During training: a short check every day builds your normal, plus 6 baseline scans.</div><div class="check"><span>2</span>One last check before you board, one when you arrive.</div><div class="check"><span>3</span>In space: 90 seconds a day, monitoring runs on its own, and I guide every scan. One guided scan each day, five areas in rotation.</div><div class="check"><span>4</span>One check before you go home, and one when you land.</div>`}),
+  welcome3: () => ({ill: I.list, title: "How it works", html: `<div class="check"><span>1</span>During training: a short check every day builds your normal, plus 6 baseline scans.</div><div class="check"><span>2</span>One last check before you board, one when you arrive.</div><div class="check"><span>3</span>In space: 90 seconds a day, monitoring runs on its own, and I guide every scan. Daily checks, weekly conference, exams on set flight days.</div><div class="check"><span>4</span>One check before you go home, and one when you land.</div>`}),
   d1: () => { const v = (PH_DEF[phase()] || PH_DEF.training)[0];
     return {title: "How long did you sleep?", html: `<div class="bigval"><span id="slv">${v}</span> h</div><input type="range" id="sl" min="3" max="10" step=".5" value="${v}">`, init() { $("#sl").oninput = e => $("#slv").textContent = e.target.value; }, save() { scratch.sleep = +$("#sl").value; }}; },
   d2: () => ({title: "How are you feeling?", sub: "Only you see this.", needs: !scratch.mood, html: `<div class="faces" id="fc">${["Very low", "Low", "Okay", "Good", "Great"].map((e, i) => `<button data-v="${i + 1}" class="${scratch.mood === i + 1 ? "on" : ""}" aria-label="${["Very low", "Low", "Okay", "Good", "Great"][i]}">${e}</button>`).join("")}</div>`,
@@ -886,7 +975,7 @@ const STEP = {
         else if (st === "go") { ts.push(performance.now() - t0); if (ts.length >= 10) { st = "done"; pad.classList.remove("go2"); const m = Math.round(ts.sort((a, b) => a - b)[5]); L().rt = m;
           pad.textContent = "Done"; $("#rto").hidden = false; $("#rto").innerHTML = `Your speed: <b>${m} ms</b>${phase() === "training" ? " · added to your normal" : ` · your normal ${f(base().rt)} ms`}`; $("#goBtn").disabled = false; } else nx(); } };
       pad.onclick = hit; pad.onkeydown = e => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); hit(); } }; }}),
-  pick: () => { const due = dueScans(), tr = day() <= 0, a = due.length ? due[0].a : tr ? missingBase()[0] : null, ts = trainingScans();
+  pick: () => { const due = dueScans().find(x => x.a), tr = day() <= 0, a = due ? due.a : tr ? missingBase()[0] : null, ts = trainingScans();
     return {title: "Which area?", sub: tr ? "All 6 are needed before launch. Tap a spot or a name." : "Tap a spot on the body or a name below.", needs: true,
       html: `<div class="scanpick"><div id="pfig">${outline(Object.entries(AREAS).map(([k2, x]) => { const s = scanState(k2).l; return `${k2 === a ? `<circle class="halo" cx="${x.pt[0]}" cy="${x.pt[1]}" r="8"/>` : ""}<circle class="spot ${s === "none" ? "" : s}" data-a="${k2}" cx="${x.pt[0]}" cy="${x.pt[1]}" r="9"><title>${x.label}</title></circle>`; }).join(""))}</div>
         <div class="arealist" id="plist">${Object.entries(AREAS).map(([k2, x]) => { const s = scanState(k2), done = tr && ts.has(k2);
@@ -898,7 +987,7 @@ const STEP = {
   sr: () => ({title: "Recording…", sub: "Hold still. I'm checking the image quality.", needs: true, html: `<div class="box"><div id="qtx">Image quality: adjusting…</div><div class="quality"><i id="qb"></i></div></div>`, go: "Send to my doctors",
     init() { let p = 0; const t = setInterval(() => { p += 20; if ($("#qb")) $("#qb").style.width = p + "%"; if (p >= 60 && $("#qb")) { $("#qb").style.background = "var(--ok)"; $("#qtx").textContent = "Image quality: good ✓"; } if (p >= 100) { clearInterval(t); $("#goBtn").disabled = false; } }, 300); }}),
   ss: area => { const tr = day() <= 0, rest = tr ? missingBase().filter(a => a !== area) : [], nextA = rest[0];
-    return {ill: I.sent, title: "Sent to your doctors", sub: `Your images are on their way${mars() && !nearDoctors() ? " (up to 20 minutes to reach Earth)" : ""}. Radiologists will look at them and reply in Messages. I don't diagnose; they do.${tr ? ` <b>${6 - rest.length} of 6 baseline scans done.</b>` : ""}`,
+    return {ill: I.sent, title: "Sent to your doctors", sub: `Your images are on their way${mars() && !nearDoctors() ? " (up to 20 minutes to reach Earth)" : ""}. Radiologists will look at them and reply in Messages.${tr ? ` <b>${6 - rest.length} of 6 baseline scans done.</b>` : ""}`,
       go: nextA ? `Next: ${AREAS[nextA].label} (${mins(nextA)})` : "Done", skip: !!nextA, skipLabel: "Stop for today", chain: nextA ? () => [`scan:${nextA}`] : null,
       after() { if (cur.sent) return; cur.sent = true; const at = Date.now(), lag = nearDoctors() ? 1000 : delayMs(), reply = tr ? "normal" : S.reply, name = AREAS[area].label.toLowerCase();
         S.scans.push({area, at, reply, repliedAt: at + 2 * lag + 2500, mission: S.mission, day: day()});
@@ -945,9 +1034,16 @@ $("#goBtn").onclick = () => advance(false); $("#skipBtn").onclick = () => advanc
 $("#closeBtn").onclick = () => { if (cur && flow[k] && flow[k].startsWith("ss:")) cur.after(); closeFlow(); }; $("#scrim").onclick = () => $("#closeBtn").onclick();
 document.addEventListener("keydown", e => { if (e.key === "Escape" && $("#sheet").classList.contains("on")) $("#closeBtn").onclick(); });
 
-$("#mainBtn").onclick = () => { const n = plan().find(x => !x.done); if (n) openFlow(n.flow, n.flow[0].startsWith("scan:") ? null : n.id); };
+$("#mainBtn").onclick = () => { const n = plan().find(x => !x.done); if (!n) return; if (n.id === "conf") markConf(); else openFlow(n.flow, n.flow[0].startsWith("scan:") ? null : n.id); };
 $("#scanBtn").onclick = () => openFlow(scanTarget ? [`scan:${scanTarget}`] : ["pick"]);
 $("#scanOther").onclick = () => openFlow(["pick"]);
+$("#monTabs").onclick = e => { const b = e.target.closest("[data-g]"); if (!b) return; MONTAB = b.dataset.g; try { sessionStorage.setItem("astra-mon-tab", MONTAB); } catch (e2) { MONTAB = b.dataset.g; } renderMon(); };
+$("#monTabs").onkeydown = e => { if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return; const t = $$("#monTabs .mon-tab"), i = t.findIndex(b => b.dataset.g === MONTAB), n = t[(i + (e.key === "ArrowRight" ? 1 : t.length - 1)) % t.length]; n.click(); n.focus(); };
+$("#monList").onclick = e => { const b = e.target.closest("[data-go]"); if (!b) return; const k = b.dataset.go;
+  if (k === "conf") return markConf();
+  if (k === "health") { const h = plan().find(x => x.flow && x.flow[0] === "daily"); if (h) openFlow(h.flow, h.id); return; }
+  if (k === "cog") return openFlow(["rt", "fin"], "cog");
+  openFlow([`scan:${MON[k].a}`]); };
 $("#scanBody").onclick = e => { const t = e.target.closest("[data-a]"); if (t) openFlow([`scan:${t.dataset.a}`]); };
 $("#connBtn").onclick = () => openFlow(["connect"]);
 $("#enterBtn").onclick = () => openFlow(["d4"]);
@@ -974,7 +1070,7 @@ $("#simMenu").onclick = e => { const b = e.target.closest("[data-sim]"); if (!b 
 $("#dReset").onclick = () => { APP = freshApp(); S = APP.crew.c1; Object.keys(SEEN).forEach(k2 => delete SEEN[k2]); render(); };
 setInterval(() => { if (!document.hidden && APP.view === "crew") renderHolo(false); const now = Date.now(); if ([...S.msgs.map(m => m.at), ...S.scans.map(s => s.repliedAt)].some(t => t > now - 1500) && !$("#sheet").classList.contains("on")) render(); }, 1000);
 wireSpots();
-window.ASTRA_API = {get APP() { return APP; }, get S() { return S; }, D, CONN, L, day, base, realFill, key, dayChip, setDay, me, save, render, phase, openFlow, closeFlow, STEP, ensureDaily, delayMs, nearDoctors, bump: () => { CALV++; }, CREW, AREAS, withMember, statuses, scanFor, plan, missingBase};
+window.ASTRA_API = {get APP() { return APP; }, get S() { return S; }, D, CONN, L, day, base, realFill, key, dayChip, setDay, me, save, render, phase, openFlow, closeFlow, STEP, ensureDaily, delayMs, nearDoctors, bump: () => { CALV++; }, CREW, AREAS, withMember, statuses, dueOn, restDay, markConf, MON, plan, missingBase};
 render();
 window.addEventListener("load", () => { window.renderGuide && window.renderGuide(document.getElementById("guideStrip")); renderView(); });
 })();

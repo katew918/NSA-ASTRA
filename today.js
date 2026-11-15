@@ -25,6 +25,14 @@
 
   function isRest(c, d) { var p = A.phase(d); return (p === "training" || p === "orbit" || p === "after") && mod(d + c.idx * 2, 7) === 3; }
 
+  function sched(d, add) {
+    var due = A.dueOn ? A.dueOn(d) : [];
+    if (due.indexOf("cog") >= 0) add("cog", "Cognitive test", "Health", "14:30", 3, {link: "cog", locked: true});
+    if (due.indexOf("eyes") >= 0) add("eyes", "Eye exam", "Health", "15:00", areaMin("eyes"), {link: "scan", area: "eyes", locked: true});
+    if (due.indexOf("neck") >= 0) add("neck", "Neck-vein ultrasound", "Health", "15:30", areaMin("neck"), {link: "scan", area: "neck", locked: true});
+    if (due.indexOf("conf") >= 0) add("conf", "Private medical conference", "Health", "17:30", 15, {link: "conf", locked: true});
+  }
+
   function gen(c, d) {
     var p = A.phase(d), mars = A.S.mission === "mars", out = [], seed = A.S.mission + ":" + d + ":" + c.id;
     function add(slug, name, cat, start, dur, x) { out.push(Object.assign({uid: c.id + ":" + A.S.mission + ":" + d + ":" + slug, name: name, cat: cat, start: start, dur: dur}, x || {})); }
@@ -61,36 +69,34 @@
       add("dock", mars ? "Vehicle checkout" : "Docking watch", "Operations", "09:00", 120, {locked: true});
       add("unpack", "Unpack personal kit", "Maintenance", "12:00", 60);
       add("orient", "Orientation walkthrough", "Operations", "14:00", 60);
-      var sa = A.scanFor(d); if (sa) add("scan", "Guided scan: " + areaLabel(sa).toLowerCase(), "Health", "15:30", areaMin(sa), {link: "scan", area: sa, locked: true});
+      sched(d, add);
       add("plan", "Daily planning conference", "Operations", "18:00", 15);
       return out;
     }
     if (p === "orbit") {
       add("health", "Daily health check", "Health", "07:30", 2, {link: "health", locked: true});
-      var a = A.scanFor(d);
       if (rest) {
-        if (a) add("scan", "Guided scan: " + areaLabel(a).toLowerCase(), "Health", "15:00", areaMin(a), {link: "scan", area: a, locked: true});
-        add("ex", "Light exercise", "Exercise", "10:00", 45);
+        sched(d, add);
         add("free", "Personal time", "Rest", "12:00", 180);
         add("call", "Family video call", "Rest", "17:00", 30);
         add("plan", "Daily planning conference", "Operations", "08:15", 15);
         return out.sort(byStart);
       }
       add("plan", "Daily planning conference", "Operations", "08:15", 15);
-      add("ex", "Exercise session", "Exercise", "09:00", 90);
+      add("ex", "Exercise session", "Exercise", "08:30", 150);
       var spec = c.role !== "Commander" && c.role !== "Pilot";
-      add("sci", pick(SCI, "s1"), "Science", "10:45", 120 + (hash(seed + "d1") % 3) * 15);
+      add("sci", pick(SCI, "s1"), "Science", "11:00", 120 + (hash(seed + "d1") % 3) * 15);
       if (spec && hash(seed + "two") % 2) { var s2 = pick(SCI, "s2"); add("sci2", s2 === out[out.length - 1].name ? "Science block" : s2, "Science", "13:30", 60 + (hash(seed + "d2") % 3) * 15); }
       else if (!spec && hash(seed + "ops") % 2) add("ops", OPS[c.role], "Operations", "13:30", 60);
       else add("mnt", pick(MAINT, "m1"), "Maintenance", "13:30", 60 + (hash(seed + "d3") % 4) * 15);
-      if (a) add("scan", "Guided scan: " + areaLabel(a).toLowerCase(), "Health", "15:00", areaMin(a), {link: "scan", area: a, locked: true});
+      sched(d, add);
       if (hash(A.S.mission + ":" + d + ":crit:" + c.idx) % 6 === 0) add("crit", mars ? "Course correction watch" : "Docking watch", "Operations", "16:30", 90, {locked: true});
       else if (hash(seed + "m2") % 2) add("mnt2", pick(MAINT, "m2"), "Maintenance", "16:30", 60);
       return out.sort(byStart);
     }
     if (p === "prereturn") {
       add("health", mars ? "Before-landing check" : "Before-you-go-home check", "Health", "07:30", 10, {link: "health", locked: true});
-      var pa = A.scanFor(d); if (pa) add("scan", "Guided scan: " + areaLabel(pa).toLowerCase(), "Health", "15:00", areaMin(pa), {link: "scan", area: pa, locked: true});
+      sched(d, add);
       add("pack", "Pack return cargo", "Maintenance", "09:00", 120);
       add("review", "Landing procedures review", "Operations", "11:30", 90);
       add("seat", "Seat and suit fit check", "Operations", "13:30", 45);
@@ -157,6 +163,8 @@
   function linkState(t) {
     var pl = A.plan ? A.plan() : [];
     if (t.link === "health") { var h = pl.find(function (x) { return x.flow && x.flow[0] === "daily"; }); return {done: h ? !!h.done : false, open: function () { if (h) A.openFlow(h.flow, h.id); }}; }
+    if (t.link === "conf") { var cf = pl.find(function (x) { return x.id === "conf"; }); return {done: cf ? !!cf.done : true, open: function () { if (A.markConf) A.markConf(); }}; }
+    if (t.link === "cog") { var cg = pl.find(function (x) { return x.id === "cog"; }); return {done: !cg, open: function () { A.openFlow(["rt", "fin"], "cog"); }}; }
     if (t.link === "bscan") { var b = pl.find(function (x) { return x.id === "bscan"; }); return {done: !b, open: function () { A.openFlow(b ? b.flow : ["scan:" + t.area], null); }}; }
     var s = pl.find(function (x) { return x.id !== "bscan" && x.flow && x.flow[0] === "scan:" + t.area; });
     return {done: !s, open: function () { A.openFlow(["scan:" + t.area], null); }};
@@ -191,7 +199,7 @@
         if (!t.late) acts += "<button class=\"tk-btn\" data-act=\"delay\" type=\"button\">Delay a day</button>";
         acts += "<button class=\"tk-btn\" data-act=\"hand\" type=\"button\" aria-haspopup=\"menu\" aria-expanded=\"" + (UI.menu === t.uid) + "\">Hand over</button>";
       }
-      var name = ls ? "<b class=\"tk-name\"><button type=\"button\" data-act=\"open\">" + esc(t.name) + "</button></b>" : "<b class=\"tk-name\">" + esc(t.name) + "</b>";
+      var name = "<b class=\"tk-name\">" + esc(t.name) + "</b>";
       var menu = "";
       if (UI.menu === t.uid && acts.indexOf("data-act=\"hand\"") >= 0) {
         menu = "<div class=\"tk-menu\" role=\"menu\">" + crew().filter(function (o) { return o.id !== c.id; }).map(function (o) {
@@ -201,7 +209,7 @@
       }
       return "<div class=\"" + cls.join(" ") + "\" data-id=\"" + esc(t.uid) + "\">" +
         "<button class=\"tk-check\" type=\"button\" aria-pressed=\"" + (done && !t.moved) + "\" aria-label=\"" + (done ? "Mark not done" : "Mark done") + "\"" + (t.moved ? " disabled" : "") + "></button>" +
-        "<div class=\"tk-main\">" + name + "<span class=\"tk-meta\">" + esc(t.start) + " · " + durTxt(t.dur) + " · " + esc(t.cat) + "</span></div>" +
+        (ls ? "<button class=\"tk-main\" type=\"button\" data-act=\"open\">" : "<div class=\"tk-main\">") + name + "<span class=\"tk-meta\">" + esc(t.start) + " · " + durTxt(t.dur) + " · " + esc(t.cat) + "</span>" + (ls ? "</button>" : "</div>") +
         "<span class=\"tk-state\">" + esc(state) + "</span><div class=\"tk-acts\">" + acts + "</div>" + menu + "</div>";
     }).join("") + "</div>";
     html += "<div class=\"limits\" id=\"limits\"><span class=\"lim" + (g.chFull ? " watch" : "") + "\">Changes today <b>" + g.ch + "/" + CHANGES_PER_DAY + "</b></span>" +
@@ -245,7 +253,7 @@
     renderMindBox(c, d);
   }
 
-  function changed() { A.save(); A.bump(); UI.todayHTML = ""; renderToday(); }
+  function changed() { A.save(); A.bump(); UI.todayHTML = ""; if (A.render) A.render(); else renderToday(); }
   function findRow(uid) { var c = me(), d = A.day(); return list(c, d).find(function (t) { return t.uid === uid; }); }
 
   function onClick(e) {

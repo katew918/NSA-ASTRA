@@ -1014,3 +1014,5 @@ rect.ch-cursor{fill:var(--navy);stroke:none;opacity:.06}
 .area-chip.urgent b{color:var(--urgent)}
 .hmid:has(#holoFig.is3d){grid-template-columns:minmax(0,.8fr) minmax(170px,1.5fr) minmax(0,.8fr) 24px}
 @media (max-width:640px){#holoFig.is3d{height:290px}.hmid:has(#holoFig.is3d){grid-template-columns:minmax(0,.9fr) minmax(130px,1.4fr) minmax(0,.9fr) 18px}}
+#holoFig.is3d{height:380px}
+@media (max-width:640px){#holoFig.is3d{height:300px}}
